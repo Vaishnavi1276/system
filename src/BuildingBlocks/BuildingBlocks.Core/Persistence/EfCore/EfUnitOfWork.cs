@@ -80,7 +80,7 @@ public class EfUnitOfWork<TDbContext> : IEfUnitOfWork<TDbContext>
 
     public void Dispose()
     {
-       GC.SuppressFinalize(this);
+        GC.SuppressFinalize(this);
     }
 
     public Task ExecuteTransactionalAsync(Func<Task> action, CancellationToken cancellationToken = default)

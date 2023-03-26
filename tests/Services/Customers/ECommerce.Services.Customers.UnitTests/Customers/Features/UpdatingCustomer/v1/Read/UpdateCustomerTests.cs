@@ -59,7 +59,8 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
             .Received(1)
             .FindOneAsync(
                 Arg.Is<Expression<Func<Customer, bool>>>(exp => exp.Compile()(existCustomer) == true),
-                Arg.Any<CancellationToken>());
+                Arg.Any<CancellationToken>()
+            );
         res.Should().NotBeNull();
         existCustomer.Id.Should().Be(fakeUpdateCustomerReadCommand.Id);
         existCustomer.CustomerId.Should().Be(fakeUpdateCustomerReadCommand.CustomerId);
@@ -73,10 +74,7 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
         var fakeUpdateCustomerReadCommand = new FakeUpdateCustomerRead().Generate();
 
         _customersReadUnitOfWork.CustomersRepository
-            .FindOneAsync(
-                Arg.Any<Expression<Func<Customer, bool>>>(),
-                Arg.Any<CancellationToken>()
-            )
+            .FindOneAsync(Arg.Any<Expression<Func<Customer, bool>>>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult<Customer?>(null));
 
         var handler = new UpdateCustomerReadHandler(_customersReadUnitOfWork, Mapper);
@@ -90,8 +88,6 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
 
         await _customersReadUnitOfWork.CustomersRepository
             .Received(1)
-            .FindOneAsync(
-                Arg.Any<Expression<Func<Customer, bool>>>(),
-                Arg.Any<CancellationToken>());
+            .FindOneAsync(Arg.Any<Expression<Func<Customer, bool>>>(), Arg.Any<CancellationToken>());
     }
 }

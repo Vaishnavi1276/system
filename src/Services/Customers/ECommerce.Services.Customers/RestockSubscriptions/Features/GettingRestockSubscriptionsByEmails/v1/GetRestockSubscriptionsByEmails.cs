@@ -46,7 +46,8 @@ internal class GetRestockSubscriptionsByEmailsHandler
             _mapper.ConfigurationProvider,
             x => !x.IsDeleted && query.Emails.Contains(x.Email!),
             x => x.Id,
-            cancellationToken);
+            cancellationToken
+        );
 
         return result;
     }

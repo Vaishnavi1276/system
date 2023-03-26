@@ -31,7 +31,8 @@ public class GetCustomerByIdTests : CustomerServiceUnitTestBase
         _customersReadUnitOfWork.CustomersRepository
             .FindOneAsync(
                 Arg.Is<Expression<Func<Customer, bool>>>(exp => exp.Compile()(customerReadModel) == true),
-                Arg.Any<CancellationToken>())
+                Arg.Any<CancellationToken>()
+            )
             .Returns(customerReadModel);
 
         // Act
@@ -43,7 +44,8 @@ public class GetCustomerByIdTests : CustomerServiceUnitTestBase
             .Received(1)
             .FindOneAsync(
                 Arg.Is<Expression<Func<Customer, bool>>>(exp => exp.Compile()(customerReadModel) == true),
-                Arg.Any<CancellationToken>());
+                Arg.Any<CancellationToken>()
+            );
         res.Should().NotBeNull();
         res.Customer.Id.Should().Be(customerReadModel.Id);
     }
@@ -67,7 +69,8 @@ public class GetCustomerByIdTests : CustomerServiceUnitTestBase
         await _customersReadUnitOfWork.CustomersRepository
             .Received(1)
             .FindOneAsync(
-                Arg.Is<Expression<Func<Customer, bool>>>(exp => exp.Compile()(new Customer {Id = invalidId}) == true),
-                Arg.Any<CancellationToken>());
+                Arg.Is<Expression<Func<Customer, bool>>>(exp => exp.Compile()(new Customer { Id = invalidId }) == true),
+                Arg.Any<CancellationToken>()
+            );
     }
 }

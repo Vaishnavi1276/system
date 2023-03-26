@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         params Assembly[] assembliesToScan
     )
-    where TContext : MongoDbContext, IMongoDbContext
+        where TContext : MongoDbContext, IMongoDbContext
     {
         services.AddValidatedOptions<MongoOptions>(nameof(MongoOptions));
 
@@ -50,19 +50,15 @@ public static class ServiceCollectionExtensions
         params Assembly[] assembliesToScan
     )
     {
-        var scanAssemblies = assembliesToScan.Any() ?
-                                 assembliesToScan :
-                                 new[]
-                                 {
-                                     Assembly.GetCallingAssembly()
-                                 };
+        var scanAssemblies = assembliesToScan.Any() ? assembliesToScan : new[] { Assembly.GetCallingAssembly() };
         services.Scan(
             scan =>
                 scan.FromAssemblies(scanAssemblies)
                     .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)), false)
                     .AsImplementedInterfaces()
                     .AsSelf()
-                    .WithTransientLifetime());
+                    .WithTransientLifetime()
+        );
 
         return services;
     }
@@ -72,19 +68,15 @@ public static class ServiceCollectionExtensions
         params Assembly[] assembliesToScan
     )
     {
-        var scanAssemblies = assembliesToScan.Any() ?
-                                 assembliesToScan :
-                                 new[]
-                                 {
-                                     Assembly.GetCallingAssembly()
-                                 };
+        var scanAssemblies = assembliesToScan.Any() ? assembliesToScan : new[] { Assembly.GetCallingAssembly() };
         services.Scan(
             scan =>
                 scan.FromAssemblies(scanAssemblies)
                     .AddClasses(classes => classes.AssignableTo(typeof(IMongoUnitOfWork<>)), false)
                     .AsImplementedInterfaces()
                     .AsSelf()
-                    .WithTransientLifetime());
+                    .WithTransientLifetime()
+        );
 
         return services;
     }
@@ -101,6 +93,7 @@ public static class ServiceCollectionExtensions
                 new IgnoreIfDefaultConvention(false),
                 new ImmutablePocoConvention(),
             },
-            _ => true);
+            _ => true
+        );
     }
 }

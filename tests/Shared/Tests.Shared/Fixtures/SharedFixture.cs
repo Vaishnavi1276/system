@@ -167,8 +167,6 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
 
     public async Task DisposeAsync()
     {
-        await MasstransitHarness.Stop(cancellationToken: CancellationToken.None);
-
         await PostgresContainerFixture.DisposeAsync();
         await MongoContainerFixture.DisposeAsync();
         //await Mongo2GoFixture.DisposeAsync();

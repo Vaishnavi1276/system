@@ -1,6 +1,8 @@
+using BuildingBlocks.Abstractions.Domain;
+
 namespace ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
 
-public class RestockSubscriptionReadModel
+public record RestockSubscription : IHaveIdentity<Guid>
 {
     public Guid Id { get; init; }
     public long RestockSubscriptionId { get; init; }

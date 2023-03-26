@@ -2,6 +2,7 @@ using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.Exception;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
 using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Application;
 using ECommerce.Services.Customers.Shared.Data;
@@ -22,12 +23,12 @@ public record GetRestockSubscriptionById(Guid Id) : IQuery<GetRestockSubscriptio
 
         internal class Handler : IQueryHandler<GetRestockSubscriptionById, GetRestockSubscriptionByIdResponse>
         {
-            private readonly CustomersReadDbContext _customersReadDbContext;
+            private readonly CustomersReadUnitOfWork _unitOfWork;
             private readonly IMapper _mapper;
 
-            public Handler(CustomersReadDbContext customersReadDbContext, IMapper mapper)
+            public Handler(CustomersReadUnitOfWork unitOfWork, IMapper mapper)
             {
-                _customersReadDbContext = customersReadDbContext;
+                _unitOfWork = unitOfWork;
                 _mapper = mapper;
             }
 
@@ -38,10 +39,10 @@ public record GetRestockSubscriptionById(Guid Id) : IQuery<GetRestockSubscriptio
             {
                 Guard.Against.Null(query, nameof(query));
 
-                var restockSubscription = await _customersReadDbContext.RestockSubscriptions
-                    .AsQueryable()
-                    .Where(x => x.IsDeleted == false)
-                    .SingleOrDefaultAsync(x => x.Id == query.Id, cancellationToken);
+                var restockSubscription = await _unitOfWork.RestockSubscriptionsRepository.FindOneAsync(
+                    x => x.IsDeleted == false && x.Id == query.Id,
+                    cancellationToken
+                );
 
                 Guard.Against.NotFound(restockSubscription, new RestockSubscriptionNotFoundException(query.Id));
 

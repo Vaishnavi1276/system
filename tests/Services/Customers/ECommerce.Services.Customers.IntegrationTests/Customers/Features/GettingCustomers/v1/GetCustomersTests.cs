@@ -22,13 +22,9 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
     [CategoryTrait(TestCategory.Integration)]
     internal async Task should_get_existing_customers_list_from_db()
     {
-        var res = await SharedFixture.ExecuteMongoDbContextAsync(x => x.Customers.AsQueryable().ToListAsync());
         // Arrange
         var fakeCustomers = new FakeCustomerReadModel().Generate(3);
-        await SharedFixture.InsertMongoDbContextAsync(
-            nameof(CustomersReadDbContext.Customers).Underscore(),
-            fakeCustomers.ToArray()
-        );
+        await SharedFixture.InsertMongoDbContextAsync(fakeCustomers.ToArray());
 
         // Act
         var query = new GetCustomers();
@@ -49,10 +45,7 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
     {
         // Arrange
         var fakeCustomers = new FakeCustomerReadModel().Generate(3);
-        await SharedFixture.InsertMongoDbContextAsync(
-            nameof(CustomersReadDbContext.Customers).Underscore(),
-            fakeCustomers.ToArray()
-        );
+        await SharedFixture.InsertMongoDbContextAsync(fakeCustomers.ToArray());
 
         // Act
         var query = new GetCustomers() { Page = 1, PageSize = 2 };

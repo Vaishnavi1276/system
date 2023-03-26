@@ -1,9 +1,9 @@
 using System.Linq.Expressions;
 using AutoMapper.QueryableExtensions;
 using BuildingBlocks.Abstractions.CQRS;
+using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Core.Linq;
-using BuildingBlocks.Core.Types;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using IConfigurationProvider = AutoMapper.IConfigurationProvider;
@@ -12,12 +12,75 @@ namespace BuildingBlocks.Persistence.Mongo;
 
 public static class MongoQueryableExtensions
 {
+    public static async Task<ListResultModel<R>> ApplyPagingAsync<T, R, TSortKey>(
+        this IMongoQueryable<T> collection,
+        IPageRequest pageRequest,
+        IConfigurationProvider configuration,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        IMongoQueryable<T> query = collection;
+        if (predicate is not null)
+        {
+            query = query.Where(predicate);
+        }
+
+        if (pageRequest.Filters is not null)
+        {
+            query = query.ApplyFilter(pageRequest.Filters);
+        }
+
+        if (sortExpression is not null)
+        {
+            query = query.OrderByDescending(sortExpression);
+        }
+
+        return await query.ApplyPagingAsync<T, R>(
+            configuration,
+            pageRequest.Page,
+            pageRequest.PageSize,
+            cancellationToken
+        );
+    }
+
+    public static async Task<ListResultModel<T>> ApplyPagingAsync<T, TSortKey>(
+        this IMongoQueryable<T> collection,
+        IPageRequest pageRequest,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        IMongoQueryable<T> query = collection;
+        if (predicate is not null)
+        {
+            query = query.Where(predicate);
+        }
+
+        if (pageRequest.Filters is not null)
+        {
+            query = query.ApplyFilter(pageRequest.Filters);
+        }
+
+        if (sortExpression is not null)
+        {
+            query = query.OrderByDescending(sortExpression);
+        }
+
+        return await query.ApplyPagingAsync(pageRequest.Page, pageRequest.PageSize, cancellationToken);
+    }
+
     public static async Task<ListResultModel<T>> ApplyPagingAsync<T>(
         this IMongoQueryable<T> collection,
         int page = 1,
         int pageSize = 10,
         CancellationToken cancellationToken = default
     )
+        where T : class
     {
         if (page <= 0)
             page = 1;
@@ -43,6 +106,7 @@ public static class MongoQueryableExtensions
         int pageSize = 10,
         CancellationToken cancellationToken = default
     )
+        where T : class
     {
         if (page <= 0)
             page = 1;
@@ -62,6 +126,7 @@ public static class MongoQueryableExtensions
     }
 
     public static IMongoQueryable<T> Skip<T>(this IMongoQueryable<T> collection, int page = 1, int resultsPerPage = 10)
+        where T : class
     {
         if (page <= 0)
             page = 1;

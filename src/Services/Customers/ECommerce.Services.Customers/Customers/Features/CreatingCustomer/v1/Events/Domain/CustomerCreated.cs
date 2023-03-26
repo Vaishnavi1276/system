@@ -3,6 +3,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Core.CQRS.Events.Internal;
+using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Read.Mongo;
 using ECommerce.Services.Customers.Customers.Models;
 
 namespace ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Events.Domain;
@@ -24,7 +25,7 @@ internal class CustomerCreatedHandler : IDomainEventHandler<CustomerCreated>
     {
         Guard.Against.Null(notification, nameof(notification));
 
-        var mongoReadCommand = _mapper.Map<CreateMongoCustomerReadModels>(notification.Customer);
+        var mongoReadCommand = _mapper.Map<CreateCustomerRead>(notification.Customer);
 
         // https://github.com/kgrzybek/modular-monolith-with-ddd#38-internal-processing
         // Schedule multiple read sides to execute here

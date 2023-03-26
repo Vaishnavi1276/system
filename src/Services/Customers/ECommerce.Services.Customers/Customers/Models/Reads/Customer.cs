@@ -1,6 +1,8 @@
+using BuildingBlocks.Abstractions.Domain;
+
 namespace ECommerce.Services.Customers.Customers.Models.Reads;
 
-public class CustomerReadModel
+public record Customer : IHaveIdentity<Guid>
 {
     public Guid Id { get; init; }
     public long CustomerId { get; init; }

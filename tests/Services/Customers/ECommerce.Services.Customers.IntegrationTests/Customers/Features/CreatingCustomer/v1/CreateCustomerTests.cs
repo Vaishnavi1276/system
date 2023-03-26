@@ -2,17 +2,16 @@ using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
+using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Read.Mongo;
 using ECommerce.Services.Customers.Shared.Data;
-using ECommerce.Services.Customers.TestShared.Fakes.Shared.Servers;
 using ECommerce.Services.Customers.TestShared.Fixtures;
 using ECommerce.Services.Shared.Customers.Customers.Events.v1.Integration;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 using Tests.Shared.Fixtures;
 using Tests.Shared.XunitCategories;
 using Xunit.Abstractions;
+using MongoDB.Driver;
 
 namespace ECommerce.Services.Customers.IntegrationTests.Customers.Features.CreatingCustomer.v1;
 
@@ -102,7 +101,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
         await SharedFixture.SendAsync(command);
 
         // Assert
-        await SharedFixture.ShouldProcessedPersistInternalCommand<CreateMongoCustomerReadModels>();
+        await SharedFixture.ShouldProcessedPersistInternalCommand<CreateCustomerRead>();
     }
 
     [Fact]
@@ -123,7 +122,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
         {
             var existsCustomer = await SharedFixture.ExecuteMongoDbContextAsync(async ctx =>
             {
-                var res = await ctx.Customers.AsQueryable().AnyAsync(x => x.Email == command.Email);
+                var res = ctx.Customers.AsQueryable().Any(x => x.Email == command.Email);
 
                 return res;
             });

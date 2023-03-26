@@ -2,6 +2,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Persistence.Mongo;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Models.Reads;
 using ECommerce.Services.Customers.Shared.Data;
@@ -11,7 +12,7 @@ using MongoDB.Driver.Linq;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomers.v1;
 
-public record GetCustomers : ListQuery<GetCustomersResponse>;
+public record GetCustomers : ListQuery<GetCustomersResult>;
 
 public class GetCustomersValidator : AbstractValidator<GetCustomers>
 {
@@ -27,7 +28,7 @@ public class GetCustomersValidator : AbstractValidator<GetCustomers>
     }
 }
 
-public class GetCustomersHandler : IQueryHandler<GetCustomers, GetCustomersResponse>
+internal class GetCustomersHandler : IQueryHandler<GetCustomers, GetCustomersResult>
 {
     private readonly CustomersReadDbContext _customersReadDbContext;
     private readonly IMapper _mapper;
@@ -38,19 +39,21 @@ public class GetCustomersHandler : IQueryHandler<GetCustomers, GetCustomersRespo
         _mapper = mapper;
     }
 
-    public async Task<GetCustomersResponse> Handle(GetCustomers request, CancellationToken cancellationToken)
+    public async Task<GetCustomersResult> Handle(GetCustomers request, CancellationToken cancellationToken)
     {
         var customer = await _customersReadDbContext.Customers
             .AsQueryable()
             .OrderByDescending(x => x.City)
             .ApplyFilter(request.Filters)
-            .ApplyPagingAsync<CustomerReadModel, CustomerReadDto>(
+            .ApplyPagingAsync<Customer, CustomerReadDto>(
                 _mapper.ConfigurationProvider,
                 request.Page,
                 request.PageSize,
                 cancellationToken: cancellationToken
             );
 
-        return new GetCustomersResponse(customer);
+        return new GetCustomersResult(customer);
     }
 }
+
+public record GetCustomersResult(IListResultModel<CustomerReadDto> Customers);

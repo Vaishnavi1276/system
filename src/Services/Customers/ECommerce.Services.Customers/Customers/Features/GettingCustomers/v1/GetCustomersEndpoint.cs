@@ -2,6 +2,8 @@ using Ardalis.ApiEndpoints;
 using Ardalis.GuardClauses;
 using Asp.Versioning;
 using BuildingBlocks.Abstractions.CQRS.Queries;
+using BuildingBlocks.Core.CQRS.Queries;
+using ECommerce.Services.Customers.Customers.Dtos.v1;
 using Hellang.Middleware.ProblemDetails;
 using Swashbuckle.AspNetCore.Annotations;
 
@@ -9,8 +11,8 @@ namespace ECommerce.Services.Customers.Customers.Features.GettingCustomers.v1;
 
 // https://www.youtube.com/watch?v=SDu0MA6TmuM
 // https://github.com/ardalis/ApiEndpoints
-public class GetCustomersEndpoint
-    : EndpointBaseAsync.WithRequest<GetCustomersRequest?>.WithActionResult<GetCustomersResponse>
+internal class GetCustomersEndpoint
+    : EndpointBaseAsync.WithRequest<GetCustomersRequest?>.WithActionResult<GetCustomersResult>
 {
     private readonly IQueryProcessor _queryProcessor;
 
@@ -23,7 +25,7 @@ public class GetCustomersEndpoint
     [SwaggerResponse(
         StatusCodes.Status200OK,
         "Customers response retrieved successfully (Success).",
-        typeof(GetCustomersResponse)
+        typeof(GetCustomersResult)
     )]
     [SwaggerResponse(StatusCodes.Status401Unauthorized, "Unauthorized", typeof(StatusCodeProblemDetails))]
     [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid input (Bad Request)", typeof(StatusCodeProblemDetails))]
@@ -35,7 +37,7 @@ public class GetCustomersEndpoint
     )]
     [HttpGet(CustomersConfigs.CustomersPrefixUri, Name = "GetCustomers")]
     [ApiVersion(1.0)]
-    public override async Task<ActionResult<GetCustomersResponse>> HandleAsync(
+    public override async Task<ActionResult<GetCustomersResult>> HandleAsync(
         [FromQuery] GetCustomersRequest? request,
         CancellationToken cancellationToken = default
     )
@@ -57,8 +59,39 @@ public class GetCustomersEndpoint
                 },
                 cancellationToken
             );
+            var response = new GetCustomersResponse(result.Customers);
 
-            return Ok(result);
+            return Ok(response);
         }
     }
 }
+
+// https://blog.codingmilitia.com/2022/01/03/getting-complex-type-as-simple-type-query-string-aspnet-core-api-controller/
+// https://benfoster.io/blog/minimal-apis-custom-model-binding-aspnet-6/
+internal record GetCustomersRequest : PageRequest
+{
+    // // For handling in minimal api
+    // public static ValueTask<GetCustomersRequest?> BindAsync(HttpContext httpContext, ParameterInfo parameter)
+    // {
+    //     var page = httpContext.Request.Query.Get<int>("Page", 1);
+    //     var pageSize = httpContext.Request.Query.Get<int>("PageSize", 20);
+    //     var customerState = httpContext.Request.Query.Get<CustomerState>("CustomerState", CustomerState.None);
+    //     var sorts = httpContext.Request.Query.GetCollection<List<string>>("Sorts");
+    //     var filters = httpContext.Request.Query.GetCollection<List<FilterModel>>("Filters");
+    //     var includes = httpContext.Request.Query.GetCollection<List<string>>("Includes");
+    //
+    //     var request = new GetCustomersRequest()
+    //     {
+    //         Page = page,
+    //         PageSize = pageSize,
+    //         CustomerState = customerState,
+    //         Sorts = sorts,
+    //         Filters = filters,
+    //         Includes = includes
+    //     };
+    //
+    //     return ValueTask.FromResult<GetCustomersRequest?>(request);
+    // }
+}
+
+internal record GetCustomersResponse(IListResultModel<CustomerReadDto> Customers);

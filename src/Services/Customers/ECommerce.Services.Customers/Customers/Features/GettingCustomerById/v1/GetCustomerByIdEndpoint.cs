@@ -2,12 +2,13 @@ using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
+using ECommerce.Services.Customers.Customers.Dtos.v1;
 using Hellang.Middleware.ProblemDetails;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomerById.v1;
 
-public class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
+internal class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
 {
     public string GroupName => CustomersConfigs.Tag;
     public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
@@ -18,7 +19,7 @@ public class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
         return builder
             .MapGet("/{id:guid}", HandleAsync)
             // .RequireAuthorization()
-            .Produces<GetCustomerByIdResponse>(StatusCodes.Status200OK)
+            .Produces<GetCustomerByIdResult>(StatusCodes.Status200OK)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
@@ -48,8 +49,11 @@ public class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
         using (Serilog.Context.LogContext.PushProperty("InternalCommandId", id))
         {
             var result = await queryProcessor.SendAsync(new GetCustomerById(id), cancellationToken);
+            var response = new GetCustomerByIdResponse(result.Customer);
 
-            return Results.Ok(result);
+            return Results.Ok(response);
         }
     }
 }
+
+public record GetCustomerByIdResponse(CustomerReadDto Customer);

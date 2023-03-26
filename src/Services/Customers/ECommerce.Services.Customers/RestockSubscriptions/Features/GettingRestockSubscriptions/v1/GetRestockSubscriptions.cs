@@ -2,6 +2,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Persistence.Mongo;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
 using ECommerce.Services.Customers.Shared.Data;
@@ -34,12 +35,12 @@ internal class GetRestockSubscriptionsValidator : AbstractValidator<GetRestockSu
 
 public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptions, GetRestockSubscriptionsResponse>
 {
-    private readonly CustomersReadDbContext _customersReadDbContext;
+    private readonly CustomersReadUnitOfWork _customersReadUnitOfWork;
     private readonly IMapper _mapper;
 
-    public GeRestockSubscriptionsHandler(CustomersReadDbContext customersReadDbContext, IMapper mapper)
+    public GeRestockSubscriptionsHandler(CustomersReadUnitOfWork customersReadUnitOfWork, IMapper mapper)
     {
-        _customersReadDbContext = customersReadDbContext;
+        _customersReadUnitOfWork = customersReadUnitOfWork;
         _mapper = mapper;
     }
 
@@ -48,24 +49,24 @@ public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptio
         CancellationToken cancellationToken
     )
     {
-        var filtering = _customersReadDbContext.RestockSubscriptions
-            .AsQueryable()
-            .ApplyFilter(query.Filters)
-            .Where(x => x.IsDeleted == false)
-            .Where(e => query.Emails.Any() == false || query.Emails.Contains(e.Email))
-            .Where(
-                x =>
+        var restockSubscriptions = await _customersReadUnitOfWork.RestockSubscriptionsRepository.GetByPageFilter<
+            RestockSubscriptionDto,
+            DateTime
+        >(
+            query,
+            _mapper.ConfigurationProvider,
+            x =>
+                x.IsDeleted == false
+                && (query.Emails.Any() == false || query.Emails.Contains(x.Email))
+                && (
                     (query.From == null && query.To == null)
                     || (query.From == null && x.Created <= query.To)
                     || (query.To == null && x.Created >= query.From)
                     || (x.Created >= query.From && x.Created <= query.To)
-            )
-            .OrderByDescending(x => x.Created);
-
-        var restockSubscriptions = await filtering.ApplyPagingAsync<
-            RestockSubscriptionReadModel,
-            RestockSubscriptionDto
-        >(_mapper.ConfigurationProvider, query.Page, query.PageSize, cancellationToken: cancellationToken);
+                ),
+            sortExpression: x => x.Created,
+            cancellationToken: cancellationToken
+        );
 
         return new GetRestockSubscriptionsResponse(restockSubscriptions);
     }

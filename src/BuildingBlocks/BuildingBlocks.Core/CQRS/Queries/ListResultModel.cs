@@ -1,6 +1,8 @@
+using BuildingBlocks.Abstractions.CQRS.Queries;
+
 namespace BuildingBlocks.Core.CQRS.Queries;
 
-public record ListResultModel<T>(List<T> Items, long TotalItems, int Page, int PageSize)
+public record ListResultModel<T>(IList<T> Items, long TotalItems, int Page, int PageSize) : IListResultModel<T>
     where T : notnull
 {
     public static ListResultModel<T> Empty => new(Enumerable.Empty<T>().ToList(), 0, 0, 0);

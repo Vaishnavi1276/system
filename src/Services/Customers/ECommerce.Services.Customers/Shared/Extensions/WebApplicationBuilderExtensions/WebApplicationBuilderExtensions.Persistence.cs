@@ -1,6 +1,9 @@
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
+using ECommerce.Services.Customers.Customers.Data.Repositories.Mongo;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
+using ECommerce.Services.Customers.RestockSubscriptions.Data.Repositories.Mongo;
 using ECommerce.Services.Customers.Shared.Contracts;
 using ECommerce.Services.Customers.Shared.Data;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +40,10 @@ public static partial class WebApplicationBuilderExtensions
 
     private static void AddMongoReadStorage(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMongoDbContext<CustomersReadDbContext>();
+        services
+            .AddMongoDbContext<CustomersReadDbContext>()
+            .AddTransient<ICustomerReadRepository, CustomerReadRepository>()
+            .AddTransient<IRestockSubscriptionReadRepository, RestockSubscriptionReadRepository>()
+            .AddTransient<ICustomersReadUnitOfWork, CustomersReadUnitOfWork>();
     }
 }

@@ -1,13 +1,14 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
+using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Features.GettingCustomerById.v1;
 using Hellang.Middleware.ProblemDetails;
 using Swashbuckle.AspNetCore.Annotations;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomerByCustomerId.v1;
 
-public class GetCustomerByCustomerIdEndpointEndpoint : IQueryMinimalEndpoint<long>
+internal class GetCustomerByCustomerIdEndpointEndpoint : IQueryMinimalEndpoint<long>
 {
     public string GroupName => CustomersConfigs.Tag;
     public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
@@ -18,7 +19,7 @@ public class GetCustomerByCustomerIdEndpointEndpoint : IQueryMinimalEndpoint<lon
         return builder
             .MapGet("/{customerId}", HandleAsync)
             // .RequireAuthorization()
-            .Produces<GetCustomerByCustomerIdResponse>(StatusCodes.Status200OK)
+            .Produces<GetCustomerByCustomerIdResult>(StatusCodes.Status200OK)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
@@ -43,8 +44,11 @@ public class GetCustomerByCustomerIdEndpointEndpoint : IQueryMinimalEndpoint<lon
         using (Serilog.Context.LogContext.PushProperty("CustomerId", customerId))
         {
             var result = await queryProcessor.SendAsync(new GetCustomerByCustomerId(customerId), cancellationToken);
+            var response = new GetCustomerByCustomerIdResponse(result.Customer);
 
-            return Results.Ok(result);
+            return Results.Ok(response);
         }
     }
 }
+
+internal record GetCustomerByCustomerIdResponse(CustomerReadDto Customer);

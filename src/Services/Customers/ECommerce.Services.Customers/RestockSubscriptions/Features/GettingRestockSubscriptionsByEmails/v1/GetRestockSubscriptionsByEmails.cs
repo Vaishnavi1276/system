@@ -2,6 +2,7 @@ using Ardalis.GuardClauses;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using BuildingBlocks.Abstractions.CQRS.Queries;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
 using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
@@ -25,12 +26,12 @@ internal class GetRestockSubscriptionsByEmailsValidator : AbstractValidator<GetR
 internal class GetRestockSubscriptionsByEmailsHandler
     : IStreamQueryHandler<GetRestockSubscriptionsByEmails, RestockSubscriptionDto>
 {
-    private readonly CustomersReadDbContext _customersReadDbContext;
+    private readonly CustomersReadUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public GetRestockSubscriptionsByEmailsHandler(CustomersReadDbContext customersReadDbContext, IMapper mapper)
+    public GetRestockSubscriptionsByEmailsHandler(CustomersReadUnitOfWork unitOfWork, IMapper mapper)
     {
-        _customersReadDbContext = customersReadDbContext;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
@@ -41,12 +42,11 @@ internal class GetRestockSubscriptionsByEmailsHandler
     {
         Guard.Against.Null(query, nameof(query));
 
-        var result = _customersReadDbContext.RestockSubscriptions
-            .AsQueryable()
-            .Where(x => !x.IsDeleted)
-            .Where(x => query.Emails.Contains(x.Email!))
-            .ProjectTo<RestockSubscriptionDto>(_mapper.ConfigurationProvider)
-            .ToAsyncEnumerable();
+        var result = _unitOfWork.RestockSubscriptionsRepository.ProjectBy<RestockSubscriptionDto, Guid>(
+            _mapper.ConfigurationProvider,
+            x => !x.IsDeleted && query.Emails.Contains(x.Email!),
+            x => x.Id,
+            cancellationToken);
 
         return result;
     }

@@ -3,7 +3,7 @@ using ECommerce.Services.Customers.Customers.Models.Reads;
 
 namespace ECommerce.Services.Customers.TestShared.Fakes.Customers.Entities;
 
-public sealed class FakeCustomerReadModel : AutoFaker<CustomerReadModel>
+public sealed class FakeCustomerReadModel : AutoFaker<Customer>
 {
     public FakeCustomerReadModel()
     {

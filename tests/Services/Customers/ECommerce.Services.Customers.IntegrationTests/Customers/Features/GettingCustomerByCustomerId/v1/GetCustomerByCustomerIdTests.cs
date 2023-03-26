@@ -24,11 +24,8 @@ public class GetCustomerByCustomerIdTests : CustomerServiceIntegrationTestBase
     internal async Task should_returns_existing_read_customer_model_from_mongodb_with_correct_properties()
     {
         // Arrange
-        CustomerReadModel fakeCustomer = new FakeCustomerReadModel().Generate();
-        await SharedFixture.InsertMongoDbContextAsync(
-            nameof(CustomersReadDbContext.Customers).Underscore(),
-            fakeCustomer
-        );
+        Customer fakeCustomer = new FakeCustomerReadModel().Generate();
+        await SharedFixture.InsertMongoDbContextAsync(fakeCustomer);
 
         // Act
         var query = new GetCustomerByCustomerId(fakeCustomer.CustomerId);

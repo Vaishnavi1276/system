@@ -2,6 +2,7 @@ using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Commands;
+using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
 using ECommerce.Services.Customers.Shared.Data;
 
@@ -19,17 +20,17 @@ public record CreateMongoRestockSubscriptionReadModels(
     DateTime? ProcessedTime = null
 ) : InternalCommand
 {
-    public bool IsDeleted { get; init; } = false;
+    public bool IsDeleted { get; init; }
 }
 
 internal class CreateRestockSubscriptionReadModelHandler : ICommandHandler<CreateMongoRestockSubscriptionReadModels>
 {
-    private readonly CustomersReadDbContext _mongoDbContext;
+    private readonly CustomersReadUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
 
-    public CreateRestockSubscriptionReadModelHandler(CustomersReadDbContext mongoDbContext, IMapper mapper)
+    public CreateRestockSubscriptionReadModelHandler(CustomersReadUnitOfWork unitOfWork, IMapper mapper)
     {
-        _mongoDbContext = mongoDbContext;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
     }
 
@@ -40,9 +41,10 @@ internal class CreateRestockSubscriptionReadModelHandler : ICommandHandler<Creat
     {
         Guard.Against.Null(command, nameof(command));
 
-        var readModel = _mapper.Map<RestockSubscriptionReadModel>(command);
+        var readModel = _mapper.Map<RestockSubscription>(command);
 
-        await _mongoDbContext.RestockSubscriptions.InsertOneAsync(readModel, cancellationToken: cancellationToken);
+        await _unitOfWork.RestockSubscriptionsRepository.AddAsync(readModel, cancellationToken: cancellationToken);
+        await _unitOfWork.CommitAsync(cancellationToken);
 
         return Unit.Value;
     }

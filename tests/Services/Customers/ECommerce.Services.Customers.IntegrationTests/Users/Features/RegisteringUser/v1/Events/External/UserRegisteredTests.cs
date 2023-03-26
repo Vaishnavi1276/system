@@ -1,4 +1,5 @@
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
+using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Read.Mongo;
 using ECommerce.Services.Customers.Shared.Data;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Events;
 using ECommerce.Services.Customers.TestShared.Fakes.Shared.Servers;
@@ -95,7 +96,7 @@ public class UserRegisteredTests : CustomerServiceIntegrationTestBase
         await SharedFixture.PublishMessageAsync(_userRegistered, cancellationToken: CancellationToken);
 
         // Assert
-        await SharedFixture.ShouldProcessedPersistInternalCommand<CreateMongoCustomerReadModels>();
+        await SharedFixture.ShouldProcessedPersistInternalCommand<CreateCustomerRead>();
     }
 
     [Fact]

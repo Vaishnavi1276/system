@@ -1,7 +1,7 @@
+using System.Reflection;
+using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.Mongo;
 using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
-using BuildingBlocks.Persistence.Mongo.Serializers;
-using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;
@@ -9,10 +9,13 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace BuildingBlocks.Persistence.Mongo;
 
-public static class Extensions
+public static class ServiceCollectionExtensions
 {
-    public static IServiceCollection AddMongoDbContext<TContext>(this IServiceCollection services)
-        where TContext : MongoDbContext, IMongoDbContext
+    public static IServiceCollection AddMongoDbContext<TContext>(
+        this IServiceCollection services,
+        params Assembly[] assembliesToScan
+    )
+    where TContext : MongoDbContext, IMongoDbContext
     {
         services.AddValidatedOptions<MongoOptions>(nameof(MongoOptions));
 
@@ -36,8 +39,52 @@ public static class Extensions
         services.AddScoped(typeof(TContext));
         services.AddScoped<IMongoDbContext>(sp => sp.GetRequiredService<TContext>());
 
-        services.AddTransient(typeof(IMongoRepository<,>), typeof(MongoRepository<,>));
-        services.AddTransient(typeof(IMongoUnitOfWork<>), typeof(MongoUnitOfWork<>));
+        services.AddMongoRepositories(assembliesToScan);
+        services.AddMongoUnitOfWork(assembliesToScan);
+
+        return services;
+    }
+
+    private static IServiceCollection AddMongoRepositories(
+        this IServiceCollection services,
+        params Assembly[] assembliesToScan
+    )
+    {
+        var scanAssemblies = assembliesToScan.Any() ?
+                                 assembliesToScan :
+                                 new[]
+                                 {
+                                     Assembly.GetCallingAssembly()
+                                 };
+        services.Scan(
+            scan =>
+                scan.FromAssemblies(scanAssemblies)
+                    .AddClasses(classes => classes.AssignableTo(typeof(IRepository<,>)), false)
+                    .AsImplementedInterfaces()
+                    .AsSelf()
+                    .WithTransientLifetime());
+
+        return services;
+    }
+
+    private static IServiceCollection AddMongoUnitOfWork(
+        this IServiceCollection services,
+        params Assembly[] assembliesToScan
+    )
+    {
+        var scanAssemblies = assembliesToScan.Any() ?
+                                 assembliesToScan :
+                                 new[]
+                                 {
+                                     Assembly.GetCallingAssembly()
+                                 };
+        services.Scan(
+            scan =>
+                scan.FromAssemblies(scanAssemblies)
+                    .AddClasses(classes => classes.AssignableTo(typeof(IMongoUnitOfWork<>)), false)
+                    .AsImplementedInterfaces()
+                    .AsSelf()
+                    .WithTransientLifetime());
 
         return services;
     }
@@ -54,7 +101,6 @@ public static class Extensions
                 new IgnoreIfDefaultConvention(false),
                 new ImmutablePocoConvention(),
             },
-            _ => true
-        );
+            _ => true);
     }
 }

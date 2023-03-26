@@ -14,7 +14,6 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Fakes\Customers\Dtos" />
     <Folder Include="Fakes\Customers\Queries" />
   </ItemGroup>
 

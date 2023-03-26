@@ -1,16 +1,18 @@
 using System.Linq.Expressions;
 using Ardalis.GuardClauses;
+using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using BuildingBlocks.Abstractions.CQRS.Events;
+using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.EfCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace BuildingBlocks.Core.Persistence.EfCore;
 
-public abstract class EfRepositoryBase<TDbContext, TEntity, TKey>
-    : IEfRepository<TEntity, TKey>,
-        IPageRepository<TEntity, TKey>
+public abstract class EfRepositoryBase<TDbContext, TEntity, TKey> : IRepository<TEntity, TKey>
     where TEntity : class, IHaveIdentity<TKey>
     where TDbContext : DbContext
 {
@@ -48,83 +50,66 @@ public abstract class EfRepositoryBase<TDbContext, TEntity, TKey>
         return await DbSet.Where(predicate).ToListAsync(cancellationToken);
     }
 
+    public async Task<bool> AnyAsync(
+        Expression<Func<TEntity, bool>> predicate,
+        CancellationToken cancellationToken = default
+    )
+    {
+        return await DbSet.AnyAsync(predicate, cancellationToken: cancellationToken);
+    }
+
     public async Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await DbSet.ToListAsync(cancellationToken);
     }
 
-    public virtual IEnumerable<TEntity> GetInclude(
-        Expression<Func<TEntity, bool>> predicate,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? includes = null,
-        bool withTracking = true
+    public IAsyncEnumerable<TResult> ProjectBy<TResult, TSortKey>(
+        IConfigurationProvider configuration,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
     )
     {
-        IQueryable<TEntity> query = DbSet;
-
-        if (includes != null)
+        var query = DbSet.AsQueryable();
+        if (predicate is not null)
         {
-            query = includes(query);
+            query = query.Where(predicate);
         }
 
-        query = query.Where(predicate);
-
-        if (withTracking == false)
+        if (sortExpression is not null)
         {
-            query = query.Where(predicate).AsNoTracking();
+            query = query.OrderByDescending(sortExpression);
         }
 
-        return query.AsEnumerable();
+        return query.ProjectTo<TResult>(configuration).ToAsyncEnumerable();
     }
 
-    public virtual IEnumerable<TEntity> GetInclude(
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? includes = null
+    public async Task<IListResultModel<TEntity>> GetByPageFilter<TSortKey>(
+        IPageRequest pageRequest,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
     )
     {
-        IQueryable<TEntity> query = DbSet;
-
-        if (includes != null)
-        {
-            query = includes(query);
-        }
-
-        return query.AsEnumerable();
+        return await DbSet.ApplyPagingAsync(pageRequest, predicate, sortExpression, cancellationToken);
     }
 
-    public virtual async Task<IEnumerable<TEntity>> GetIncludeAsync(
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? includes = null
+    public async Task<IListResultModel<TResult>> GetByPageFilter<TResult, TSortKey>(
+        IPageRequest pageRequest,
+        IConfigurationProvider configuration,
+        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
     )
+        where TResult : class
     {
-        IQueryable<TEntity> query = DbSet;
-
-        if (includes != null)
-        {
-            query = includes(query);
-        }
-
-        return await query.ToListAsync();
-    }
-
-    public virtual async Task<IEnumerable<TEntity>> GetIncludeAsync(
-        Expression<Func<TEntity, bool>> predicate,
-        Func<IQueryable<TEntity>, IIncludableQueryable<TEntity, object>>? includes = null,
-        bool withTracking = true
-    )
-    {
-        IQueryable<TEntity> query = DbSet;
-
-        if (includes != null)
-        {
-            query = includes(query);
-        }
-
-        query = query.Where(predicate);
-
-        if (withTracking == false)
-        {
-            query = query.Where(predicate).AsNoTracking();
-        }
-
-        return await query.ToListAsync();
+        return await DbSet.ApplyPagingAsync<TEntity, TResult, TSortKey>(
+            pageRequest,
+            configuration,
+            predicate,
+            sortExpression,
+            cancellationToken
+        );
     }
 
     public async Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)

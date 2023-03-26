@@ -7,6 +7,7 @@ using ECommerce.Services.Customers.UnitTests.Common;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Tests.Shared.XunitCategories;
 
 namespace ECommerce.Services.Customers.UnitTests.Customers.Features.UpdatingCustomer.v1;
 
@@ -19,6 +20,7 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
         _logger = new NullLogger<UpdateCustomerHandler>();
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task can_update_customer_with_valid_inputs()
     {
@@ -40,6 +42,7 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
         entity!.PhoneNumber.Value.Should().Be(command.PhoneNumber);
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task must_throw_argument_exception_with_null_command()
     {
@@ -56,6 +59,7 @@ public class UpdateCustomerTests : CustomerServiceUnitTestBase
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task must_throw_not_found_when_input_customer_not_exists()
     {

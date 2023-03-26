@@ -17,7 +17,7 @@ public static class UserManagerExtensions
         return await userManager.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).ToListAsync();
     }
 
-    public static async Task<ListResultModel<TResult>> FindAllUsersByPageAsync<TResult>(
+    public static async Task<IListResultModel<TResult>> FindAllUsersByPageAsync<TResult>(
         this UserManager<ApplicationUser> userManager,
         IMapper mapper,
         IPageRequest request,

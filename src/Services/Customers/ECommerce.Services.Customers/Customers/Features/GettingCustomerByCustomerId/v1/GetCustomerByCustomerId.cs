@@ -4,14 +4,12 @@ using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.Exception;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
-using ECommerce.Services.Customers.Shared.Data;
+using ECommerce.Services.Customers.Shared.Contracts;
 using FluentValidation;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomerByCustomerId.v1;
 
-public record GetCustomerByCustomerId(long CustomerId) : IQuery<GetCustomerByCustomerIdResponse>
+public record GetCustomerByCustomerId(long CustomerId) : IQuery<GetCustomerByCustomerIdResult>
 {
     internal class Validator : AbstractValidator<GetCustomerByCustomerId>
     {
@@ -20,34 +18,39 @@ public record GetCustomerByCustomerId(long CustomerId) : IQuery<GetCustomerByCus
             RuleFor(x => x.CustomerId).NotEmpty();
         }
     }
+}
 
-    internal class Handler : IQueryHandler<GetCustomerByCustomerId, GetCustomerByCustomerIdResponse>
+// totally we don't need to unit test our handlers according jimmy bogard blogs and videos and we should extract our business to domain or seperated class so we don't need repository pattern for test, but for a sample I use it here
+// https://www.reddit.com/r/dotnet/comments/rxuqrb/testing_mediator_handlers/
+internal class GetCustomerByCustomerIdHandler : IQueryHandler<GetCustomerByCustomerId, GetCustomerByCustomerIdResult>
+{
+    private readonly ICustomersReadUnitOfWork _unitOfWork;
+    private readonly IMapper _mapper;
+
+    public GetCustomerByCustomerIdHandler(ICustomersReadUnitOfWork unitOfWork, IMapper mapper)
     {
-        private readonly CustomersReadDbContext _customersReadDbContext;
-        private readonly IMapper _mapper;
+        _unitOfWork = unitOfWork;
+        _mapper = mapper;
+    }
 
-        public Handler(CustomersReadDbContext customersReadDbContext, IMapper mapper)
-        {
-            _customersReadDbContext = customersReadDbContext;
-            _mapper = mapper;
-        }
+    public async Task<GetCustomerByCustomerIdResult> Handle(
+        GetCustomerByCustomerId query,
+        CancellationToken cancellationToken
+    )
+    {
+        Guard.Against.Null(query, nameof(query));
 
-        public async Task<GetCustomerByCustomerIdResponse> Handle(
-            GetCustomerByCustomerId query,
-            CancellationToken cancellationToken
-        )
-        {
-            Guard.Against.Null(query, nameof(query));
+        var customer = await _unitOfWork.CustomersRepository.FindOneAsync(
+            x => x.CustomerId == query.CustomerId,
+            cancellationToken: cancellationToken
+        );
 
-            var customer = await _customersReadDbContext.Customers
-                .AsQueryable()
-                .FirstOrDefaultAsync(x => x.CustomerId == query.CustomerId, cancellationToken: cancellationToken);
+        Guard.Against.NotFound(customer, new CustomerNotFoundException(query.CustomerId));
 
-            Guard.Against.NotFound(customer, new CustomerNotFoundException(query.CustomerId));
+        var customerDto = _mapper.Map<CustomerReadDto>(customer);
 
-            var customerDto = _mapper.Map<CustomerReadDto>(customer);
-
-            return new GetCustomerByCustomerIdResponse(customerDto);
-        }
+        return new GetCustomerByCustomerIdResult(customerDto);
     }
 }
+
+internal record GetCustomerByCustomerIdResult(CustomerReadDto Customer);

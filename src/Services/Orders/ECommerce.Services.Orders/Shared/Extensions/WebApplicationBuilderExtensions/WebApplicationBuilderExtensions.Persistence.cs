@@ -37,6 +37,7 @@ internal static partial class WebApplicationBuilderExtensions
 
     private static void AddMongoReadStorage(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddMongoDbContext<OrderReadDbContext>();
+        services
+            .AddMongoDbContext<OrderReadDbContext>();
     }
 }

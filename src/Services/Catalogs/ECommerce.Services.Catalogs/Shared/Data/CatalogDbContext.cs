@@ -22,9 +22,9 @@ public class CatalogDbContext : EfDbContextBase, ICatalogDbContext
         base.OnModelCreating(modelBuilder);
     }
 
-    public DbSet<Product> Products => Set<Product>();
-    public DbSet<ProductView> ProductsView => Set<ProductView>();
-    public DbSet<Category> Categories => Set<Category>();
-    public DbSet<Supplier> Suppliers => Set<Supplier>();
-    public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<Product> Products { get; set; } = default!;
+    public DbSet<ProductView> ProductsView { get; set; } = default!;
+    public DbSet<Category> Categories { get; set; } = default!;
+    public DbSet<Supplier> Suppliers { get; set; } = default!;
+    public DbSet<Brand> Brands { get; set; } = default!;
 }

@@ -13,6 +13,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using Tests.Shared.XunitCategories;
 
 namespace ECommerce.Services.Customers.UnitTests.Customers.Features.CreatingCustomer.v1;
 
@@ -20,6 +21,8 @@ namespace ECommerce.Services.Customers.UnitTests.Customers.Features.CreatingCust
 //https://jeremydmiller.com/2022/10/24/using-context-specification-to-better-express-complicated-tests/
 //{do_something}_{given_some_condition}
 
+// totally we don't need to unit test our handlers according jimmy bogard blogs and videos and we should extract our business to domain or seperated class so we don't need repository pattern
+// https://www.reddit.com/r/dotnet/comments/rxuqrb/testing_mediator_handlers/
 public class CreateCustomerTests : CustomerServiceUnitTestBase
 {
     private readonly ILogger<CreateCustomerHandler> _logger;
@@ -31,6 +34,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
         _identityApiClient = Substitute.For<IIdentityApiClient>();
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task can_create_customer_with_valid_inputs()
     {
@@ -63,6 +67,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
         entity!.Email.Value.Should().Be(command.Email);
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task must_throw_response_exception_with_code_404_when_create_customer_with_none_exists_user()
     {
@@ -84,6 +89,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
             .Where(e => e.StatusCode == HttpStatusCode.NotFound);
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task must_throw_argument_exception_with_null_command()
     {
@@ -100,6 +106,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
 
+    [CategoryTrait(TestCategory.Unit)]
     [Fact]
     public async Task must_throw_already_exist_exception_with_create_an_existing_customer()
     {

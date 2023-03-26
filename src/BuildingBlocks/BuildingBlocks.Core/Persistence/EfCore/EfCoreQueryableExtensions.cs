@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using BuildingBlocks.Abstractions.CQRS;
+using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Core.Linq;
 using BuildingBlocks.Core.Types;
@@ -13,7 +14,79 @@ namespace BuildingBlocks.Core.Persistence.EfCore;
 // https://github.com/dynamicexpresso/DynamicExpresso
 public static class EfCoreQueryableExtensions
 {
-    public static async Task<ListResultModel<T>> ApplyPagingAsync<T>(
+    public static async Task<IListResultModel<R>> ApplyPagingAsync<T, R, TSortKey>(
+        this IQueryable<T> collection,
+        IPageRequest pageRequest,
+        IConfigurationProvider configuration,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        IQueryable<T> query = collection;
+        if (predicate is not null)
+        {
+            query = query.Where(predicate);
+        }
+
+        if (pageRequest.Filters is not null)
+        {
+            query = query.ApplyFilter(pageRequest.Filters);
+        }
+
+        if (sortExpression is not null)
+        {
+            query = query.OrderByDescending(sortExpression);
+        }
+
+        return await query.ApplyPagingAsync<T, R>(
+            configuration,
+            pageRequest.Page,
+            pageRequest.PageSize,
+            cancellationToken
+        );
+    }
+
+    public static async Task<IListResultModel<T>> ApplyPagingAsync<T, TSortKey>(
+        this IQueryable<T> collection,
+        IPageRequest pageRequest,
+        Expression<Func<T, bool>>? predicate = null,
+        Expression<Func<T, TSortKey>>? sortExpression = null,
+        CancellationToken cancellationToken = default
+    )
+        where T : class
+    {
+        IQueryable<T> query = collection;
+        if (predicate is not null)
+        {
+            query = query.Where(predicate);
+        }
+
+        if (pageRequest.Filters is not null)
+        {
+            query = query.ApplyFilter(pageRequest.Filters);
+        }
+
+        if (sortExpression is not null)
+        {
+            query = query.OrderByDescending(sortExpression);
+        }
+
+        return await query.ApplyPagingAsync(pageRequest.Page, pageRequest.PageSize, cancellationToken);
+    }
+
+    public static async Task<IListResultModel<T>> ApplyPagingAsync<T>(
+        this IQueryable<T> collection,
+        IPageRequest pageRequest,
+        CancellationToken cancellationToken = default
+    )
+        where T : notnull
+    {
+        return await collection.ApplyPagingAsync(pageRequest.Page, pageRequest.PageSize, cancellationToken);
+    }
+
+    public static async Task<IListResultModel<T>> ApplyPagingAsync<T>(
         this IQueryable<T> collection,
         int page = 1,
         int pageSize = 10,
@@ -38,7 +111,7 @@ public static class EfCoreQueryableExtensions
         return ListResultModel<T>.Create(data, totalItems, page, pageSize);
     }
 
-    public static async Task<ListResultModel<TR>> ApplyPagingAsync<T, TR>(
+    public static async Task<IListResultModel<TR>> ApplyPagingAsync<T, TR>(
         this IQueryable<T> collection,
         IConfigurationProvider configuration,
         int page = 1,

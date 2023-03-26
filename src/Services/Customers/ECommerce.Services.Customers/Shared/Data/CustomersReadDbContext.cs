@@ -1,7 +1,6 @@
 using BuildingBlocks.Persistence.Mongo;
 using ECommerce.Services.Customers.Customers.Models.Reads;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
-using Humanizer;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
@@ -12,10 +11,10 @@ public class CustomersReadDbContext : MongoDbContext
     public CustomersReadDbContext(IOptions<MongoOptions> options)
         : base(options.Value)
     {
-        RestockSubscriptions = GetCollection<RestockSubscriptionReadModel>(nameof(RestockSubscriptions).Underscore());
-        Customers = GetCollection<CustomerReadModel>(nameof(Customers).Underscore());
+        RestockSubscriptions = GetCollection<RestockSubscription>();
+        Customers = GetCollection<Customer>();
     }
 
-    public IMongoCollection<RestockSubscriptionReadModel> RestockSubscriptions { get; }
-    public IMongoCollection<CustomerReadModel> Customers { get; }
+    public IMongoCollection<RestockSubscription> RestockSubscriptions { get; }
+    public IMongoCollection<Customer> Customers { get; }
 }

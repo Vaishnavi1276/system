@@ -2,9 +2,12 @@ using AutoMapper;
 using BuildingBlocks.Core.Domain.ValueObjects;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
+using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Read.Mongo;
+using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.Read.Mongo;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1;
 using ECommerce.Services.Customers.Customers.Models;
 using ECommerce.Services.Customers.Customers.Models.Reads;
+using Customer = ECommerce.Services.Customers.Customers.Models.Reads.Customer;
 
 namespace ECommerce.Services.Customers.Customers;
 
@@ -12,7 +15,7 @@ public class CustomersMapping : Profile
 {
     public CustomersMapping()
     {
-        CreateMap<CustomerReadModel, CustomerReadDto>()
+        CreateMap<Customer, CustomerReadDto>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId))
             .ForMember(x => x.Name, opt => opt.MapFrom(x => x.FullName))
@@ -25,7 +28,7 @@ public class CustomersMapping : Profile
             .ForMember(x => x.BirthDate, opt => opt.MapFrom(x => x.BirthDate))
             .ForMember(x => x.PhoneNumber, opt => opt.MapFrom(x => x.PhoneNumber));
 
-        CreateMap<Customer, CreateMongoCustomerReadModels>()
+        CreateMap<Models.Customer, CreateCustomerRead>()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.Id.Value))
             .ForMember(x => x.Created, opt => opt.MapFrom(x => x.Created))
@@ -48,11 +51,11 @@ public class CustomersMapping : Profile
             .ForMember(x => x.InternalCommandId, opt => opt.Ignore())
             .ForMember(x => x.OccurredOn, opt => opt.MapFrom(x => x.Created));
 
-        CreateMap<CreateMongoCustomerReadModels, CustomerReadModel>()
+        CreateMap<CreateCustomerRead, Customer>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId));
 
-        CreateMap<Customer, UpdateMongoCustomerReadsModel>()
+        CreateMap<Models.Customer, UpdateCustomerRead>()
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.Id.Value))
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.Country, opt => opt.MapFrom(x => x.Address == Address.Empty ? "" : x.Address!.City))
@@ -74,7 +77,7 @@ public class CustomersMapping : Profile
             .ForMember(x => x.InternalCommandId, opt => opt.Ignore())
             .ForMember(x => x.OccurredOn, opt => opt.MapFrom(x => x.Created));
 
-        CreateMap<UpdateMongoCustomerReadsModel, CustomerReadModel>()
+        CreateMap<UpdateCustomerRead, Customer>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId))
             .ForMember(x => x.Created, opt => opt.MapFrom(x => x.OccurredOn));

@@ -72,9 +72,9 @@ public class CreateRestockSubscriptionTests : CustomerServiceUnitTestBase
 
         //Act
         Func<Task> act = async () =>
-                         {
-                             await handler.Handle(null!, CancellationToken.None);
-                         };
+        {
+            await handler.Handle(null!, CancellationToken.None);
+        };
 
         // Assert
         await act.Should().ThrowAsync<ArgumentNullException>();

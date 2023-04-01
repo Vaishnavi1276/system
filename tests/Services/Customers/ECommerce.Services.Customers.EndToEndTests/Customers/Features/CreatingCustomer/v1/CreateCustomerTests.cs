@@ -67,11 +67,12 @@ public class CreateCustomerTests : CustomerServiceEndToEndTestBase
         response
             .Should()
             .HasResponse<CreateCustomerResponse>(
-                expectedObject: new {IdentityUserId = fakeIdentityUser.Id},
+                expectedObject: new { IdentityUserId = fakeIdentityUser.Id },
                 responseAction: customerResponse =>
-                                {
-                                    customerResponse!.CustomerId.Should().BeGreaterThan(0);
-                                });
+                {
+                    customerResponse!.CustomerId.Should().BeGreaterThan(0);
+                }
+            );
     }
 
     [Fact]
@@ -96,7 +97,8 @@ public class CreateCustomerTests : CustomerServiceEndToEndTestBase
                     Detail = $"Customer with email '{fakeCustomer.Email.Value}' already exists.",
                     Title = nameof(CustomerAlreadyExistsException),
                     Type = "https://somedomain/application-error",
-                })
+                }
+            )
             .And.Be409Conflict();
     }
 
@@ -121,7 +123,8 @@ public class CreateCustomerTests : CustomerServiceEndToEndTestBase
                     Detail = "Email address is invalid.",
                     Title = nameof(ValidationException),
                     Type = "https://somedomain/input-validation-rules-error"
-                })
+                }
+            )
             .And.Be400BadRequest();
     }
 }

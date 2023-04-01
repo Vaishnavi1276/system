@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using BuildingBlocks.Core.Domain.Exceptions;
 using BuildingBlocks.Core.Exception.Types;
 using BuildingBlocks.Security;
@@ -20,8 +21,11 @@ public static partial class WebApplicationBuilderExtensions
             };
 
             // Control when an exception is included
-            x.IncludeExceptionDetails = (ctx, _) =>
+            x.IncludeExceptionDetails = (ctx, exception) =>
             {
+                // https://github.com/benaadams/Ben.Demystifier
+                exception.Demystify();
+
                 // Fetch services from HttpContext.RequestServices
                 var env = ctx.RequestServices.GetRequiredService<IHostEnvironment>();
                 return env.IsDevelopment() || env.IsStaging();

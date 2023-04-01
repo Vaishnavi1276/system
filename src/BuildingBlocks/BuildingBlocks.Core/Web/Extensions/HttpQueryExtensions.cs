@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 
-namespace BuildingBlocks.Core.Web.Extenions;
+namespace BuildingBlocks.Core.Web.Extensions;
 
 // ref: https://khalidabuhakmeh.com/adding-experimental-http-methods-to-aspnet-core
 public static class HttpQueryExtensions

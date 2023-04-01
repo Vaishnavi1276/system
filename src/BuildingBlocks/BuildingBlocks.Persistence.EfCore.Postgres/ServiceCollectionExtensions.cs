@@ -6,7 +6,7 @@ using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.EfCore;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Persistence.EfCore.Interceptors;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Core.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;

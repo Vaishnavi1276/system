@@ -1,6 +1,6 @@
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using Hellang.Middleware.ProblemDetails;
 using Swashbuckle.AspNetCore.Annotations;
 

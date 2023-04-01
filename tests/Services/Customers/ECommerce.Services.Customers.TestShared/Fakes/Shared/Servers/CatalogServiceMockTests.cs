@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs.Dtos;
 using FluentAssertions;

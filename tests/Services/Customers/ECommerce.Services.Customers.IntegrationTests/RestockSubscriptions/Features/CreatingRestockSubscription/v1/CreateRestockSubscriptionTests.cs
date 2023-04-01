@@ -21,7 +21,7 @@ public class CreateRestockSubscriptionTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_create_new_customer_restock_subscription_in_postgres_db()
+    public async Task can_create_new_customer_restock_subscription_in_postgres_db()
     {
         // Arrange
         var fakeProduct = CustomersServiceMockServersFixture.CatalogsServiceMock.SetupGetProductById().Response.Product;

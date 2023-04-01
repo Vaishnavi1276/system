@@ -20,7 +20,7 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    internal async Task should_get_existing_customers_list_from_db()
+    internal async Task can_get_existing_customers_list_from_db()
     {
         // Arrange
         var fakeCustomers = new FakeCustomerReadModel().Generate(3);
@@ -41,7 +41,7 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    internal async Task should_get_existing_customers_list_with_correct_page_size_and_page()
+    internal async Task can_get_existing_customers_list_with_correct_page_size_and_page()
     {
         // Arrange
         var fakeCustomers = new FakeCustomerReadModel().Generate(3);

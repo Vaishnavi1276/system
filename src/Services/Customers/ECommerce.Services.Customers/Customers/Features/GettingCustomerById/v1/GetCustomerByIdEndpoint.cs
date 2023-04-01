@@ -18,7 +18,7 @@ internal class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
     {
         return builder
             .MapGet("/{id:guid}", HandleAsync)
-            // .RequireAuthorization()
+            .RequireAuthorization()
             .Produces<GetCustomerByIdResult>(StatusCodes.Status200OK)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
             .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
@@ -43,16 +43,10 @@ internal class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
     {
         Guard.Against.Null(id, nameof(id));
 
-        // https://github.com/serilog/serilog/wiki/Enrichment
-        // https://dotnetdocs.ir/Post/34/categorizing-logs-with-serilog-in-aspnet-core
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetCustomerByIdEndpointEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("InternalCommandId", id))
-        {
-            var result = await queryProcessor.SendAsync(new GetCustomerById(id), cancellationToken);
-            var response = new GetCustomerByIdResponse(result.Customer);
+        var result = await queryProcessor.SendAsync(new GetCustomerById(id), cancellationToken);
+        var response = new GetCustomerByIdResponse(result.Customer);
 
-            return Results.Ok(response);
-        }
+        return Results.Ok(response);
     }
 }
 

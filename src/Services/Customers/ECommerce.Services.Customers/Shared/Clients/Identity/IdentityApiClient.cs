@@ -1,10 +1,13 @@
 using System.Net.Http.Json;
 using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Exception;
-using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
 using Microsoft.Extensions.Options;
+using Polly;
+using Polly.Timeout;
+using Polly.Wrap;
 
 namespace ECommerce.Services.Customers.Shared.Clients.Identity;
 
@@ -12,11 +15,38 @@ public class IdentityApiClient : IIdentityApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly IdentityApiClientOptions _options;
+    private readonly AsyncPolicyWrap<HttpResponseMessage> _combinedPolicy;
 
-    public IdentityApiClient(HttpClient httpClient, IOptions<IdentityApiClientOptions> options)
+    public IdentityApiClient(
+        HttpClient httpClient,
+        IOptions<IdentityApiClientOptions> options,
+        IOptions<PolicyOptions> policyOptions
+    )
     {
         _httpClient = Guard.Against.Null(httpClient, nameof(httpClient));
         _options = options.Value;
+
+        var retryPolicy = Policy
+            .Handle<HttpRequestException>()
+            .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+            .RetryAsync(policyOptions.Value.RetryCount);
+
+        var timeoutPolicy = Policy.TimeoutAsync(policyOptions.Value.TimeOutDuration, TimeoutStrategy.Pessimistic);
+
+        // at any given time there will 3 parallel requests execution for specific service call and another 6 requests for other services can be in the queue. So that if the response from customer service is delayed or blocked then we don’t use too many resources
+        var bulkheadPolicy = Policy.BulkheadAsync<HttpResponseMessage>(3, 6);
+
+        var circuitBreakerPolicy = Policy
+            .Handle<HttpRequestException>()
+            .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
+            .CircuitBreakerAsync(
+                policyOptions.Value.RetryCount + 1,
+                TimeSpan.FromSeconds(policyOptions.Value.BreakDuration)
+            );
+
+        var combinedPolicy = Policy.WrapAsync(retryPolicy, circuitBreakerPolicy, bulkheadPolicy);
+
+        _combinedPolicy = combinedPolicy.WrapAsync(timeoutPolicy);
     }
 
     public async Task<GetUserByEmailResponse?> GetUserByEmailAsync(
@@ -27,9 +57,16 @@ public class IdentityApiClient : IIdentityApiClient
         Guard.Against.NullOrEmpty(email);
         Guard.Against.InvalidEmail(email);
 
-        // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
-        // https: //github.com/App-vNext/Polly#step-1--specify-the--exceptionsfaults-you-want-the-policy-to-handle
-        var httpResponse = await _httpClient.GetAsync($"/{_options.UsersEndpoint}/by-email/{email}", cancellationToken);
+        var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
+        {
+            // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
+            // https: //github.com/App-vNext/Polly#step-1--specify-the--exceptionsfaults-you-want-the-policy-to-handle
+            var httpResponse = await _httpClient.GetAsync(
+                $"/{_options.UsersEndpoint}/by-email/{email}",
+                cancellationToken
+            );
+            return httpResponse;
+        });
 
         // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
         // throw HttpResponseException instead of HttpRequestException (because we want detail response exception) with corresponding status code
@@ -47,13 +84,17 @@ public class IdentityApiClient : IIdentityApiClient
     {
         Guard.Against.Null(createUserRequest);
 
-        // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
-        // https: //github.com/App-vNext/Polly#step-1--specify-the--exceptionsfaults-you-want-the-policy-to-handle
-        var httpResponse = await _httpClient.PostAsJsonAsync(
-            _options.UsersEndpoint,
-            createUserRequest,
-            cancellationToken
-        );
+        var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
+        {
+            // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
+            // https: //github.com/App-vNext/Polly#step-1--specify-the--exceptionsfaults-you-want-the-policy-to-handle
+            var httpResponse = await _httpClient.PostAsJsonAsync(
+                _options.UsersEndpoint,
+                createUserRequest,
+                cancellationToken
+            );
+            return httpResponse;
+        });
 
         // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
         // throw HttpResponseException instead of HttpRequestException (because we want detail response exception) with corresponding status code

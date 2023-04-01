@@ -1,7 +1,7 @@
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Web.Module;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Identity.Identity.Data;
 using ECommerce.Services.Identity.Identity.Features.GettingClaims.v1;
@@ -42,7 +42,9 @@ internal class IdentityConfigs : IModuleConfiguration
 
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var identityVersionGroup = endpoints.MapApiGroup(Tag).WithTags(Tag);
+        // https://github.com/dotnet/aspnet-api-versioning/commit/b789e7e980e83a7d2f82ce3b75235dee5e0724b4
+        // changed from MapApiGroup to NewVersionedApi in v7.0.0
+        var identityVersionGroup = endpoints.NewVersionedApi(Tag).WithTags(Tag);
 
         // create a new sub group for each version
         var identityGroupV1 = identityVersionGroup.MapGroup(IdentityPrefixUri).HasApiVersion(1.0);

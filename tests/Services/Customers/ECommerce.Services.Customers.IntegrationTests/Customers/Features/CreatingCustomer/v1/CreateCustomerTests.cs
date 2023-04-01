@@ -25,7 +25,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_create_new_customer_in_postgres_db()
+    public async Task can_create_new_customer_with_valid_input_in_postgres_db()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock
@@ -52,7 +52,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_throw_exception_when_identity_user_with_customer_email_not_exists()
+    public async Task must_throw_exception_when_identity_user_with_customer_email_not_exists()
     {
         // Arrange
         var command = new CreateCustomer("test@example.com");
@@ -69,7 +69,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_throw_exception_when_customer_with_email_already_exists()
+    public async Task must_throw_exception_when_customer_with_email_already_exists()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock
@@ -89,7 +89,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_save_mongo_customer_read_model_in_internal_persistence_message()
+    public async Task can_save_mongo_customer_read_model_in_internal_persistence_message()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock
@@ -106,7 +106,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_create_new_mongo_customer_read_model_in_the_mongodb()
+    public async Task can_create_new_mongo_customer_read_model_in_the_mongodb()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock
@@ -133,7 +133,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_publish_customer_created_integration_event_to_the_broker()
+    public async Task can_publish_customer_created_integration_event_to_the_broker()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock
@@ -150,7 +150,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    public async Task should_save_customer_created_integration_event_in_the_outbox()
+    public async Task can_save_customer_created_integration_event_in_the_outbox()
     {
         // Arrange
         var fakeIdentityUser = CustomersServiceMockServersFixture.IdentityServiceMock

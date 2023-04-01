@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using ECommerce.Services.Customers.Shared.Clients.Identity;
 using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Events;

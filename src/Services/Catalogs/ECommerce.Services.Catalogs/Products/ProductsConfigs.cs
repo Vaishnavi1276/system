@@ -32,7 +32,9 @@ internal class ProductsConfigs : IModuleConfiguration
 
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var productsVersionGroup = endpoints.MapApiGroup(Tag).WithTags(Tag);
+        // https://github.com/dotnet/aspnet-api-versioning/commit/b789e7e980e83a7d2f82ce3b75235dee5e0724b4
+        // changed from MapApiGroup to NewVersionedApi in v7.0.0
+        var productsVersionGroup = endpoints.NewVersionedApi(Tag).WithTags(Tag);
 
         // create a new sub group for each version
         var productsGroupV1 = productsVersionGroup.MapGroup(ProductsPrefixUri).HasApiVersion(1.0);

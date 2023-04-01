@@ -4,7 +4,7 @@ using BuildingBlocks.Abstractions.Caching;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Reflection;
 using BuildingBlocks.Core.Utils;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using EasyCaching.Redis;
 using Microsoft.AspNetCore.Builder;
 

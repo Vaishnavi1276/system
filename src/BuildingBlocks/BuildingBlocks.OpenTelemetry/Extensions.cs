@@ -1,5 +1,5 @@
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using OpenTelemetry;

@@ -31,7 +31,7 @@ public class CustomersMappingTests : IClassFixture<MappingFixture>
 
     [Fact]
     [CategoryTrait(TestCategory.Unit)]
-    public void can_map_customerreadmodel_to_customerreaddto()
+    public void can_map_customer_read_model_to_customer_read_dto()
     {
         var customerReadModel = AutoFaker.Generate<Customer>();
         var res = _mapper.Map<CustomerReadDto>(customerReadModel);
@@ -41,7 +41,7 @@ public class CustomersMappingTests : IClassFixture<MappingFixture>
 
     [Fact]
     [CategoryTrait(TestCategory.Unit)]
-    public void can_map_customer_to_createmongocustomerreadmodels()
+    public void can_map_customer_to_create_mongo_customer_read_models()
     {
         var customer = new FakeCustomer().Generate();
         var res = _mapper.Map<CreateCustomerRead>(customer);
@@ -51,7 +51,7 @@ public class CustomersMappingTests : IClassFixture<MappingFixture>
 
     [Fact]
     [CategoryTrait(TestCategory.Unit)]
-    public void can_map_createmongocustomerreadmodels_to_customerreadmodel()
+    public void can_map_create_mongo_customer_read_models_to_customer_read_model()
     {
         var createReadCustomer = AutoFaker.Generate<CreateCustomerRead>();
         var res = _mapper.Map<Customer>(createReadCustomer);
@@ -61,7 +61,7 @@ public class CustomersMappingTests : IClassFixture<MappingFixture>
 
     [Fact]
     [CategoryTrait(TestCategory.Unit)]
-    public void can_map_customer_to_updatemongocustomerreadmodel()
+    public void can_map_customer_to_update_mongo_customer_read_model()
     {
         var customer = new FakeCustomer().Generate();
         var res = _mapper.Map<UpdateCustomerRead>(customer);
@@ -71,7 +71,7 @@ public class CustomersMappingTests : IClassFixture<MappingFixture>
 
     [Fact]
     [CategoryTrait(TestCategory.Unit)]
-    public void can_map_updatemongocustomerreadsmodel_to_customerreadmodel()
+    public void can_map_update_mongo_customer_reads_model_to_customer_read_model()
     {
         var updateMongoCustomerReadsModel = AutoFaker.Generate<UpdateCustomerRead>();
         var res = _mapper.Map<Customer>(updateMongoCustomerReadsModel);

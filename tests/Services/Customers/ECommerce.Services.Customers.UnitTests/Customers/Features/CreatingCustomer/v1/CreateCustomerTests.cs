@@ -69,7 +69,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
 
     [CategoryTrait(TestCategory.Unit)]
     [Fact]
-    public async Task must_throw_response_exception_with_code_404_when_create_customer_with_none_exists_user()
+    public async Task must_throw_not_found_exception_with_none_exists_user()
     {
         // Arrange
         var command = new CreateCustomer("test@test.com");
@@ -108,7 +108,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
 
     [CategoryTrait(TestCategory.Unit)]
     [Fact]
-    public async Task must_throw_already_exist_exception_with_create_an_existing_customer()
+    public async Task must_throw_already_exist_exception_with_an_existing_customer()
     {
         // Arrange
         var existCustomer = new FakeCustomer().Generate();

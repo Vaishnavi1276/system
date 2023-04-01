@@ -2,7 +2,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Options;
 
-namespace BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+namespace BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 
 public static partial class ServiceCollectionExtensions
 {

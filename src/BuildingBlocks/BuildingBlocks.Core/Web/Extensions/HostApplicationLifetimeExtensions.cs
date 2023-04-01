@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 
-namespace BuildingBlocks.Core.Web.Extenions;
+namespace BuildingBlocks.Core.Web.Extensions;
 
 public static class HostApplicationLifetimeExtensions
 {

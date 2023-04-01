@@ -76,9 +76,11 @@ public static class MinimalApiExtensions
 
         var endpoints = scope.ServiceProvider.GetServices<IMinimalEndpoint>().ToList();
 
+        // https://github.com/dotnet/aspnet-api-versioning/commit/b789e7e980e83a7d2f82ce3b75235dee5e0724b4
+        // changed from MapApiGroup to NewVersionedApi in v7.0.0
         var versionGroups = endpoints
             .GroupBy(x => x.GroupName)
-            .ToDictionary(x => x.Key, c => builder.MapApiGroup(c.Key).WithTags(c.Key));
+            .ToDictionary(x => x.Key, c => builder.NewVersionedApi(c.Key).WithTags(c.Key)); //
 
         var versionSubGroups = endpoints
             .GroupBy(

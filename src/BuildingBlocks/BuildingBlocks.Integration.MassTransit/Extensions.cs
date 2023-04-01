@@ -5,7 +5,7 @@ using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Messaging;
 using BuildingBlocks.Core.Reflection;
 using BuildingBlocks.Core.Utils;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Validation;
 using MassTransit;
 using Microsoft.AspNetCore.Builder;

@@ -4,7 +4,7 @@ using System.Text;
 using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Exception.Types;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Security.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -124,16 +124,15 @@ public static class Extensions
     public static IServiceCollection AddCustomAuthorization(
         this IServiceCollection services,
         IList<ClaimPolicy>? claimPolicies = null,
-        IList<RolePolicy>? rolePolicies = null
+        IList<RolePolicy>? rolePolicies = null,
+        string scheme = JwtBearerDefaults.AuthenticationScheme
     )
     {
         services.AddAuthorization(authorizationOptions =>
         {
             // https://docs.microsoft.com/en-us/aspnet/core/security/authorization/limitingidentitybyscheme
             // https://andrewlock.net/setting-global-authorization-policies-using-the-defaultpolicy-and-the-fallbackpolicy-in-aspnet-core-3/
-            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(
-                JwtBearerDefaults.AuthenticationScheme
-            );
+            var defaultAuthorizationPolicyBuilder = new AuthorizationPolicyBuilder(scheme);
             defaultAuthorizationPolicyBuilder = defaultAuthorizationPolicyBuilder.RequireAuthenticatedUser();
             authorizationOptions.DefaultPolicy = defaultAuthorizationPolicyBuilder.Build();
 
@@ -146,7 +145,7 @@ public static class Extensions
                         policy.Name,
                         x =>
                         {
-                            x.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                            x.AuthenticationSchemes.Add(scheme);
                             foreach (var policyClaim in policy.Claims)
                             {
                                 x.RequireClaim(policyClaim.Type, policyClaim.Value);
@@ -165,7 +164,7 @@ public static class Extensions
                         rolePolicy.Name,
                         x =>
                         {
-                            x.AuthenticationSchemes.Add(JwtBearerDefaults.AuthenticationScheme);
+                            x.AuthenticationSchemes.Add(scheme);
                             x.RequireRole(rolePolicy.Roles);
                         }
                     );

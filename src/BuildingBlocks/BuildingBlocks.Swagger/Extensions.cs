@@ -1,5 +1,5 @@
 using System.Reflection;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;

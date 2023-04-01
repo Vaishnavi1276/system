@@ -42,6 +42,8 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ECommerce.Services.Customers.IntegrationTests" />
+    <InternalsVisibleTo Include="ECommerce.Services.Customers.EndToEndTests" />
+    <InternalsVisibleTo Include="ECommerce.Services.Customers.TestShared" />
     <InternalsVisibleTo Include="ECommerce.Services.Customers.UnitTests" />
   </ItemGroup>
 

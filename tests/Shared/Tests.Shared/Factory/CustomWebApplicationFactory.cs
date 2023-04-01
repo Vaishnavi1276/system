@@ -1,5 +1,7 @@
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extenions;
+using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Security.Extensions;
+using BuildingBlocks.Security.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -98,37 +100,50 @@ public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TE
             services.AddScoped<TextReader>(
                 sp => new StringReader(sp.GetRequiredService<TextWriter>().ToString() ?? "")
             );
-
-            // services.RemoveAll(typeof(IHostedService));
-
-            // TODO: Web could use this in E2E test for running another service during our test
-            // https://milestone.topics.it/2021/11/10/http-client-factory-in-integration-testing.html
-            // services.Replace(new ServiceDescriptor(typeof(IHttpClientFactory),
-            //     new DelegateHttpClientFactory(ClientProvider)));
-
-            //// https://blog.joaograssi.com/posts/2021/asp-net-core-testing-permission-protected-api-endpoints/
-            //// This helper just supports jwt Scheme, and for Identity server Scheme will crash so we should disable AddIdentityServer()
-            // services.AddScoped(_ => CreateAnonymouslyUserMock());
-            // services.ReplaceSingleton(CreateCustomTestHttpContextAccessorMock);
-            // services.AddTestAuthentication();
-
-            // Or
-            // add authentication using a fake jwt bearer - we can use SetAdminUser method to set authenticate user to existing HttContextAccessor
-            // https://github.com/webmotions/fake-authentication-jwtbearer
-            // https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
-            services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = FakeJwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme = FakeJwtBearerDefaults.AuthenticationScheme;
-                })
-                .AddFakeJwtBearer();
         });
 
         builder.ConfigureWebHost(wb =>
         {
             wb.ConfigureTestServices(services =>
             {
+                // services.RemoveAll(typeof(IHostedService));
+
+                // TODO: Web could use this in E2E test for running another service during our test
+                // https://milestone.topics.it/2021/11/10/http-client-factory-in-integration-testing.html
+                // services.Replace(new ServiceDescriptor(typeof(IHttpClientFactory),
+                //     new DelegateHttpClientFactory(ClientProvider)));
+
+                //// https://blog.joaograssi.com/posts/2021/asp-net-core-testing-permission-protected-api-endpoints/
+                //// This helper just supports jwt Scheme, and for Identity server Scheme will crash so we should disable AddIdentityServer()
+                // services.AddScoped(_ => CreateAnonymouslyUserMock());
+                // services.ReplaceSingleton(CreateCustomTestHttpContextAccessorMock);
+                // services.AddTestAuthentication();
+
+                // Or
+                // add authentication using a fake jwt bearer - we can use SetAdminUser method to set authenticate user to existing HttContextAccessor
+                // https://github.com/webmotions/fake-authentication-jwtbearer
+                // https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
+                services
+                    .AddAuthentication(options =>
+                    {
+                        // choosing `FakeBearer` scheme (instead of exiting default scheme of application) as default in runtime for authentication and authorization middleware
+                        options.DefaultAuthenticateScheme = FakeJwtBearerDefaults.AuthenticationScheme;
+                        options.DefaultChallengeScheme = FakeJwtBearerDefaults.AuthenticationScheme;
+                    })
+                    .AddFakeJwtBearer(c =>
+                    {
+                        // for working fake token this should be set to jwt
+                        c.BearerValueType = FakeJwtBearerBearerValueType.Jwt;
+                    })
+                    .Services.AddCustomAuthorization(
+                        rolePolicies: new List<RolePolicy>
+                        {
+                            new(Constants.Users.Admin.Role, new List<string> { Constants.Users.Admin.Role }),
+                            new(Constants.Users.NormalUser.Role, new List<string> { Constants.Users.NormalUser.Role }),
+                        },
+                        scheme: FakeJwtBearerDefaults.AuthenticationScheme
+                    );
+
                 TestConfigureServices?.Invoke(services);
             });
 

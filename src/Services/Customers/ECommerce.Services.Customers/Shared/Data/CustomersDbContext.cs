@@ -21,6 +21,6 @@ public class CustomersDbContext : EfDbContextBase, ICustomersDbContext
         base.OnModelCreating(modelBuilder);
     }
 
-    public DbSet<Customer> Customers { get; set; } = default!;
-    public DbSet<RestockSubscription> RestockSubscriptions { get; set; } = default!;
+    public virtual DbSet<Customer> Customers { get; set; } = default!;
+    public virtual DbSet<RestockSubscription> RestockSubscriptions { get; set; } = default!;
 }

@@ -15,7 +15,7 @@ using BuildingBlocks.Core.Reflection;
 using BuildingBlocks.Core.Serialization;
 using BuildingBlocks.Core.Types;
 using BuildingBlocks.Core.Utils;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Microsoft.Extensions.Configuration;
 using Scrutor;
 

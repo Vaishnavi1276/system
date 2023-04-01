@@ -26,7 +26,9 @@ public class RestockSubscriptionsMapping : Profile
             .ForMember(x => x.Email, opt => opt.MapFrom(x => x.Email.Value))
             .ForMember(x => x.ProductName, opt => opt.MapFrom(x => x.ProductInformation.Name))
             .ForMember(x => x.ProductId, opt => opt.MapFrom(x => x.ProductInformation.Id.Value))
-            .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId.Value));
+            .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId.Value))
+            .ForMember(x => x.CustomerName, opt => opt.Ignore())
+            .ForMember(x => x.IsDeleted, opt => opt.Ignore());
 
         CreateMap<RestockSubscription, RestockSubscriptionDto>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.RestockSubscriptionId))

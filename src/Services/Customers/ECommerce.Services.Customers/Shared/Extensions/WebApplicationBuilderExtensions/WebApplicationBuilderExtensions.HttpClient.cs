@@ -1,5 +1,6 @@
 using Ardalis.GuardClauses;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
+using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Clients.Identity;
 using Microsoft.Extensions.Options;
@@ -12,16 +13,18 @@ public static partial class WebApplicationBuilderExtensions
     {
         builder.Services.AddValidatedOptions<IdentityApiClientOptions>();
         builder.Services.AddValidatedOptions<CatalogsApiClientOptions>();
+        builder.Services.AddValidatedOptions<PolicyOptions>();
 
         builder.Services.AddHttpClient<ICatalogApiClient, CatalogApiClient>(
             (client, sp) =>
             {
                 var catalogApiOptions = sp.GetRequiredService<IOptions<CatalogsApiClientOptions>>();
+                var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>();
                 Guard.Against.Null(catalogApiOptions.Value);
 
                 var baseAddress = catalogApiOptions.Value.BaseApiAddress;
                 client.BaseAddress = new Uri(baseAddress);
-                return new CatalogApiClient(client, catalogApiOptions);
+                return new CatalogApiClient(client, catalogApiOptions, policyOptions);
             }
         );
 
@@ -29,11 +32,12 @@ public static partial class WebApplicationBuilderExtensions
             (client, sp) =>
             {
                 var identityApiOptions = sp.GetRequiredService<IOptions<IdentityApiClientOptions>>();
+                var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>();
                 Guard.Against.Null(identityApiOptions.Value);
 
                 var baseAddress = identityApiOptions.Value.BaseApiAddress;
                 client.BaseAddress = new Uri(baseAddress);
-                return new IdentityApiClient(client, identityApiOptions);
+                return new IdentityApiClient(client, identityApiOptions, policyOptions);
             }
         );
 

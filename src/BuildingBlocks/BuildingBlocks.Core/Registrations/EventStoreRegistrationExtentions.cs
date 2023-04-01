@@ -5,7 +5,7 @@ using BuildingBlocks.Core.Persistence.EventStore;
 using BuildingBlocks.Core.Persistence.EventStore.InMemory;
 using BuildingBlocks.Core.Reflection;
 using BuildingBlocks.Core.Utils;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 
 namespace BuildingBlocks.Core.Registrations;
 

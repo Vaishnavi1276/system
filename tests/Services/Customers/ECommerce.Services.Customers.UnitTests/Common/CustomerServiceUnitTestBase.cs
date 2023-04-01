@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Clients.Identity;
 using ECommerce.Services.Customers.Shared.Data;
 using ECommerce.Services.Customers.TestShared.Fixtures;
 using Microsoft.Extensions.Options;
 using Tests.Shared.Helpers;
+using Tests.Shared.XunitCategories;
 
 namespace ECommerce.Services.Customers.UnitTests.Common;
 
@@ -14,6 +16,7 @@ public class QueryTestCollection : ICollectionFixture<CustomerServiceUnitTestBas
 //https://stackoverflow.com/questions/43082094/use-multiple-collectionfixture-on-my-test-class-in-xunit-2-x
 // note: each class could have only one collection
 [Collection(UnitTestCollection.Name)]
+[CategoryTrait(TestCategory.Unit)]
 public class CustomerServiceUnitTestBase : IAsyncDisposable
 {
     // We don't need to inject `CustomersServiceMockServersFixture` class fixture in the constructor because it initialized by `collection fixture` and its static properties are accessible in the codes
@@ -26,9 +29,18 @@ public class CustomerServiceUnitTestBase : IAsyncDisposable
         IOptions<IdentityApiClientOptions> identityClientOptions = Options.Create(
             ConfigurationHelper.BindOptions<IdentityApiClientOptions>()
         );
+        IOptions<PolicyOptions> policyOptions = Options.Create(
+            new PolicyOptions
+            {
+                RetryCount = 1,
+                TimeOutDuration = 3,
+                BreakDuration = 5
+            }
+        );
         IdentityApiClient = new IdentityApiClient(
             new HttpClient { BaseAddress = new Uri(CustomersServiceMockServersFixture.IdentityServiceMock.Url!) },
-            identityClientOptions
+            identityClientOptions,
+            policyOptions
         );
 
         //https://stackoverflow.com/questions/40876507/net-core-unit-testing-mock-ioptionst
@@ -37,7 +49,8 @@ public class CustomerServiceUnitTestBase : IAsyncDisposable
         );
         CatalogApiClient = new CatalogApiClient(
             new HttpClient { BaseAddress = new Uri(CustomersServiceMockServersFixture.CatalogsServiceMock.Url!) },
-            catalogClientOptions
+            catalogClientOptions,
+            policyOptions
         );
     }
 

@@ -37,19 +37,13 @@ internal class CreateCustomerEndpoint : ICommandMinimalEndpoint<CreateCustomerRe
 
         var command = new CreateCustomer(request.Email);
 
-        // https://github.com/serilog/serilog/wiki/Enrichment
-        // https://dotnetdocs.ir/Post/34/categorizing-logs-with-serilog-in-aspnet-core
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(CreateCustomerEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("CustomerId", command.Id))
-        {
-            var result = await commandProcessor.SendAsync(command, cancellationToken);
-            var response = new CreateCustomerResponse(result.CustomerId, result.IdentityUserId);
+        var result = await commandProcessor.SendAsync(command, cancellationToken);
+        var response = new CreateCustomerResponse(result.CustomerId, result.IdentityUserId);
 
-            return Results.Created($"{CustomersConfigs.CustomersPrefixUri}/{result.CustomerId}", response);
-        }
+        return Results.Created($"{CustomersConfigs.CustomersPrefixUri}/{result.CustomerId}", response);
     }
 }
 
-internal record CreateCustomerRequest(string Email);
+public record CreateCustomerRequest(string Email);
 
-internal record CreateCustomerResponse(long CustomerId, Guid IdentityUserId);
+public record CreateCustomerResponse(long CustomerId, Guid IdentityUserId);

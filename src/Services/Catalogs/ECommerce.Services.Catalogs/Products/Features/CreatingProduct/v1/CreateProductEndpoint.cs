@@ -37,8 +37,8 @@ public static class CreateProductEndpoint
             })
             .RequireAuthorization()
             .Produces<CreateProductResponse>(StatusCodes.Status201Created)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
+            .ProducesValidationProblem()
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
             .WithName("CreateProduct")
             .WithDisplayName("Create a new product.")
             .MapToApiVersion(1.0);

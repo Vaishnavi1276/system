@@ -1,8 +1,8 @@
 using Bogus;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web;
-using BuildingBlocks.Core.Web.Extenions;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Web;
 using BuildingBlocks.Web.Extensions;

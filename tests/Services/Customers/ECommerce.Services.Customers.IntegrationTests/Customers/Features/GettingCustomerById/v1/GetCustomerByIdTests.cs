@@ -21,7 +21,7 @@ public class GetCustomerByIdTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    internal async Task should_returns_existing_read_customer_model_from_mongodb_with_correct_properties()
+    internal async Task can_returns_valid_read_customer_model()
     {
         // Arrange
         Customer fakeCustomer = new FakeCustomerReadModel().Generate();
@@ -37,7 +37,7 @@ public class GetCustomerByIdTests : CustomerServiceIntegrationTestBase
 
     [Fact]
     [CategoryTrait(TestCategory.Integration)]
-    internal async Task should_throw_not_found_exception_when_item_does_not_exists_in_mongodb()
+    internal async Task must_throw_not_found_exception_when_item_does_not_exists_in_mongodb()
     {
         // Act
         var query = new GetCustomerById(Guid.NewGuid());

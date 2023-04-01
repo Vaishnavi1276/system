@@ -11,7 +11,7 @@ public static class MapperFactory
         var configurationProvider = new MapperConfiguration(cfg =>
         {
             cfg.AddProfile<CustomersMapping>();
-            //cfg.AddProfile<RestockSubscriptionsMapping>();
+            cfg.AddProfile<RestockSubscriptionsMapping>();
         });
 
         return configurationProvider.CreateMapper();

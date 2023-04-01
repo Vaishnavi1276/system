@@ -8,7 +8,7 @@ using BuildingBlocks.Core.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Events;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Core.Scheduler;
-using BuildingBlocks.Core.Web.Extenions.ServiceCollection;
+using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using MediatR;
 
 namespace BuildingBlocks.Core.Registrations;

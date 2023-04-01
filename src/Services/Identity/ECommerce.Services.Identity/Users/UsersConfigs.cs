@@ -24,7 +24,9 @@ internal class UsersConfigs : IModuleConfiguration
 
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)
     {
-        var usersVersionGroup = endpoints.MapApiGroup(Tag).WithTags(Tag);
+        // https://github.com/dotnet/aspnet-api-versioning/commit/b789e7e980e83a7d2f82ce3b75235dee5e0724b4
+        // changed from MapApiGroup to NewVersionedApi in v7.0.0
+        var usersVersionGroup = endpoints.NewVersionedApi(Tag).WithTags(Tag);
 
         // create a new sub group for each version
         var usersGroupV1 = usersVersionGroup.MapGroup(UsersPrefixUri).HasApiVersion(1.0);

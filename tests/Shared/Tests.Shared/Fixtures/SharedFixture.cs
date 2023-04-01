@@ -22,6 +22,7 @@ using NSubstitute;
 using Serilog;
 using Serilog.AspNetCore;
 using Tests.Shared.Auth;
+using Tests.Shared.Extensions;
 using Tests.Shared.Factory;
 using WireMock.Server;
 using Xunit.Sdk;
@@ -491,7 +492,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         //https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
         var claims = CreateAdminUserMock().Claims;
 
-        adminClient.SetFakeBearerToken(claims);
+        adminClient.SetFakeJwtBearerClaims(claims);
 
         return adminClient;
     }
@@ -503,7 +504,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         //https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
         var claims = CreateNormalUserMock().Claims;
 
-        userClient.SetFakeBearerToken(claims);
+        userClient.SetFakeJwtBearerClaims(claims);
 
         return userClient;
     }

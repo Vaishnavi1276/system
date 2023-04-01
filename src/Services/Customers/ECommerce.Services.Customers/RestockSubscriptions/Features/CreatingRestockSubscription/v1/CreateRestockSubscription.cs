@@ -16,6 +16,7 @@ using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Data;
 using ECommerce.Services.Customers.Shared.Extensions;
 using FluentValidation;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1;
 
@@ -65,14 +66,16 @@ internal class CreateRestockSubscriptionHandler
     {
         Guard.Against.Null(request, nameof(request));
 
-        var existsCustomer = await _customersDbContext.ExistsCustomerByIdAsync(CustomerId.Of(request.CustomerId));
+        var existsCustomer = await _customersDbContext.Customers.AnyAsync(
+            x => x.Id == CustomerId.Of(request.CustomerId),
+            cancellationToken: cancellationToken
+        );
         Guard.Against.NotExists(existsCustomer, new CustomerNotFoundException(request.CustomerId));
 
         var product = (await _catalogApiClient.GetProductByIdAsync(request.ProductId, cancellationToken))?.Product;
-        Guard.Against.NotFound(product, new ProductNotFoundException(request.ProductId));
 
         if (product!.AvailableStock > 0)
-            throw new ProductHaveStockException(product.Id, product.AvailableStock, product.Name);
+            throw new ProductHasStockException(product.Id, product.AvailableStock, product.Name);
 
         var alreadySubscribed = _customersDbContext.RestockSubscriptions.Any(
             x => x.Email.Value == request.Email && x.ProductInformation.Id == request.ProductId && x.Processed == false

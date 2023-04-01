@@ -1,10 +1,9 @@
 using System.Collections;
-using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Types.Extensions;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 
-namespace BuildingBlocks.Core.Web.Extenions;
+namespace BuildingBlocks.Core.Web.Extensions;
 
 // https://khalidabuhakmeh.com/read-and-convert-querycollection-values-in-aspnet
 public static class QueryCollectionExtensions

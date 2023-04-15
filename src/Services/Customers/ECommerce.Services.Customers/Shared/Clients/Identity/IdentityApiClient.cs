@@ -1,6 +1,5 @@
 using System.Net.Http.Json;
-using Ardalis.GuardClauses;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
@@ -23,7 +22,7 @@ public class IdentityApiClient : IIdentityApiClient
         IOptions<PolicyOptions> policyOptions
     )
     {
-        _httpClient = Guard.Against.Null(httpClient, nameof(httpClient));
+        _httpClient = httpClient.NotBeNull();
         _options = options.Value;
 
         var retryPolicy = Policy
@@ -54,8 +53,8 @@ public class IdentityApiClient : IIdentityApiClient
         CancellationToken cancellationToken = default
     )
     {
-        Guard.Against.NullOrEmpty(email);
-        Guard.Against.InvalidEmail(email);
+        email.NotBeNullOrWhiteSpace();
+        email.NotBeInvalidEmail();
 
         var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
         {
@@ -82,7 +81,7 @@ public class IdentityApiClient : IIdentityApiClient
         CancellationToken cancellationToken = default
     )
     {
-        Guard.Against.Null(createUserRequest);
+        createUserRequest.NotBeNull();
 
         var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
         {

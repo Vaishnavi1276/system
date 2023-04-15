@@ -2,9 +2,11 @@ using AutoMapper;
 using BuildingBlocks.Core.Domain.ValueObjects;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
+using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Events.Domain;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Read.Mongo;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.Read.Mongo;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1;
+using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1.Events.Domain;
 using ECommerce.Services.Customers.Customers.Models;
 using ECommerce.Services.Customers.Customers.Models.Reads;
 using Customer = ECommerce.Services.Customers.Customers.Models.Reads.Customer;
@@ -29,7 +31,6 @@ public class CustomersMapping : Profile
             .ForMember(x => x.PhoneNumber, opt => opt.MapFrom(x => x.PhoneNumber));
 
         CreateMap<Models.Customer, CreateCustomerRead>()
-            .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.Id.Value))
             .ForMember(x => x.Created, opt => opt.MapFrom(x => x.Created))
             .ForMember(x => x.Country, opt => opt.MapFrom(x => x.Address == Address.Empty ? "" : x.Address!.City))
@@ -52,7 +53,7 @@ public class CustomersMapping : Profile
             .ForMember(x => x.OccurredOn, opt => opt.MapFrom(x => x.Created));
 
         CreateMap<CreateCustomerRead, Customer>()
-            .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
+            .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId));
 
         CreateMap<Models.Customer, UpdateCustomerRead>()
@@ -81,5 +82,9 @@ public class CustomersMapping : Profile
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))
             .ForMember(x => x.CustomerId, opt => opt.MapFrom(x => x.CustomerId))
             .ForMember(x => x.Created, opt => opt.MapFrom(x => x.OccurredOn));
+
+        CreateMap<CustomerCreated, CreateCustomerRead>();
+
+        CreateMap<CustomerUpdated, UpdateCustomerRead>();
     }
 }

@@ -1,6 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
+using BuildingBlocks.Core.Extensions;
 
 namespace BuildingBlocks.Core.CQRS.Events;
 
@@ -18,7 +18,7 @@ public class DomainNotificationEventPublisher : IDomainNotificationEventPublishe
         CancellationToken cancellationToken = default
     )
     {
-        Guard.Against.Null(domainNotificationEvent, nameof(domainNotificationEvent));
+        domainNotificationEvent.NotBeNull();
 
         return _messagePersistenceService.AddNotificationAsync(domainNotificationEvent, cancellationToken);
     }
@@ -28,7 +28,7 @@ public class DomainNotificationEventPublisher : IDomainNotificationEventPublishe
         CancellationToken cancellationToken = default
     )
     {
-        Guard.Against.Null(domainNotificationEvents, nameof(domainNotificationEvents));
+        domainNotificationEvents.NotBeNull();
 
         foreach (var domainNotificationEvent in domainNotificationEvents)
         {

@@ -31,18 +31,18 @@ public interface IReadRepository<TEntity, in TId>
         CancellationToken cancellationToken = default
     );
 
-    Task<IListResultModel<TEntity>> GetByPageFilter<TSortKey>(
+    Task<IPageList<TEntity>> GetByPageFilter<TSortKey>(
         IPageRequest pageRequest,
+        Expression<Func<TEntity, TSortKey>> sortExpression,
         Expression<Func<TEntity, bool>>? predicate = null,
-        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
         CancellationToken cancellationToken = default
     );
 
-    Task<IListResultModel<TResult>> GetByPageFilter<TResult, TSortKey>(
+    Task<IPageList<TResult>> GetByPageFilter<TResult, TSortKey>(
         IPageRequest pageRequest,
         IConfigurationProvider configuration,
+        Expression<Func<TEntity, TSortKey>> sortExpression,
         Expression<Func<TEntity, bool>>? predicate = null,
-        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
         CancellationToken cancellationToken = default
     )
         where TResult : class;

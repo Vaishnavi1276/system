@@ -4,8 +4,10 @@ using AutoMapper.QueryableExtensions;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Domain;
 using BuildingBlocks.Abstractions.Persistence;
+using BuildingBlocks.Core.Extensions;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using Sieve.Services;
 
 namespace BuildingBlocks.Persistence.Mongo;
 
@@ -14,11 +16,13 @@ public class MongoRepositoryBase<TDbContext, TEntity, TId> : IRepository<TEntity
     where TDbContext : MongoDbContext
 {
     private readonly TDbContext _context;
+    private readonly ISieveProcessor _sieveProcessor;
     protected readonly IMongoCollection<TEntity> DbSet;
 
-    public MongoRepositoryBase(TDbContext context)
+    public MongoRepositoryBase(TDbContext context, ISieveProcessor sieveProcessor)
     {
         _context = context;
+        _sieveProcessor = sieveProcessor;
         DbSet = _context.GetCollection<TEntity>();
     }
 
@@ -85,21 +89,23 @@ public class MongoRepositoryBase<TDbContext, TEntity, TId> : IRepository<TEntity
         return query.ProjectTo<TResult>(configuration).ToAsyncEnumerable();
     }
 
-    public async Task<IListResultModel<TEntity>> GetByPageFilter<TSortKey>(
+    public async Task<IPageList<TEntity>> GetByPageFilter<TSortKey>(
         IPageRequest pageRequest,
+        Expression<Func<TEntity, TSortKey>> sortExpression,
         Expression<Func<TEntity, bool>>? predicate = null,
-        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
         CancellationToken cancellationToken = default
     )
     {
-        return await DbSet.AsQueryable().ApplyPagingAsync(pageRequest, predicate, sortExpression, cancellationToken);
+        return await DbSet
+            .AsQueryable()
+            .ApplyPagingAsync(pageRequest, _sieveProcessor, predicate, sortExpression, cancellationToken);
     }
 
-    public async Task<IListResultModel<TResult>> GetByPageFilter<TResult, TSortKey>(
+    public async Task<IPageList<TResult>> GetByPageFilter<TResult, TSortKey>(
         IPageRequest pageRequest,
         IConfigurationProvider configuration,
+        Expression<Func<TEntity, TSortKey>> sortExpression,
         Expression<Func<TEntity, bool>>? predicate = null,
-        Expression<Func<TEntity, TSortKey>>? sortExpression = null,
         CancellationToken cancellationToken = default
     )
         where TResult : class
@@ -108,6 +114,7 @@ public class MongoRepositoryBase<TDbContext, TEntity, TId> : IRepository<TEntity
             .AsQueryable()
             .ApplyPagingAsync<TEntity, TResult, TSortKey>(
                 pageRequest,
+                _sieveProcessor,
                 configuration,
                 predicate,
                 sortExpression,

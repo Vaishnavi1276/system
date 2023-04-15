@@ -1,15 +1,13 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Domain;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Catalogs.Brands;
 using ECommerce.Services.Catalogs.Brands.Exceptions.Application;
 using ECommerce.Services.Catalogs.Categories;
 using ECommerce.Services.Catalogs.Categories.Exceptions.Domain;
-using ECommerce.Services.Catalogs.Products.Dtos.v1;
-using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Requests;
 using ECommerce.Services.Catalogs.Products.Models;
 using ECommerce.Services.Catalogs.Products.ValueObjects;
 using ECommerce.Services.Catalogs.Shared.Contracts;
@@ -21,7 +19,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1;
 
-public record CreateProduct(
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/notes_about_csharp_records_and_nullable_reference_types/
+// https://buildplease.com/pages/vos-in-events/
+// https://codeopinion.com/leaking-value-objects-from-your-domain/
+// https://www.youtube.com/watch?v=CdanF8PWJng
+// we don't pass value-objects and domains to our commands and events, just primitive types
+internal record CreateProduct(
     string Name,
     decimal Price,
     int Stock,
@@ -38,48 +43,77 @@ public record CreateProduct(
     long BrandId,
     string? Description = null,
     IEnumerable<CreateProductImageRequest>? Images = null
-) : ITxCreateCommand<CreateProductResponse>
+) : ITxCreateCommand<CreateProductResult>
 {
-    public long Id { get; init; } = SnowFlakIdGenerator.NewId();
+    public long Id { get; } = SnowFlakIdGenerator.NewId();
+
+    public static CreateProduct Of(
+        string? name,
+        decimal price,
+        int stock,
+        int restockThreshold,
+        int maxStockThreshold,
+        ProductStatus status,
+        int width,
+        int height,
+        int depth,
+        string? size,
+        ProductColor color,
+        long categoryId,
+        long supplierId,
+        long brandId,
+        string? description = null,
+        IEnumerable<CreateProductImageRequest>? images = null
+    )
+    {
+        return new CreateProductValidator().HandleValidation(
+            new CreateProduct(
+                name!,
+                price,
+                stock,
+                restockThreshold,
+                maxStockThreshold,
+                status,
+                width,
+                height,
+                depth,
+                size!,
+                color,
+                categoryId,
+                supplierId,
+                brandId,
+                description,
+                images
+            )
+        );
+    }
 }
 
-public class CreateProductValidator : AbstractValidator<CreateProduct>
+internal class CreateProductValidator : AbstractValidator<CreateProduct>
 {
     public CreateProductValidator()
     {
-        CascadeMode = CascadeMode.Stop;
-
-        RuleFor(x => x.Id).NotEmpty().GreaterThan(0).WithMessage("InternalCommandId must be greater than 0");
-
+        RuleFor(x => x.Id).NotEmpty().GreaterThan(0).WithMessage("Id must be greater than 0");
         RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
-
         RuleFor(x => x.Price).NotEmpty().GreaterThan(0).WithMessage("Price must be greater than 0");
-
         RuleFor(x => x.Status).IsInEnum().WithMessage("Status is required.");
-
         RuleFor(x => x.Color).IsInEnum().WithMessage("Color is required.");
-
         RuleFor(x => x.Stock).NotEmpty().GreaterThan(0).WithMessage("Stock must be greater than 0");
-
         RuleFor(x => x.MaxStockThreshold)
             .NotEmpty()
             .GreaterThan(0)
             .WithMessage("MaxStockThreshold must be greater than 0");
-
         RuleFor(x => x.RestockThreshold)
             .NotEmpty()
             .GreaterThan(0)
             .WithMessage("RestockThreshold must be greater than 0");
-
         RuleFor(x => x.CategoryId).NotEmpty().GreaterThan(0).WithMessage("CategoryId must be greater than 0");
-
         RuleFor(x => x.SupplierId).NotEmpty().GreaterThan(0).WithMessage("SupplierId must be greater than 0");
-
         RuleFor(x => x.BrandId).NotEmpty().GreaterThan(0).WithMessage("BrandId must be greater than 0");
     }
 }
 
-public class CreateProductHandler : ICommandHandler<CreateProduct, CreateProductResponse>
+internal class CreateProductHandler : ICommandHandler<CreateProduct, CreateProductResult>
 {
     private readonly ILogger<CreateProductHandler> _logger;
     private readonly IMapper _mapper;
@@ -91,16 +125,35 @@ public class CreateProductHandler : ICommandHandler<CreateProduct, CreateProduct
         ILogger<CreateProductHandler> logger
     )
     {
-        _logger = Guard.Against.Null(logger, nameof(logger));
-        _mapper = Guard.Against.Null(mapper, nameof(mapper));
-        _catalogDbContext = Guard.Against.Null(catalogDbContext, nameof(catalogDbContext));
+        _catalogDbContext = catalogDbContext;
+        _mapper = mapper;
+        _logger = logger;
     }
 
-    public async Task<CreateProductResponse> Handle(CreateProduct command, CancellationToken cancellationToken)
+    public async Task<CreateProductResult> Handle(CreateProduct command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
-        var images = command.Images
+        var (
+            name,
+            price,
+            stock,
+            restockThreshold,
+            maxStockThreshold,
+            status,
+            width,
+            height,
+            depth,
+            size,
+            color,
+            categoryId,
+            supplierId,
+            brandId,
+            description,
+            imageItems
+        ) = command;
+
+        var images = imageItems
             ?.Select(
                 x =>
                     new ProductImage(
@@ -112,29 +165,38 @@ public class CreateProductHandler : ICommandHandler<CreateProduct, CreateProduct
             )
             .ToList();
 
-        var category = await _catalogDbContext.FindCategoryAsync(CategoryId.Of(command.CategoryId));
-        Guard.Against.NotFound(category, new CategoryDomainException(command.CategoryId));
+        var category = await _catalogDbContext.FindCategoryAsync(CategoryId.Of(categoryId));
+        if (category is null)
+        {
+            throw new CategoryDomainException(categoryId);
+        }
 
-        var brand = await _catalogDbContext.FindBrandAsync(BrandId.Of(command.BrandId));
-        Guard.Against.NotFound(brand, new BrandNotFoundException(command.BrandId));
+        var brand = await _catalogDbContext.FindBrandAsync(BrandId.Of(brandId));
+        if (brand is null)
+        {
+            throw new BrandNotFoundException(brandId);
+        }
 
-        var supplier = await _catalogDbContext.FindSupplierByIdAsync(SupplierId.Of(command.SupplierId));
-        Guard.Against.NotFound(supplier, new SupplierNotFoundException(command.SupplierId));
+        var supplier = await _catalogDbContext.FindSupplierByIdAsync(SupplierId.Of(supplierId));
+        if (supplier is null)
+        {
+            throw new SupplierNotFoundException(supplierId);
+        }
 
         // await _domainEventDispatcher.DispatchAsync(cancellationToken, new Events.Domain.CreatingProduct());
         var product = Product.Create(
             ProductId.Of(command.Id),
-            Name.Of(command.Name),
-            Stock.Of(command.Stock, command.RestockThreshold, command.MaxStockThreshold),
-            command.Status,
-            Dimensions.Of(command.Width, command.Height, command.Depth),
-            Size.Of(command.Size),
-            command.Color,
-            command.Description,
-            Price.Of(command.Price),
-            category!.Id,
-            supplier!.Id,
-            brand!.Id,
+            Name.Of(name),
+            Stock.Of(stock, restockThreshold, maxStockThreshold),
+            status,
+            Dimensions.Of(width, height, depth),
+            Size.Of(size),
+            color,
+            description,
+            Price.Of(price),
+            CategoryId.Of(categoryId),
+            SupplierId.Of(supplierId),
+            BrandId.Of(brandId),
             images
         );
 
@@ -148,10 +210,10 @@ public class CreateProductHandler : ICommandHandler<CreateProduct, CreateProduct
             .Include(x => x.Supplier)
             .SingleOrDefaultAsync(x => x.Id == product.Id, cancellationToken: cancellationToken);
 
-        var productDto = _mapper.Map<ProductDto>(created);
-
         _logger.LogInformation("Product a with ID: '{ProductId} created.'", command.Id);
 
-        return new CreateProductResponse(productDto);
+        return new CreateProductResult(command.Id);
     }
 }
+
+internal record CreateProductResult(long Id);

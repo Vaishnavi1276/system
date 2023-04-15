@@ -1,9 +1,10 @@
 using System.Collections.Immutable;
-using Ardalis.GuardClauses;
+using System.Diagnostics.CodeAnalysis;
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.Domain.EventSourcing;
 using BuildingBlocks.Abstractions.Persistence.EventStore;
 using BuildingBlocks.Core.Domain;
+using BuildingBlocks.Core.Extensions;
 
 namespace BuildingBlocks.Core.Persistence.EventStore;
 
@@ -24,7 +25,7 @@ public class AggregateStore : IAggregateStore
     )
         where TAggregate : class, IEventSourcedAggregate<TId>, new()
     {
-        Guard.Against.Null(aggregateId, nameof(aggregateId));
+        aggregateId.NotBeNull();
 
         var streamName = StreamName.For<TAggregate, TId>(aggregateId);
 
@@ -48,7 +49,7 @@ public class AggregateStore : IAggregateStore
     )
         where TAggregate : class, IEventSourcedAggregate<TId>, new()
     {
-        Guard.Against.Null(aggregate, nameof(aggregate));
+        aggregate.NotBeNull();
 
         var streamName = StreamName.For<TAggregate, TId>(aggregate.Id);
 
@@ -87,7 +88,7 @@ public class AggregateStore : IAggregateStore
     public Task<bool> Exists<TAggregate, TId>(TId aggregateId, CancellationToken cancellationToken = default)
         where TAggregate : class, IEventSourcedAggregate<TId>, new()
     {
-        Guard.Against.Null(aggregateId, nameof(aggregateId));
+        aggregateId.NotBeNull();
 
         var streamName = StreamName.For<TAggregate, TId>(aggregateId);
 

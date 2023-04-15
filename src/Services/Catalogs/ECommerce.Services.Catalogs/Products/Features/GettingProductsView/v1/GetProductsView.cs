@@ -1,7 +1,10 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Persistence;
+using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Validation.Extensions;
 using Dapper;
+using ECommerce.Services.Catalogs.Products.Dtos.v1;
 using ECommerce.Services.Catalogs.Products.Models;
 using FluentValidation;
 using MediatR;
@@ -9,51 +12,64 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Catalogs.Products.Features.GettingProductsView.v1;
 
-public record GetProductsView : IQuery<GetProductsViewResponse>
+internal record GetProductsView : PageQuery<GetProductsViewResult>
 {
-    public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 20;
-
-    internal class Validator : AbstractValidator<GetProductsView>
+    public static GetProductsView Of(PageRequest pageRequest)
     {
-        public Validator()
-        {
-            CascadeMode = CascadeMode.Stop;
+        var (pageNumber, pageSize, filters, sortOrder) = pageRequest;
 
-            RuleFor(x => x.Page)
-                .GreaterThanOrEqualTo(1)
-                .WithMessage("Page should at least greater than or equal to 1.");
-
-            RuleFor(x => x.PageSize)
-                .GreaterThanOrEqualTo(1)
-                .WithMessage("PageSize should at least greater than or equal to 1.");
-        }
-    }
-
-    internal class Handler : IRequestHandler<GetProductsView, GetProductsViewResponse>
-    {
-        private readonly IDbFacadeResolver _facadeResolver;
-        private readonly IMapper _mapper;
-
-        public Handler(IDbFacadeResolver facadeResolver, IMapper mapper)
-        {
-            _facadeResolver = facadeResolver;
-            _mapper = mapper;
-        }
-
-        public async Task<GetProductsViewResponse> Handle(GetProductsView request, CancellationToken cancellationToken)
-        {
-            await using var conn = _facadeResolver.Database.GetDbConnection();
-            await conn.OpenAsync(cancellationToken);
-            var results = await conn.QueryAsync<ProductView>(
-                @"SELECT product_id ""InternalCommandId"", product_name ""Name"", category_name CategoryName, supplier_name SupplierName, count(*) OVER() AS ItemCount
-                    FROM catalog.product_views LIMIT @PageSize OFFSET ((@Page - 1) * @PageSize)",
-                new { request.PageSize, request.Page }
-            );
-
-            var productViewDtos = _mapper.Map<IEnumerable<ProductViewDto>>(results);
-
-            return new GetProductsViewResponse(productViewDtos);
-        }
+        return new GetProductsViewValidator().HandleValidation(
+            new GetProductsView
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Filters = filters,
+                SortOrder = sortOrder
+            }
+        );
     }
 }
+
+internal class GetProductsViewValidator : AbstractValidator<GetProductsView>
+{
+    public GetProductsViewValidator()
+    {
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Page should at least greater than or equal to 1.");
+
+        RuleFor(x => x.PageSize)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("PageSize should at least greater than or equal to 1.");
+    }
+}
+
+internal class GetProductsViewHandler : IRequestHandler<GetProductsView, GetProductsViewResult>
+{
+    private readonly IDbFacadeResolver _facadeResolver;
+    private readonly IMapper _mapper;
+
+    public GetProductsViewHandler(IDbFacadeResolver facadeResolver, IMapper mapper)
+    {
+        _facadeResolver = facadeResolver;
+        _mapper = mapper;
+    }
+
+    public async Task<GetProductsViewResult> Handle(GetProductsView request, CancellationToken cancellationToken)
+    {
+        await using var conn = _facadeResolver.Database.GetDbConnection();
+        var (pageNumber, pageSize, filters, sortOrder) = request;
+        await conn.OpenAsync(cancellationToken);
+        var results = await conn.QueryAsync<ProductView>(
+            @"SELECT product_id ""InternalCommandId"", product_name ""Name"", category_name CategoryName, supplier_name SupplierName, count(*) OVER() AS ItemCount
+                    FROM catalog.product_views LIMIT @PageSize OFFSET ((@Page - 1) * @PageSize)",
+            new { pageSize, pageNumber }
+        );
+
+        var productViewDtos = _mapper.Map<IEnumerable<ProductViewDto>>(results);
+
+        return new GetProductsViewResult(productViewDtos);
+    }
+}
+
+internal record GetProductsViewResult(IEnumerable<ProductViewDto> Products);

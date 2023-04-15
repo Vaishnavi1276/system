@@ -1,69 +1,64 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Web.Minimal.Extensions;
+using Humanizer;
 
 namespace ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1;
 
-internal class UpdateCustomerEndpoint : ICommandMinimalEndpoint<UpdateCustomerRequest>
+internal class UpdateCustomerEndpoint : ICommandMinimalEndpoint<UpdateCustomerRequest, UpdateCustomerRequestParameters>
 {
     public string GroupName => CustomersConfigs.Tag;
     public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
     public double Version => 1.0;
 
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        UpdateCustomerRequest request,
-        ICommandProcessor commandProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
-    {
-        Guard.Against.Null(request, nameof(request));
-
-        var command = new UpdateCustomer(
-            request.Id,
-            request.FirstName,
-            request.LastName,
-            request.Email,
-            request.PhoneNumber,
-            request.BirthDate,
-            request.Nationality,
-            request.Address
-        );
-
-        // https://github.com/serilog/serilog/wiki/Enrichment
-        // https://dotnetdocs.ir/Post/34/categorizing-logs-with-serilog-in-aspnet-core
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(UpdateCustomerEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("CustomerId", command.Id))
-        {
-            await commandProcessor.SendAsync(command, cancellationToken);
-
-            return Results.NoContent();
-        }
-    }
-
     public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
     {
         return builder
             .MapPut("/", HandleAsync)
-            .AllowAnonymous()
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .WithMetadata(new SwaggerOperationAttribute("Update a Customer", "Updating a Customer"))
-            .WithName("UpdateCustomer")
-            .WithDisplayName("Update Customer.");
+            .RequireAuthorization()
+            .WithTags(CustomersConfigs.Tag)
+            .RequireAuthorization()
+            .WithName(nameof(UpdateCustomer))
+            .WithDisplayName(nameof(UpdateCustomer).Humanize())
+            .WithSummaryAndDescription(nameof(UpdateCustomer).Humanize(), nameof(UpdateCustomer).Humanize())
+            // .Produces("Customer updated successfully.", StatusCodes.Status204NoContent)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
+    }
+
+    public async Task<IResult> HandleAsync(UpdateCustomerRequestParameters requestParameters)
+    {
+        var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
+
+        var command = mapper.Map<UpdateCustomer>(request);
+
+        await commandProcessor.SendAsync(command, cancellationToken);
+
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.NoContent();
     }
 }
 
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record UpdateCustomerRequestParameters(
+    [FromBody] UpdateCustomerRequest Request,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<UpdateCustomerRequest>;
+
+// These parameters can be pass null from the user
 internal sealed record UpdateCustomerRequest(
     long Id,
-    string FirstName,
-    string LastName,
-    string Email,
-    string PhoneNumber,
+    string? FirstName,
+    string? LastName,
+    string? Email,
+    string? PhoneNumber,
     DateTime? BirthDate = null,
     string? Nationality = null,
     string? Address = null

@@ -1,9 +1,7 @@
 using System.Reflection;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Caching;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Reflection;
-using BuildingBlocks.Core.Utils;
 using BuildingBlocks.Core.Web.Extensions;
 using EasyCaching.Redis;
 using Microsoft.AspNetCore.Builder;
@@ -19,7 +17,7 @@ public static class Extensions
     {
         // https://www.twilio.com/blog/provide-default-configuration-to-dotnet-applications
         var cacheOptions = builder.Configuration.BindOptions<CacheOptions>();
-        Guard.Against.Null(cacheOptions);
+        cacheOptions.NotBeNull();
 
         AddCachingRequests(builder.Services, scanAssemblies);
 

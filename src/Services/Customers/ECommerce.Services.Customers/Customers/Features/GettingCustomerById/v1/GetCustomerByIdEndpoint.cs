@@ -1,14 +1,22 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomerById.v1;
 
-internal class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
+internal class GetCustomerByIdEndpointEndpoint
+    : IQueryMinimalEndpoint<
+        GetCustomerByIdRequestParameters,
+        Ok<GetCustomerByIdResponse>,
+        ValidationProblem,
+        NotFoundHttpProblemResult,
+        UnAuthorizedHttpProblemResult
+    >
 {
     public string GroupName => CustomersConfigs.Tag;
     public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
@@ -19,35 +27,43 @@ internal class GetCustomerByIdEndpointEndpoint : IQueryMinimalEndpoint<Guid>
         return builder
             .MapGet("/{id:guid}", HandleAsync)
             .RequireAuthorization()
-            .Produces<GetCustomerByIdResult>(StatusCodes.Status200OK)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
-            .WithMetadata(
-                new SwaggerOperationAttribute(
-                    "Getting a Customer By InternalCommandId",
-                    "Getting a Customer By InternalCommandId"
-                )
-            )
-            .WithName("GetCustomerById")
-            .WithDisplayName("Get Customer By InternalCommandId.");
+            .RequireAuthorization()
+            .WithName(nameof(GetCustomerById))
+            .WithDisplayName(nameof(GetCustomerById).Humanize())
+            .WithSummaryAndDescription(nameof(GetCustomerById).Humanize(), nameof(GetCustomerById).Humanize())
+            // .Produces<GetCustomerByIdResponse>("Customer fetched successfully.", StatusCodes.Status200OK)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem(StatusCodes.Status404NotFound)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
     }
 
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        Guid id,
-        IQueryProcessor queryProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Results<
+            Ok<GetCustomerByIdResponse>,
+            ValidationProblem,
+            NotFoundHttpProblemResult,
+            UnAuthorizedHttpProblemResult
+        >
+    > HandleAsync([AsParameters] GetCustomerByIdRequestParameters requestParameters)
     {
-        Guard.Against.Null(id, nameof(id));
-
+        var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
         var result = await queryProcessor.SendAsync(new GetCustomerById(id), cancellationToken);
-        var response = new GetCustomerByIdResponse(result.Customer);
 
-        return Results.Ok(response);
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.Ok(new GetCustomerByIdResponse(result.Customer));
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetCustomerByIdRequestParameters(
+    [FromRoute] Guid Id,
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpQuery;
 
 public record GetCustomerByIdResponse(CustomerReadDto Customer);

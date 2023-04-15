@@ -1,7 +1,7 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Shared.Contracts;
@@ -9,14 +9,19 @@ using FluentValidation;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomerById.v1;
 
-public record GetCustomerById(Guid Id) : IQuery<GetCustomerByIdResult>
+internal record GetCustomerById(Guid Id) : IQuery<GetCustomerByIdResult>
 {
-    internal class Validator : AbstractValidator<GetCustomerById>
+    public static GetCustomerById Of(Guid id)
     {
-        public Validator()
-        {
-            RuleFor(x => x.Id).NotEmpty();
-        }
+        return new GetCustomerByIdValidator().HandleValidation(new GetCustomerById(id));
+    }
+}
+
+internal class GetCustomerByIdValidator : AbstractValidator<GetCustomerById>
+{
+    public GetCustomerByIdValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
     }
 }
 
@@ -35,14 +40,15 @@ internal class GetCustomerByIdHandler : IQueryHandler<GetCustomerById, GetCustom
 
     public async Task<GetCustomerByIdResult> Handle(GetCustomerById query, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(query, nameof(query));
+        query.NotBeNull();
 
         var customer = await _unitOfWork.CustomersRepository.FindOneAsync(
             x => x.Id == query.Id,
             cancellationToken: cancellationToken
         );
 
-        Guard.Against.NotFound(customer, new CustomerNotFoundException(query.Id));
+        if (customer is null)
+            throw new CustomerNotFoundException(query.Id);
 
         var customerDto = _mapper.Map<CustomerReadDto>(customer);
 

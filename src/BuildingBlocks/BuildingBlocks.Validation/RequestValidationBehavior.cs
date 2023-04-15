@@ -1,4 +1,5 @@
 using System.Text.Json;
+using BuildingBlocks.Validation.Extensions;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -11,7 +12,6 @@ public class RequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
 {
     private readonly ILogger<RequestValidationBehavior<TRequest, TResponse>> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private IValidator<TRequest> _validator;
 
     public RequestValidationBehavior(
         IServiceProvider serviceProvider,
@@ -28,8 +28,8 @@ public class RequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
         CancellationToken cancellationToken
     )
     {
-        _validator = _serviceProvider.GetService<IValidator<TRequest>>()!;
-        if (_validator is null)
+        var validator = _serviceProvider.GetService<IValidator<TRequest>>()!;
+        if (validator is null)
             return await next();
 
         _logger.LogInformation(
@@ -45,7 +45,7 @@ public class RequestValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             JsonSerializer.Serialize(request)
         );
 
-        await _validator.HandleValidationAsync(request, cancellationToken);
+        await validator.HandleValidationAsync(request, cancellationToken);
 
         var response = await next();
 

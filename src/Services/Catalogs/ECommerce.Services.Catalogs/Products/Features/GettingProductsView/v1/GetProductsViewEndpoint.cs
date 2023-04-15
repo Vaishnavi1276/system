@@ -1,6 +1,11 @@
+using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Catalogs.Products.Dtos.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Catalogs.Products.Features.GettingProductsView.v1;
 
@@ -10,31 +15,42 @@ public static class GetProductsViewEndpoint
     internal static RouteHandlerBuilder MapGetProductsViewEndpoint(this IEndpointRouteBuilder endpoints)
     {
         return endpoints
-            .MapGet("/products-view/{page}/{pageSize}", GetProductsView)
+            .MapGet("/products-view/{page}/{pageSize}", Handle)
+            .WithTags(ProductsConfigs.Tag)
             // .RequireAuthorization()
-            .Produces<GetProductsViewResponse>(StatusCodes.Status200OK)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .WithDisplayName("Get Products View.")
-            .WithName("GetProductsView")
-            .WithMetadata(new SwaggerOperationAttribute("Getting Products View", "Getting Products View"));
-    }
+            .WithDisplayName(nameof(v1.GetProductsView).Humanize())
+            .WithSummaryAndDescription(nameof(v1.GetProductsView).Humanize(), nameof(v1.GetProductsView).Humanize())
+            .WithName(nameof(v1.GetProductsView))
+            // .Produces<GetProductsViewResult>(StatusCodes.Status200OK)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .MapToApiVersion(1.0);
 
-    private static async Task<IResult> GetProductsView(
-        IQueryProcessor queryProcessor,
-        CancellationToken cancellationToken,
-        int page = 1,
-        int pageSize = 20
-    )
-    {
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetProductsViewEndpoint)))
+        async Task<Results<Ok<GetProductsViewResponse>, ValidationProblem, UnAuthorizedHttpProblemResult>> Handle(
+            [AsParameters] GetProductsViewRequestParameters requestParameters
+        )
         {
-            var result = await queryProcessor.SendAsync(
-                new GetProductsView { Page = page, PageSize = pageSize },
-                cancellationToken
-            );
+            var (context, queryProcessor, mapper, cancellationToken, _, _, _, _) = requestParameters;
+            var query = mapper.Map<GetProductsView>(requestParameters);
 
-            return Results.Ok(result);
+            var result = await queryProcessor.SendAsync(query, cancellationToken);
+
+            return TypedResults.Ok(new GetProductsViewResponse(result.Products.ToList()));
         }
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetProductsViewRequestParameters(
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken,
+    int PageSize = 10,
+    int PageNumber = 1,
+    string? Filters = null,
+    string? SortOrder = null
+) : IHttpQuery, IPageRequest;
+
+internal record GetProductsViewResponse(IList<ProductViewDto> Products);

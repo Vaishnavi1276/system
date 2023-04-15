@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Customers.Customers.ValueObjects;
 
@@ -11,7 +11,7 @@ public record CustomerId : AggregateId
         : base(value) { }
 
     // validations should be placed here instead of constructor
-    public static CustomerId Of(long id) => new(Guard.Against.NegativeOrZero(id));
+    public static CustomerId Of(long id) => new(id.NotBeNegativeOrZero());
 
     public static implicit operator long(CustomerId id) => id.Value;
 }

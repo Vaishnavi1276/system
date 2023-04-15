@@ -1,4 +1,3 @@
-using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 
 namespace ECommerce.Services.Catalogs.Products.Exceptions.Application;
@@ -6,8 +5,8 @@ namespace ECommerce.Services.Catalogs.Products.Exceptions.Application;
 public class ProductNotFoundException : AppException
 {
     public ProductNotFoundException(long id)
-        : base($"Product with id '{id}' not found", HttpStatusCode.NotFound) { }
+        : base($"Product with id '{id}' not found", StatusCodes.Status404NotFound) { }
 
     public ProductNotFoundException(string message)
-        : base(message, HttpStatusCode.NotFound) { }
+        : base(message, StatusCodes.Status404NotFound) { }
 }

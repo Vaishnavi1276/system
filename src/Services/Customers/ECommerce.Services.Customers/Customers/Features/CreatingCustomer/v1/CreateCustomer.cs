@@ -1,6 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Domain.ValueObjects;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.Models;
@@ -13,15 +13,13 @@ namespace ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
 
 public record CreateCustomer(string Email) : ITxCreateCommand<CreateCustomerResult>
 {
-    public long Id { get; init; } = SnowFlakIdGenerator.NewId();
+    public long Id { get; } = SnowFlakIdGenerator.NewId();
 }
 
 internal class CreateCustomerValidator : AbstractValidator<CreateCustomer>
 {
     public CreateCustomerValidator()
     {
-        CascadeMode = CascadeMode.Stop;
-
         RuleFor(x => x.Email).NotNull().NotEmpty().EmailAddress().WithMessage("Email address is invalid.");
     }
 }
@@ -47,7 +45,7 @@ internal class CreateCustomerHandler : ICommandHandler<CreateCustomer, CreateCus
     {
         _logger.LogInformation("Creating customer");
 
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         if (_customersDbContext.Customers.Any(x => x.Email.Value == command.Email))
             throw new CustomerAlreadyExistsException($"Customer with email '{command.Email}' already exists.");
@@ -74,4 +72,4 @@ internal class CreateCustomerHandler : ICommandHandler<CreateCustomer, CreateCus
     }
 }
 
-public record CreateCustomerResult(long CustomerId, Guid IdentityUserId);
+internal record CreateCustomerResult(long CustomerId, Guid IdentityUserId);

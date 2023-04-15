@@ -5,7 +5,7 @@ namespace BuildingBlocks.Core.Web.Extensions;
 public static class HttpResponseMessageExtensions
 {
     /// <summary>
-    /// Throws an exception if the <see cref="P:System.Net.Http.HttpResponseMessage.IsSuccessStatusCode" /> property for the HTTP response is <see langword="false"/> and read exception detail from response content - default EnsureSuccessStatusCode returns HttpRequestException with no response detail exception
+    /// Throws an exception if the <see cref="System.Net.Http.HttpResponseMessage.IsSuccessStatusCode" /> property for the HTTP response is <see langword="false"/> and read exception detail from response content - default EnsureSuccessStatusCode returns HttpRequestException with no response detail exception
     /// Ref: https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws
     /// </summary>
     /// <param name="response">HttpResponseMessage.</param>
@@ -18,6 +18,6 @@ public static class HttpResponseMessageExtensions
 
         var content = await response.Content.ReadAsStringAsync();
 
-        throw new HttpResponseException(content, response.StatusCode);
+        throw new HttpResponseException(content, (int)response.StatusCode);
     }
 }

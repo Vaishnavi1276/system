@@ -1,7 +1,10 @@
+using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Web.Extensions;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Catalogs.Products.Features.DebitingProductStock.v1;
 
@@ -11,34 +14,43 @@ public static class DebitProductStockEndpoint
     internal static RouteHandlerBuilder MapDebitProductStockEndpoint(this IEndpointRouteBuilder endpoints)
     {
         return endpoints
-            .MapPost("/{productId}/debit-stock", DebitProductStock)
+            .MapPost("/{productId}/debit-stock", Handle)
             .RequireAuthorization()
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized, "Unauthorized")
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest, "Invalid inputs. (Bad Request)")
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound, "Product Not Found. (Not Found)")
-            .Produces<StatusCodeProblemDetails>(
-                StatusCodes.Status204NoContent,
-                "Debit-Stock performed successfully. (No Content)"
-            )
-            .WithMetadata(new SwaggerOperationAttribute("Debiting Product Stock", "Debiting Product Stock"))
-            .WithName("DebitProductStock")
-            .WithDisplayName("Debit product stock");
-    }
+            .WithTags(ProductsConfigs.Tag)
+            .WithName(nameof(DebitProductStock))
+            .WithDisplayName(nameof(DebitProductStock).Humanize())
+            .WithSummaryAndDescription(nameof(DebitProductStock).Humanize(), nameof(DebitProductStock).Humanize())
+            // .Produces("Debit-Stock performed successfully. (No Content)", StatusCodes.Status204NoContent)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            // .ProducesProblem(StatusCodes.Status404NotFound)
+            .MapToApiVersion(1.0);
 
-    private static async Task<IResult> DebitProductStock(
-        long productId,
-        int quantity,
-        ICommandProcessor commandProcessor,
-        CancellationToken cancellationToken
-    )
-    {
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(DebitProductStockEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("ProductId", productId))
+        async Task<
+            Results<NoContent, UnAuthorizedHttpProblemResult, ValidationProblem, NotFoundHttpProblemResult>
+        > Handle([AsParameters] DebitProductStockRequestParameters requestParameters)
         {
-            await commandProcessor.SendAsync(new DebitProductStock(productId, quantity), cancellationToken);
+            var (request, productId, context, commandProcessor, _, cancellationToken) = requestParameters;
 
-            return Results.NoContent();
+            await commandProcessor.SendAsync(
+                new DebitProductStock(productId, request.DebitQuantity),
+                cancellationToken
+            );
+
+            return TypedResults.NoContent();
         }
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record DebitProductStockRequestParameters(
+    [FromBody] DebitProductStockRequest Request,
+    [FromRoute] long ProductId,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<DebitProductStockRequest>;
+
+internal record DebitProductStockRequest(int DebitQuantity);

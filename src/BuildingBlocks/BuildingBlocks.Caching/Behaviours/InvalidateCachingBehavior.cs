@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Caching;
+using BuildingBlocks.Core.Extensions;
 using EasyCaching.Core;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -22,11 +22,9 @@ public class InvalidateCachingBehavior<TRequest, TResponse> : IPipelineBehavior<
         IEnumerable<IInvalidateCacheRequest<TRequest, TResponse>> invalidateCachingPolicies
     )
     {
-        _logger = Guard.Against.Null(logger);
-        Guard.Against.Null(cacheOptions.Value);
-        _cacheProvider = Guard.Against
-            .Null(cachingProviderFactory)
-            .GetCachingProvider(cacheOptions.Value.DefaultCacheType);
+        cacheOptions.Value.NotBeNull();
+        _logger = logger;
+        _cacheProvider = cachingProviderFactory.GetCachingProvider(cacheOptions.Value.DefaultCacheType);
 
         // cachePolicies inject like `FluentValidation` approach as a nested or seperated cache class for commands ,queries
         _invalidateCachingPolicies = invalidateCachingPolicies;

@@ -1,13 +1,21 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
 
-internal class CreateCustomerEndpoint : ICommandMinimalEndpoint<CreateCustomerRequest>
+internal class CreateCustomerEndpoint
+    : ICommandMinimalEndpoint<
+        CreateCustomerRequest,
+        CreateCustomerRequestParameters,
+        CreatedAtRoute<CreateCustomerResponse>,
+        UnAuthorizedHttpProblemResult,
+        ValidationProblem
+    >
 {
     public string GroupName => CustomersConfigs.Tag;
     public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
@@ -17,33 +25,47 @@ internal class CreateCustomerEndpoint : ICommandMinimalEndpoint<CreateCustomerRe
     {
         return builder
             .MapPost("/", HandleAsync)
-            .AllowAnonymous()
-            .Produces<CreateCustomerResult>(StatusCodes.Status201Created)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .WithMetadata(new SwaggerOperationAttribute("Creating a Customer", "Creating a Customer"))
-            .WithName("CreateCustomer")
-            .WithDisplayName("Register New Customer.");
+            .WithTags(CustomersConfigs.Tag)
+            .RequireAuthorization()
+            .WithName(nameof(CreateCustomer))
+            .WithDisplayName(nameof(CreateCustomer).Humanize())
+            .WithSummaryAndDescription(nameof(CreateCustomer).Humanize(), nameof(CreateCustomer).Humanize())
+            .Produces<CreateCustomerRequest>("Customer created successfully.", StatusCodes.Status201Created)
+            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
     }
 
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        CreateCustomerRequest request,
-        ICommandProcessor commandProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Results<CreatedAtRoute<CreateCustomerResponse>, UnAuthorizedHttpProblemResult, ValidationProblem>
+    > HandleAsync(CreateCustomerRequestParameters requestParameters)
     {
-        Guard.Against.Null(request, nameof(request));
+        var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
-        var command = new CreateCustomer(request.Email);
+        var command = mapper.Map<CreateCustomer>(request);
 
         var result = await commandProcessor.SendAsync(command, cancellationToken);
-        var response = new CreateCustomerResponse(result.CustomerId, result.IdentityUserId);
 
-        return Results.Created($"{CustomersConfigs.CustomersPrefixUri}/{result.CustomerId}", response);
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.CreatedAtRoute(
+            new CreateCustomerResponse(result.CustomerId),
+            "GetCustomerById",
+            new { id = result.CustomerId }
+        );
     }
 }
 
-public record CreateCustomerRequest(string Email);
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record CreateCustomerRequestParameters(
+    [FromBody] CreateCustomerRequest Request,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<CreateCustomerRequest>;
 
-public record CreateCustomerResponse(long CustomerId, Guid IdentityUserId);
+public record CreateCustomerRequest(string? Email);
+
+public record CreateCustomerResponse(long CustomerId);

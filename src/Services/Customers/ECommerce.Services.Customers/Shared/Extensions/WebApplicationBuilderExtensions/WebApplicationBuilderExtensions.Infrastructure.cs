@@ -16,6 +16,7 @@ using BuildingBlocks.Security.Extensions;
 using BuildingBlocks.Security.Jwt;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Validation;
+using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Customers.Customers.Extensions;
 using ECommerce.Services.Customers.Products;
@@ -99,7 +100,7 @@ public static partial class WebApplicationBuilderExtensions
         builder.Services.AddEmailService(builder.Configuration);
 
         builder.AddCompression();
-        builder.AddCustomProblemDetails();
+        builder.AddAppProblemDetails();
 
         builder.AddCustomOpenTelemetry();
 

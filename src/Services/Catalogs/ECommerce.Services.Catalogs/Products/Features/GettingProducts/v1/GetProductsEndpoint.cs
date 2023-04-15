@@ -1,59 +1,62 @@
-using Ardalis.ApiEndpoints;
-using Ardalis.GuardClauses;
-using Asp.Versioning;
+using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Catalogs.Products.Dtos.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Catalogs.Products.Features.GettingProducts.v1;
 
 // https://www.youtube.com/watch?v=SDu0MA6TmuM
 // https://github.com/ardalis/ApiEndpoints
 // https://im5tu.io/article/2022/09/asp.net-core-versioning-mvc-apis/
-public class GetProductsEndpoint
-    : EndpointBaseAsync.WithRequest<GetProductsRequest?>.WithActionResult<GetProductsResponse>
+internal static class GetProductsEndpoint
 {
-    private readonly IQueryProcessor _queryProcessor;
-
-    public GetProductsEndpoint(IQueryProcessor queryProcessor)
+    internal static RouteHandlerBuilder MapGetProductsByPageEndpoint(this IEndpointRouteBuilder app)
     {
-        _queryProcessor = queryProcessor;
-    }
+        // return app.MapQueryEndpoint<GetProductsRequestParameters, GetProductsResponse, GetProducts,
+        //         GetProductsResult>("/")
+        return app.MapGet("/", Handle)
+            // .RequireAuthorization()
+            .WithTags(ProductsConfigs.Tag)
+            .WithName(nameof(GetProducts))
+            .WithSummaryAndDescription(nameof(GetProducts).Humanize(), nameof(GetProducts).Humanize())
+            .WithDisplayName(nameof(GetProducts).Humanize())
+            // .Produces<GetProductsResponse>("Products fetched successfully.", StatusCodes.Status200OK)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
 
-    // We could use `SwaggerResponse` form `Swashbuckle.AspNetCore` package instead of `ProducesResponseType` for supporting custom description for status codes
-    [HttpGet(ProductsConfigs.ProductsPrefixUri, Name = "GetProducts")]
-    [ProducesResponseType(typeof(GetProductsResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(StatusCodeProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(StatusCodeProblemDetails), StatusCodes.Status400BadRequest)]
-    [ApiVersion(1.0)]
-    [SwaggerOperation(
-        Summary = "Getting All Products",
-        Description = "Getting All Products",
-        OperationId = "GetProducts",
-        Tags = new[] { ProductsConfigs.Tag }
-    )]
-    public override async Task<ActionResult<GetProductsResponse>> HandleAsync(
-        [FromQuery] GetProductsRequest? request,
-        CancellationToken cancellationToken = default
-    )
-    {
-        Guard.Against.Null(request, nameof(request));
-
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetProductsEndpoint)))
+        async Task<Results<Ok<GetProductsResponse>, ValidationProblem, UnAuthorizedHttpProblemResult>> Handle(
+            [AsParameters] GetProductsRequestParameters requestParameters
+        )
         {
-            var result = await _queryProcessor.SendAsync(
-                new GetProducts
-                {
-                    Page = request.Page,
-                    Sorts = request.Sorts,
-                    PageSize = request.PageSize,
-                    Filters = request.Filters,
-                    Includes = request.Includes,
-                },
-                cancellationToken
-            );
+            var (context, queryProcessor, mapper, cancellationToken, _, _, _, _) = requestParameters;
 
-            return Ok(result);
+            var query = mapper.Map<GetProducts>(requestParameters);
+
+            var result = await queryProcessor.SendAsync(query, cancellationToken);
+
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+            return TypedResults.Ok(new GetProductsResponse(result.Products));
         }
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetProductsRequestParameters(
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken,
+    int PageSize = 10,
+    int PageNumber = 1,
+    string? Filters = null,
+    string? SortOrder = null
+) : IHttpQuery, IPageRequest;
+
+internal record GetProductsResponse(IPageList<ProductDto> Products);

@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Messaging.MessagePersistence;
 using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using BuildingBlocks.Messaging.Persistence.Postgres.MessagePersistence;
@@ -18,8 +18,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IMessagePersistenceConnectionFactory>(sp =>
         {
-            var postgresOptions = sp.GetService<MessagePersistenceOptions>();
-            Guard.Against.NullOrEmpty(postgresOptions?.ConnectionString);
+            var postgresOptions = sp.GetRequiredService<MessagePersistenceOptions>();
+            postgresOptions.ConnectionString.NotBeNullOrWhiteSpace();
 
             return new NpgsqlMessagePersistenceConnectionFactory(postgresOptions.ConnectionString);
         });

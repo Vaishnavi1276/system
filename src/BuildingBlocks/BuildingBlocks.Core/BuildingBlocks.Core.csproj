@@ -37,7 +37,6 @@
     <PackageReference Include="Bogus" />
     <PackageReference Include="McMaster.NETCore.Plugins" />
     <PackageReference Include="DotNetEnv" />
-    <PackageReference Include="Hellang.Middleware.ProblemDetails" />
     <PackageReference Include="IdGen" />
     <PackageReference Include="Newtonsoft.Json" />
     <PackageReference Include="Scrutor" />
@@ -51,6 +50,9 @@
     <PackageReference Include="Humanizer.Core" />
     <PackageReference Include="EntityFrameworkCore.Projectables" />
     <PackageReference Include="LinqKit.Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="System.Linq.Async" />
+    <PackageReference Include="System.Linq.Async.Queryable" />
+    <PackageReference Include="Sieve" />
   </ItemGroup>
 
   <ItemGroup>
@@ -58,6 +60,10 @@
     <PackageReference Include="Nito.AsyncEx.Context" />
     <PackageReference Include="Nito.AsyncEx.Tasks" />
     <PackageReference Include="FluentValidation.AspNetCore" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageVersion Update="Sieve" />
   </ItemGroup>
 
 </Project>

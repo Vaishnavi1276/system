@@ -1,5 +1,4 @@
-using Ardalis.GuardClauses;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Catalogs.Products.Exceptions.Domain;
 using ECommerce.Services.Catalogs.Suppliers;
 
@@ -14,12 +13,14 @@ public record SupplierInformation
     public Name Name { get; private set; } = default!;
     public SupplierId Id { get; private set; } = default!;
 
-    public static SupplierInformation Of(SupplierId id, Name name)
+    public static SupplierInformation Of(SupplierId? id, Name? name)
     {
         // validations should be placed here instead of constructor
-        Guard.Against.Null(id, new ProductDomainException("SupplierId can not be null."));
-        Guard.Against.Null(name, new ProductDomainException("Name cannot be null."));
+        id.NotBeNull();
+        name.NotBeNull();
 
         return new SupplierInformation { Id = id, Name = name };
     }
+
+    public void Deconstruct(out Name name, out SupplierId supplierId) => (name, supplierId) = (Name, Id);
 }

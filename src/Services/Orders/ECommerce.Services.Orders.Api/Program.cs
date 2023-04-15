@@ -6,6 +6,9 @@ using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Web;
 using BuildingBlocks.Web.Extensions;
+using BuildingBlocks.Web.Minimal;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Modules.Extensions;
 using ECommerce.Services.Orders.Api.Extensions.ApplicationBuilderExtensions;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Spectre.Console;
@@ -33,18 +36,6 @@ builder.Host.UseDefaultServiceProvider(
         // options.ValidateOnBuild = true;
     }
 );
-
-builder.Services
-    .AddControllers(
-        options => options.Conventions.Add(new RouteTokenTransformerConvention(new SlugifyParameterTransformer()))
-    )
-    .AddNewtonsoftJson(options =>
-    {
-        options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-        // https://stackoverflow.com/questions/36452468/swagger-ui-web-api-documentation-present-enums-as-strings
-        // options.SerializerSettings.Converters.Add(new StringEnumConverter()); // sending enum string to and from client instead of number
-    })
-    .AddControllersAsServices();
 
 // https://www.talkingdotnet.com/disable-automatic-model-state-validation-in-asp-net-core-2-1/
 builder.Services.Configure<ApiBehaviorOptions>(options =>

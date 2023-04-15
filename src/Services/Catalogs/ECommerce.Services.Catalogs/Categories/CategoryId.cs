@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Categories;
 
@@ -12,5 +12,5 @@ public record CategoryId : AggregateId
     public static implicit operator long(CategoryId id) => id.Value;
 
     // validations should be placed here instead of constructor
-    public static CategoryId Of(long id) => new(Guard.Against.NegativeOrZero(id));
+    public static CategoryId Of(long id) => new(id.NotBeNegativeOrZero());
 }

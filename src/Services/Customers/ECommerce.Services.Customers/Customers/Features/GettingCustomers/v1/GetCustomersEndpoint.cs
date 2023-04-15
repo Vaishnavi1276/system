@@ -1,97 +1,70 @@
-using Ardalis.ApiEndpoints;
-using Ardalis.GuardClauses;
-using Asp.Versioning;
+using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomers.v1;
 
-// https://www.youtube.com/watch?v=SDu0MA6TmuM
-// https://github.com/ardalis/ApiEndpoints
 internal class GetCustomersEndpoint
-    : EndpointBaseAsync.WithRequest<GetCustomersRequest?>.WithActionResult<GetCustomersResult>
+    : IQueryMinimalEndpoint<
+        GetCustomersRequestParameters,
+        Ok<GetCustomersResponse>,
+        ValidationProblem,
+        UnAuthorizedHttpProblemResult
+    >
 {
-    private readonly IQueryProcessor _queryProcessor;
+    public string GroupName => CustomersConfigs.Tag;
+    public string PrefixRoute => CustomersConfigs.CustomersPrefixUri;
+    public double Version => 1.0;
 
-    public GetCustomersEndpoint(IQueryProcessor queryProcessor)
+    public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
     {
-        _queryProcessor = queryProcessor;
+        // return app.MapQueryEndpoint<GetCustomersRequestParameters, GetCustomersResponse, GetCustomers,
+        //         GetProductsResult>("/")
+        return builder
+            .MapGet("/", HandleAsync)
+            .RequireAuthorization()
+            .WithTags(CustomersConfigs.Tag)
+            .WithName(nameof(GetCustomers))
+            .WithSummaryAndDescription(nameof(GetCustomers).Humanize(), nameof(GetCustomers).Humanize())
+            .WithDisplayName(nameof(GetCustomers).Humanize())
+            // .Produces<GetCustomersResponse>("Customers fetched successfully.", StatusCodes.Status200OK)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
     }
 
-    // We could use `SwaggerResponse` form `Swashbuckle.AspNetCore` package instead of `ProducesResponseType` for supporting custom description for status codes
-    [SwaggerResponse(
-        StatusCodes.Status200OK,
-        "Customers response retrieved successfully (Success).",
-        typeof(GetCustomersResult)
-    )]
-    [SwaggerResponse(StatusCodes.Status401Unauthorized, "Unauthorized", typeof(StatusCodeProblemDetails))]
-    [SwaggerResponse(StatusCodes.Status400BadRequest, "Invalid input (Bad Request)", typeof(StatusCodeProblemDetails))]
-    [SwaggerOperation(
-        Summary = "Getting All Customers",
-        Description = "Getting All Customers",
-        OperationId = "GetCustomers",
-        Tags = new[] { CustomersConfigs.Tag }
-    )]
-    [HttpGet(CustomersConfigs.CustomersPrefixUri, Name = "GetCustomers")]
-    [ApiVersion(1.0)]
-    public override async Task<ActionResult<GetCustomersResult>> HandleAsync(
-        [FromQuery] GetCustomersRequest? request,
-        CancellationToken cancellationToken = default
+    public async Task<Results<Ok<GetCustomersResponse>, ValidationProblem, UnAuthorizedHttpProblemResult>> HandleAsync(
+        [AsParameters] GetCustomersRequestParameters requestParameters
     )
     {
-        Guard.Against.Null(request, nameof(request));
+        var (context, queryProcessor, mapper, cancellationToken, _, _, _, _) = requestParameters;
 
-        // https://github.com/serilog/serilog/wiki/Enrichment
-        // https://dotnetdocs.ir/Post/34/categorizing-logs-with-serilog-in-aspnet-core
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetCustomersEndpoint)))
-        {
-            var result = await _queryProcessor.SendAsync(
-                new GetCustomers
-                {
-                    Filters = request.Filters,
-                    Includes = request.Includes,
-                    Page = request.Page,
-                    Sorts = request.Sorts,
-                    PageSize = request.PageSize
-                },
-                cancellationToken
-            );
-            var response = new GetCustomersResponse(result.Customers);
+        var query = mapper.Map<GetCustomers>(requestParameters);
 
-            return Ok(response);
-        }
+        var result = await queryProcessor.SendAsync(query, cancellationToken);
+
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.Ok(new GetCustomersResponse(result.Customers));
     }
 }
 
-// https://blog.codingmilitia.com/2022/01/03/getting-complex-type-as-simple-type-query-string-aspnet-core-api-controller/
-// https://benfoster.io/blog/minimal-apis-custom-model-binding-aspnet-6/
-internal record GetCustomersRequest : PageRequest
-{
-    // // For handling in minimal api
-    // public static ValueTask<GetCustomersRequest?> BindAsync(HttpContext httpContext, ParameterInfo parameter)
-    // {
-    //     var page = httpContext.Request.Query.Get<int>("Page", 1);
-    //     var pageSize = httpContext.Request.Query.Get<int>("PageSize", 20);
-    //     var customerState = httpContext.Request.Query.Get<CustomerState>("CustomerState", CustomerState.None);
-    //     var sorts = httpContext.Request.Query.GetCollection<List<string>>("Sorts");
-    //     var filters = httpContext.Request.Query.GetCollection<List<FilterModel>>("Filters");
-    //     var includes = httpContext.Request.Query.GetCollection<List<string>>("Includes");
-    //
-    //     var request = new GetCustomersRequest()
-    //     {
-    //         Page = page,
-    //         PageSize = pageSize,
-    //         CustomerState = customerState,
-    //         Sorts = sorts,
-    //         Filters = filters,
-    //         Includes = includes
-    //     };
-    //
-    //     return ValueTask.FromResult<GetCustomersRequest?>(request);
-    // }
-}
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetCustomersRequestParameters(
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken,
+    int PageSize = 10,
+    int PageNumber = 1,
+    string? Filters = null,
+    string? SortOrder = null
+) : IHttpQuery, IPageRequest;
 
-internal record GetCustomersResponse(IListResultModel<CustomerReadDto> Customers);
+internal record GetCustomersResponse(IPageList<CustomerReadDto> Customers);

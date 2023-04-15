@@ -4,26 +4,19 @@ using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Do
 
 namespace ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Notification;
 
-public record ProductCreatedNotification(ProductCreated DomainEvent)
-    : BuildingBlocks.Core.CQRS.Events.Internal.DomainNotificationEventWrapper<ProductCreated>(DomainEvent)
-{
-    public long Id => DomainEvent.Product.Id;
-    public string Name => DomainEvent.Product.Name;
-    public long CategoryId => DomainEvent.Product.CategoryId.Value;
-    public string? CategoryName => DomainEvent.Product.Category?.Name;
-    public int Stock => DomainEvent.Product.Stock.Available;
-}
+internal record ProductCreatedNotification(ProductCreated DomainEvent)
+    : BuildingBlocks.Core.CQRS.Events.Internal.DomainNotificationEventWrapper<ProductCreated>(DomainEvent);
 
-internal class ProductCreatedNotificationHandler : IDomainNotificationEventHandler<ProductCreatedNotification>
+internal class ProductCreatedHandler : IDomainNotificationEventHandler<ProductCreatedNotification>
 {
     private readonly IBus _bus;
 
-    public ProductCreatedNotificationHandler(IBus bus)
+    public ProductCreatedHandler(IBus bus)
     {
         _bus = bus;
     }
 
-    public async Task Handle(ProductCreatedNotification notification, CancellationToken cancellationToken)
+    public Task Handle(ProductCreatedNotification notification, CancellationToken cancellationToken)
     {
         // We could publish integration event to bus here
         // await _bus.PublishAsync(
@@ -36,6 +29,6 @@ internal class ProductCreatedNotificationHandler : IDomainNotificationEventHandl
         //     null,
         //     cancellationToken);
 
-        return;
+        return Task.CompletedTask;
     }
 }

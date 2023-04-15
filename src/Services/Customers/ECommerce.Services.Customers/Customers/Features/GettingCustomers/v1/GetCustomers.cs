@@ -1,26 +1,44 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
-using BuildingBlocks.Persistence.Mongo;
-using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
 using ECommerce.Services.Customers.Customers.Models.Reads;
+using ECommerce.Services.Customers.Shared.Contracts;
 using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+using Sieve.Services;
 
 namespace ECommerce.Services.Customers.Customers.Features.GettingCustomers.v1;
 
-public record GetCustomers : ListQuery<GetCustomersResult>;
+internal record GetCustomers : PageQuery<GetCustomersResult>
+{
+    public static GetCustomers Of(PageRequest pageRequest)
+    {
+        var (pageNumber, pageSize, filters, sortOrder) = pageRequest;
 
-public class GetCustomersValidator : AbstractValidator<GetCustomers>
+        return new GetCustomersValidator().HandleValidation(
+            new GetCustomers
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Filters = filters,
+                SortOrder = sortOrder
+            }
+        );
+    }
+}
+
+internal class GetCustomersValidator : AbstractValidator<GetCustomers>
 {
     public GetCustomersValidator()
     {
-        CascadeMode = CascadeMode.Stop;
-
-        RuleFor(x => x.Page).GreaterThanOrEqualTo(1).WithMessage("Page should at least greater than or equal to 1.");
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Page should at least greater than or equal to 1.");
 
         RuleFor(x => x.PageSize)
             .GreaterThanOrEqualTo(1)
@@ -30,30 +48,28 @@ public class GetCustomersValidator : AbstractValidator<GetCustomers>
 
 internal class GetCustomersHandler : IQueryHandler<GetCustomers, GetCustomersResult>
 {
-    private readonly CustomersReadDbContext _customersReadDbContext;
+    private readonly ICustomersReadUnitOfWork _unitOfWork;
     private readonly IMapper _mapper;
+    private readonly ISieveProcessor _sieveProcessor;
 
-    public GetCustomersHandler(CustomersReadDbContext customersReadDbContext, IMapper mapper)
+    public GetCustomersHandler(ICustomersReadUnitOfWork unitOfWork, IMapper mapper, ISieveProcessor sieveProcessor)
     {
-        _customersReadDbContext = customersReadDbContext;
+        _unitOfWork = unitOfWork;
         _mapper = mapper;
+        _sieveProcessor = sieveProcessor;
     }
 
     public async Task<GetCustomersResult> Handle(GetCustomers request, CancellationToken cancellationToken)
     {
-        var customer = await _customersReadDbContext.Customers
-            .AsQueryable()
-            .OrderByDescending(x => x.City)
-            .ApplyFilter(request.Filters)
-            .ApplyPagingAsync<Customer, CustomerReadDto>(
-                _mapper.ConfigurationProvider,
-                request.Page,
-                request.PageSize,
-                cancellationToken: cancellationToken
-            );
+        var customer = await _unitOfWork.CustomersRepository.GetByPageFilter<CustomerReadDto, string>(
+            request,
+            _mapper.ConfigurationProvider,
+            sortExpression: x => x.City!,
+            cancellationToken: cancellationToken
+        );
 
         return new GetCustomersResult(customer);
     }
 }
 
-public record GetCustomersResult(IListResultModel<CustomerReadDto> Customers);
+internal record GetCustomersResult(IPageList<CustomerReadDto> Customers);

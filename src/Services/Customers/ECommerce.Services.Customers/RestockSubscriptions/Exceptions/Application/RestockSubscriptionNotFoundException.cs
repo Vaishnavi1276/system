@@ -1,4 +1,3 @@
-using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Application;
@@ -6,8 +5,8 @@ namespace ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Applicati
 public class RestockSubscriptionNotFoundException : AppException
 {
     public RestockSubscriptionNotFoundException(long id)
-        : base($"RestockSubscription with id: {id}not found", HttpStatusCode.NotFound) { }
+        : base($"RestockSubscription with id: {id}not found", StatusCodes.Status404NotFound) { }
 
     public RestockSubscriptionNotFoundException(Guid id)
-        : base($"RestockSubscription with id: {id}not found", HttpStatusCode.NotFound) { }
+        : base($"RestockSubscription with id: {id}not found", StatusCodes.Status404NotFound) { }
 }

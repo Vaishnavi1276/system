@@ -1,7 +1,7 @@
-using System.Diagnostics.CodeAnalysis;
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.Domain;
 using Microsoft.EntityFrameworkCore;
+using Sieve.Services;
 
 namespace BuildingBlocks.Core.Persistence.EfCore;
 
@@ -9,14 +9,22 @@ public class EfRepository<TDbContext, TEntity, TKey> : EfRepositoryBase<TDbConte
     where TEntity : class, IHaveIdentity<TKey>
     where TDbContext : DbContext
 {
-    public EfRepository(TDbContext dbContext, IAggregatesDomainEventsRequestStore aggregatesDomainEventsStore)
-        : base(dbContext, aggregatesDomainEventsStore) { }
+    public EfRepository(
+        TDbContext dbContext,
+        ISieveProcessor sieveProcessor,
+        IAggregatesDomainEventsRequestStore aggregatesDomainEventsStore
+    )
+        : base(dbContext, sieveProcessor, aggregatesDomainEventsStore) { }
 }
 
 public class EfRepository<TDbContext, TEntity> : EfRepository<TDbContext, TEntity, Guid>
     where TEntity : class, IHaveIdentity<Guid>
     where TDbContext : DbContext
 {
-    public EfRepository(TDbContext dbContext, [NotNull] IAggregatesDomainEventsRequestStore aggregatesDomainEventsStore)
-        : base(dbContext, aggregatesDomainEventsStore) { }
+    public EfRepository(
+        TDbContext dbContext,
+        ISieveProcessor sieveProcessor,
+        IAggregatesDomainEventsRequestStore aggregatesDomainEventsStore
+    )
+        : base(dbContext, sieveProcessor, aggregatesDomainEventsStore) { }
 }

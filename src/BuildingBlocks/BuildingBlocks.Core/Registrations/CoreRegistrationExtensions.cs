@@ -18,6 +18,7 @@ using BuildingBlocks.Core.Utils;
 using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Microsoft.Extensions.Configuration;
 using Scrutor;
+using Sieve.Services;
 
 namespace BuildingBlocks.Core.Registrations;
 
@@ -40,6 +41,7 @@ public static class CoreRegistrationExtensions
         services.AddSingleton<IMachineInstanceInfo>(systemInfo);
         services.AddSingleton(systemInfo);
         services.AddSingleton<IExclusiveLock, ExclusiveLock>();
+        services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
 
         services.AddTransient<IAggregatesDomainEventsRequestStore, AggregatesDomainEventsStore>();
 

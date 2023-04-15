@@ -4,7 +4,7 @@ internal sealed class SerilogOptions
 {
     public string? SeqUrl { get; set; }
     public bool UseConsole { get; set; } = true;
-    public bool ExportLogsToOpenTelemetry { get; set; } = false;
+    public bool ExportLogsToOpenTelemetry { get; set; }
     public string? ElasticSearchUrl { get; set; }
     public string? GrafanaLokiUrl { get; set; }
     public bool UseElasticsearchJsonFormatter { get; set; }

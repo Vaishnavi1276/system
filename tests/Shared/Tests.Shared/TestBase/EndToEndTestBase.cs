@@ -5,7 +5,6 @@ using Tests.Shared.XunitCategories;
 
 namespace Tests.Shared.Fixtures;
 
-[CategoryTrait(TestCategory.EndToEnd)]
 public class EndToEndTestTest<TEntryPoint> : IntegrationTest<TEntryPoint>
     where TEntryPoint : class
 {

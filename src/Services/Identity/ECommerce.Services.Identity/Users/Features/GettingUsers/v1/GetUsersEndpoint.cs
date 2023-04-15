@@ -40,9 +40,8 @@ public class GetUsersEndpoint : EndpointBaseAsync.WithRequest<GetUsersRequest?>.
             new GetUsers
             {
                 Filters = request.Filters,
-                Includes = request.Includes,
-                Page = request.Page,
-                Sorts = request.Sorts,
+                PageNumber = request.PageNumber,
+                SortOrder = request.SortOrder,
                 PageSize = request.PageSize
             },
             cancellationToken

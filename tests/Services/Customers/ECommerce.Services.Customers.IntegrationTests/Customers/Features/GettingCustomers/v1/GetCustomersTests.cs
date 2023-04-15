@@ -34,9 +34,9 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
         listResult.Should().NotBeNull();
         listResult.Items.Should().NotBeEmpty();
         listResult.Items.Should().HaveCount(3);
-        listResult.Page.Should().Be(1);
+        listResult.PageNumber.Should().Be(1);
         listResult.PageSize.Should().Be(10);
-        listResult.TotalItems.Should().Be(3);
+        listResult.TotalCount.Should().Be(3);
     }
 
     [Fact]
@@ -48,15 +48,15 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
         await SharedFixture.InsertMongoDbContextAsync(fakeCustomers.ToArray());
 
         // Act
-        var query = new GetCustomers() { Page = 1, PageSize = 2 };
+        var query = new GetCustomers() { PageNumber = 1, PageSize = 2 };
         var listResult = (await SharedFixture.SendAsync(query)).Customers;
 
         // Assert
         listResult.Should().NotBeNull();
         listResult.Items.Should().NotBeEmpty();
         listResult.Items.Should().HaveCount(2);
-        listResult.Page.Should().Be(1);
+        listResult.PageNumber.Should().Be(1);
         listResult.PageSize.Should().Be(2);
-        listResult.TotalItems.Should().Be(3);
+        listResult.TotalCount.Should().Be(3);
     }
 }

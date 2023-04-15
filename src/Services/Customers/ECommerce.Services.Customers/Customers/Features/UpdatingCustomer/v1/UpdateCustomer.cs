@@ -1,7 +1,7 @@
-using System.Text.RegularExpressions;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Domain.ValueObjects;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.ValueObjects;
 using ECommerce.Services.Customers.Shared.Data;
@@ -15,10 +15,45 @@ public sealed record UpdateCustomer(
     string LastName,
     string Email,
     string PhoneNumber,
+    Guid IdentityId,
     DateTime? BirthDate = null,
-    string? Nationality = null,
-    string? Address = null
-) : ICommand;
+    string? Country = null,
+    string? City = null,
+    string? DetailAddress = null,
+    string? Nationality = null
+) : ICommand
+{
+    public static UpdateCustomer Of(
+        long id,
+        string? firstName,
+        string? lastName,
+        string? email,
+        string? phoneNumber,
+        Guid identityId,
+        DateTime? birthDate = null,
+        string? country = null,
+        string? city = null,
+        string? detailAddress = null,
+        string? nationality = null
+    )
+    {
+        return new UpdateCustomerValidator().HandleValidation(
+            new UpdateCustomer(
+                id,
+                firstName!,
+                lastName!,
+                email!,
+                phoneNumber!,
+                identityId,
+                birthDate,
+                country,
+                city,
+                detailAddress,
+                nationality
+            )
+        );
+    }
+}
 
 internal class UpdateCustomerValidator : AbstractValidator<UpdateCustomer>
 {
@@ -53,7 +88,7 @@ internal class UpdateCustomerHandler : ICommandHandler<UpdateCustomer>
     {
         _logger.LogInformation("Updating customer");
 
-        Guard.Against.Null(command);
+        command.NotBeNull();
 
         var customer = await _customersDbContext.Customers.FindAsync(
             new object?[] { CustomerId.Of(command.Id) },

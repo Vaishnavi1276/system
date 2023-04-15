@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs.Dtos;
@@ -22,7 +22,7 @@ public class CatalogApiClient : ICatalogApiClient
         IOptions<PolicyOptions> policyOptions
     )
     {
-        _httpClient = Guard.Against.Null(httpClient, nameof(httpClient));
+        _httpClient = httpClient.NotBeNull();
         _options = options.Value;
 
         var retryPolicy = Policy
@@ -35,6 +35,7 @@ public class CatalogApiClient : ICatalogApiClient
         // at any given time there will 3 parallel requests execution for specific service call and another 6 requests for other services can be in the queue. So that if the response from customer service is delayed or blocked then we don’t use too many resources
         var bulkheadPolicy = Policy.BulkheadAsync<HttpResponseMessage>(3, 6);
 
+        // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var circuitBreakerPolicy = Policy
             .Handle<HttpRequestException>()
             .OrResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
@@ -53,8 +54,9 @@ public class CatalogApiClient : ICatalogApiClient
         CancellationToken cancellationToken = default
     )
     {
-        Guard.Against.NegativeOrZero(id);
+        id.NotBeNegativeOrZero();
 
+        // https://github.com/App-vNext/Polly#handing-return-values-and-policytresult
         var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
         {
             // https://stackoverflow.com/questions/21097730/usage-of-ensuresuccessstatuscode-and-handling-of-httprequestexception-it-throws

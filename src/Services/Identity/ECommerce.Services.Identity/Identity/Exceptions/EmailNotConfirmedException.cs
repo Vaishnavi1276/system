@@ -1,4 +1,3 @@
-using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 
 namespace ECommerce.Services.Identity.Identity.Exceptions;
@@ -7,7 +6,7 @@ namespace ECommerce.Services.Identity.Identity.Exceptions;
 public class EmailNotConfirmedException : AppException
 {
     public EmailNotConfirmedException(string email)
-        : base($"Email not confirmed for email address `{email}`", HttpStatusCode.UnprocessableEntity)
+        : base($"Email not confirmed for email address `{email}`", StatusCodes.Status422UnprocessableEntity)
     {
         Email = email;
     }

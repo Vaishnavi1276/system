@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Caching;
+using BuildingBlocks.Core.Extensions;
 using EasyCaching.Core;
 using MediatR;
 using Microsoft.Extensions.Logging;
@@ -23,11 +23,9 @@ public class CachingBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, 
         IEnumerable<ICacheRequest<TRequest, TResponse>> cachePolicies
     )
     {
-        _logger = Guard.Against.Null(logger);
-        Guard.Against.Null(cacheOptions.Value);
-        _cacheProvider = Guard.Against
-            .Null(cachingProviderFactory)
-            .GetCachingProvider(cacheOptions.Value.DefaultCacheType);
+        cacheOptions.Value.NotBeNull();
+        _logger = logger;
+        _cacheProvider = cachingProviderFactory.GetCachingProvider(cacheOptions.Value.DefaultCacheType);
 
         // cachePolicies inject like `FluentValidation` approach as a nested or seperated cache class for commands ,queries
         _cachePolicies = cachePolicies;
@@ -93,11 +91,9 @@ public class StreamCachingBehavior<TRequest, TResponse> : IStreamPipelineBehavio
         IEnumerable<ICacheRequest<TRequest, TResponse>> cachePolicies
     )
     {
-        _logger = Guard.Against.Null(logger);
-        Guard.Against.Null(cacheOptions.Value);
-        _cacheProvider = Guard.Against
-            .Null(cachingProviderFactory)
-            .GetCachingProvider(cacheOptions.Value.DefaultCacheType);
+        cacheOptions.Value.NotBeNull();
+        _logger = logger;
+        _cacheProvider = cachingProviderFactory.GetCachingProvider(cacheOptions.Value.DefaultCacheType);
 
         // cachePolicies inject like `FluentValidation` approach as a nested or seperated cache class for commands ,queries
         _cachePolicies = cachePolicies;

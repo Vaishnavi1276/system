@@ -1,12 +1,12 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Domain;
-using ECommerce.Services.Catalogs.Categories.Exceptions.Domain;
 
 namespace ECommerce.Services.Catalogs.Categories;
 
 // https://stackoverflow.com/a/32354885/581476
 // https://learn.microsoft.com/en-us/ef/core/modeling/constructors
 // https://github.com/dotnet/efcore/issues/29940
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public class Category : Aggregate<CategoryId>
 {
     // EF
@@ -19,7 +19,8 @@ public class Category : Aggregate<CategoryId>
 
     public static Category Create(CategoryId id, string name, string code, string description = "")
     {
-        var category = new Category { Id = Guard.Against.Null(id, nameof(id)) };
+        // input validation will do in the command and our value objects, here we just do business validation
+        var category = new Category { Id = id };
 
         category.ChangeName(name);
         category.ChangeDescription(description);
@@ -30,25 +31,17 @@ public class Category : Aggregate<CategoryId>
 
     public void ChangeName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new CategoryDomainException("Name can't be white space or null.");
-
+        // input validation will do in the command and our value objects, here we just do business validation
         Name = name;
     }
 
     public void ChangeCode(string code)
     {
-        if (string.IsNullOrWhiteSpace(code))
-            throw new CategoryDomainException("Code can't be white space or null.");
-
         Code = code;
     }
 
     public void ChangeDescription(string description)
     {
-        if (string.IsNullOrWhiteSpace(description))
-            throw new CategoryDomainException("Description can't be white space or null.");
-
         Description = description;
     }
 

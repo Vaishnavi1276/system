@@ -1,6 +1,4 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Domain;
-using ECommerce.Services.Catalogs.Brands.Exceptions.Domain;
 
 namespace ECommerce.Services.Catalogs.Brands;
 
@@ -10,7 +8,8 @@ public class Brand : Aggregate<BrandId>
 
     public static Brand Create(BrandId id, string name)
     {
-        var brand = new Brand { Id = Guard.Against.Null(id, nameof(id)) };
+        // input validation will do in the command and our value objects, here we just do business validation
+        var brand = new Brand { Id = id, };
 
         brand.ChangeName(name);
 
@@ -19,9 +18,6 @@ public class Brand : Aggregate<BrandId>
 
     public void ChangeName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            throw new BrandDomainException("Name can't be white space or null.");
-
         Name = name;
     }
 }

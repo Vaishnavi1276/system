@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
+using BuildingBlocks.Core.Extensions;
 
 namespace BuildingBlocks.Core.CQRS.Events;
 
@@ -25,12 +25,9 @@ public class DomainEventPublisher : IDomainEventPublisher
     {
         _messagePersistenceService = messagePersistenceService;
         _domainEventsAccessor = domainEventsAccessor;
-        _domainNotificationEventPublisher = Guard.Against.Null(
-            domainNotificationEventPublisher,
-            nameof(domainNotificationEventPublisher)
-        );
-        _eventProcessor = Guard.Against.Null(eventProcessor, nameof(eventProcessor));
-        _serviceProvider = Guard.Against.Null(serviceProvider, nameof(serviceProvider));
+        _domainNotificationEventPublisher = domainNotificationEventPublisher;
+        _eventProcessor = eventProcessor;
+        _serviceProvider = serviceProvider;
     }
 
     public Task PublishAsync(IDomainEvent domainEvent, CancellationToken cancellationToken = default)
@@ -40,7 +37,7 @@ public class DomainEventPublisher : IDomainEventPublisher
 
     public async Task PublishAsync(IDomainEvent[] domainEvents, CancellationToken cancellationToken = default)
     {
-        Guard.Against.Null(domainEvents, nameof(domainEvents));
+        domainEvents.NotBeNull();
 
         if (!domainEvents.Any())
             return;

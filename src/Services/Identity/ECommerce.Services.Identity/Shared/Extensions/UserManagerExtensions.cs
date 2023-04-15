@@ -1,10 +1,12 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Persistence.EfCore;
 using ECommerce.Services.Identity.Shared.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Sieve.Services;
 
 namespace ECommerce.Services.Identity.Shared.Extensions;
 
@@ -17,25 +19,24 @@ public static class UserManagerExtensions
         return await userManager.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).ToListAsync();
     }
 
-    public static async Task<IListResultModel<TResult>> FindAllUsersByPageAsync<TResult>(
+    public static async Task<IPageList<TResult>> FindAllUsersByPageAsync<TResult>(
         this UserManager<ApplicationUser> userManager,
-        IMapper mapper,
         IPageRequest request,
+        IMapper mapper,
+        ISieveProcessor sieveProcessor,
         CancellationToken cancellationToken
     )
-        where TResult : notnull
+        where TResult : class
     {
         // https://benjii.me/2018/01/expression-projection-magic-entity-framework-core/
         // we don't use include for loading nested navigation because with mapping we load them explicitly
         return await userManager.Users
             .OrderByDescending(x => x.CreatedAt)
-            .ApplyIncludeList(request.Includes)
-            .ApplyFilter(request.Filters)
             .AsNoTracking()
             .ApplyPagingAsync<ApplicationUser, TResult>(
+                request,
                 mapper.ConfigurationProvider,
-                request.Page,
-                request.PageSize,
+                sieveProcessor,
                 cancellationToken: cancellationToken
             );
     }

@@ -1,4 +1,3 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Domain;
 using BuildingBlocks.Core.Domain.ValueObjects;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Events.Domain;
@@ -34,19 +33,35 @@ public class Customer : Aggregate<CustomerId>
         Nationality? nationality = null
     )
     {
+        // input validation will do in the command and our value objects, here we just do business validation
         var customer = new Customer
         {
-            Id = Guard.Against.Null(id),
-            Email = Guard.Against.Null(email),
-            PhoneNumber = Guard.Against.Null(phoneNumber),
-            Name = Guard.Against.Null(name),
-            IdentityId = Guard.Against.NullOrEmpty(identityId),
+            Id = id,
+            Email = email,
+            PhoneNumber = phoneNumber,
+            Name = name,
+            IdentityId = identityId,
             BirthDate = birthDate,
             Address = address,
             Nationality = nationality
         };
 
-        customer.AddDomainEvents(new CustomerCreated(customer));
+        var (firstName, lastName) = name;
+
+        customer.AddDomainEvents(
+            CustomerCreated.Of(
+                id,
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                identityId,
+                DateTime.Now,
+                address?.Detail,
+                birthDate!,
+                nationality!
+            )
+        );
 
         return customer;
     }
@@ -79,6 +94,62 @@ public class Customer : Aggregate<CustomerId>
             Nationality = nationality;
         }
 
-        AddDomainEvents(new CustomerUpdated(this));
+        var (firstName, lastName) = name;
+
+        AddDomainEvents(
+            CustomerUpdated.Of(
+                Id,
+                firstName,
+                lastName,
+                email,
+                phoneNumber,
+                IdentityId,
+                DateTime.Now,
+                birthDate!,
+                address?.Country,
+                address?.City,
+                address?.Detail,
+                nationality!
+            )
+        );
     }
+
+    public void Deconstruct(
+        out long id,
+        out Guid identityId,
+        out string email,
+        out string firstName,
+        out string lastName,
+        out string phoneNumber,
+        out string? country,
+        out string? city,
+        out string? detailedAddress,
+        out string? nationality,
+        out DateTime? birthDate
+    ) =>
+        (
+            id,
+            identityId,
+            email,
+            firstName,
+            lastName,
+            phoneNumber,
+            country,
+            city,
+            detailedAddress,
+            nationality,
+            birthDate
+        ) = (
+            Id,
+            IdentityId,
+            Email,
+            Name.FirstName,
+            Name.LastName,
+            PhoneNumber,
+            Address?.Country,
+            Address?.City,
+            Address?.Detail,
+            Nationality!,
+            BirthDate!
+        );
 }

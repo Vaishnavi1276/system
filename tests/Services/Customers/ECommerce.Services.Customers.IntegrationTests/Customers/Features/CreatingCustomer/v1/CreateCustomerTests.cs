@@ -7,6 +7,7 @@ using ECommerce.Services.Customers.Shared.Data;
 using ECommerce.Services.Customers.TestShared.Fixtures;
 using ECommerce.Services.Shared.Customers.Customers.Events.v1.Integration;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Tests.Shared.Fixtures;
 using Tests.Shared.XunitCategories;
@@ -64,7 +65,7 @@ public class CreateCustomerTests : CustomerServiceIntegrationTestBase
         //https://fluentassertions.com/exceptions/
         await act.Should()
             .ThrowAsync<HttpResponseException>()
-            .Where(x => x.StatusCode == HttpStatusCode.NotFound && !string.IsNullOrWhiteSpace(x.Message));
+            .Where(x => x.StatusCode == StatusCodes.Status404NotFound && !string.IsNullOrWhiteSpace(x.Message));
     }
 
     [Fact]

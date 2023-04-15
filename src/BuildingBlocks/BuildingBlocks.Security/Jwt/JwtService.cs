@@ -2,7 +2,7 @@ using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Utils;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -80,7 +80,7 @@ public class JwtService : IJwtService
         if (usersClaims?.Any() is true)
             jwtClaims = jwtClaims.Union(usersClaims).ToList();
 
-        Guard.Against.NullOrEmpty(_jwtOptions.SecretKey, nameof(_jwtOptions.SecretKey));
+        _jwtOptions.SecretKey.NotBeNullOrWhiteSpace();
 
         SymmetricSecurityKey signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOptions.SecretKey));
         SigningCredentials signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
@@ -102,8 +102,8 @@ public class JwtService : IJwtService
 
     public ClaimsPrincipal? GetPrincipalFromToken(string token)
     {
-        Guard.Against.NullOrEmpty(token, nameof(token));
-        Guard.Against.NullOrEmpty(_jwtOptions.SecretKey, nameof(_jwtOptions.SecretKey));
+        token.NotBeNullOrWhiteSpace();
+        _jwtOptions.SecretKey.NotBeNullOrWhiteSpace();
 
         TokenValidationParameters tokenValidationParameters = new TokenValidationParameters
         {

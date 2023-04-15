@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Brands;
 
@@ -12,5 +12,5 @@ public record BrandId : AggregateId
     public static implicit operator long(BrandId id) => id.Value;
 
     // validations should be placed here instead of constructor
-    public static BrandId Of(long id) => new(Guard.Against.NegativeOrZero(id));
+    public static BrandId Of(long id) => new(id.NotBeNegativeOrZero());
 }

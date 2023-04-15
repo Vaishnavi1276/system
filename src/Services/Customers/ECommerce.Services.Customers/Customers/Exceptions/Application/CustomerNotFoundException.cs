@@ -1,4 +1,3 @@
-using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 
 namespace ECommerce.Services.Customers.Customers.Exceptions.Application;
@@ -6,11 +5,11 @@ namespace ECommerce.Services.Customers.Customers.Exceptions.Application;
 public class CustomerNotFoundException : AppException
 {
     public CustomerNotFoundException(string message)
-        : base(message, HttpStatusCode.NotFound) { }
+        : base(message, StatusCodes.Status404NotFound) { }
 
     public CustomerNotFoundException(long id)
-        : base($"Customer with id '{id}' not found.", HttpStatusCode.NotFound) { }
+        : base($"Customer with id '{id}' not found.", StatusCodes.Status404NotFound) { }
 
     public CustomerNotFoundException(Guid id)
-        : base($"Customer with id '{id}' not found.", HttpStatusCode.NotFound) { }
+        : base($"Customer with id '{id}' not found.", StatusCodes.Status404NotFound) { }
 }

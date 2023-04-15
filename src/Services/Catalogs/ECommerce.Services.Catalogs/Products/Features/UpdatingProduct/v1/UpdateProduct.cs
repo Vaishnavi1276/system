@@ -1,7 +1,7 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Caching;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Catalogs.Brands;
 using ECommerce.Services.Catalogs.Brands.Exceptions.Application;
 using ECommerce.Services.Catalogs.Categories;
@@ -19,7 +19,7 @@ using MediatR;
 
 namespace ECommerce.Services.Catalogs.Products.Features.UpdatingProduct.v1;
 
-public record UpdateProduct(
+internal record UpdateProduct(
     long Id,
     string Name,
     decimal Price,
@@ -34,13 +34,66 @@ public record UpdateProduct(
     long SupplierId,
     long BrandId,
     string? Description = null
-) : ITxUpdateCommand;
+) : ITxCommand
+{
+    public static UpdateProduct Of(
+        long id,
+        string? name,
+        decimal price,
+        int restockThreshold,
+        int maxStockThreshold,
+        ProductStatus status,
+        int width,
+        int height,
+        int depth,
+        string? size,
+        long categoryId,
+        long supplierId,
+        long brandId,
+        string? description = null
+    )
+    {
+        return new UpdateProductValidator().HandleValidation(
+            new UpdateProduct(
+                id,
+                name!,
+                price,
+                restockThreshold,
+                maxStockThreshold,
+                status,
+                width,
+                height,
+                depth,
+                size!,
+                categoryId,
+                supplierId,
+                brandId,
+                description
+            )
+        );
+    }
+}
 
 internal class UpdateProductValidator : AbstractValidator<UpdateProduct>
 {
     public UpdateProductValidator()
     {
-        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.Id).NotEmpty().GreaterThan(0);
+        RuleFor(x => x.Id).NotEmpty().GreaterThan(0).WithMessage("Id must be greater than 0");
+        RuleFor(x => x.Name).NotEmpty().WithMessage("Name is required.");
+        RuleFor(x => x.Price).NotEmpty().GreaterThan(0).WithMessage("Price must be greater than 0");
+        RuleFor(x => x.Status).IsInEnum().WithMessage("Status is required.");
+        RuleFor(x => x.MaxStockThreshold)
+            .NotEmpty()
+            .GreaterThan(0)
+            .WithMessage("MaxStockThreshold must be greater than 0");
+        RuleFor(x => x.RestockThreshold)
+            .NotEmpty()
+            .GreaterThan(0)
+            .WithMessage("RestockThreshold must be greater than 0");
+        RuleFor(x => x.CategoryId).NotEmpty().GreaterThan(0).WithMessage("CategoryId must be greater than 0");
+        RuleFor(x => x.SupplierId).NotEmpty().GreaterThan(0).WithMessage("SupplierId must be greater than 0");
+        RuleFor(x => x.BrandId).NotEmpty().GreaterThan(0).WithMessage("BrandId must be greater than 0");
     }
 }
 
@@ -63,32 +116,55 @@ internal class UpdateProductCommandHandler : ICommandHandler<UpdateProduct>
 
     public async Task<Unit> Handle(UpdateProduct command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
-        var product = await _catalogDbContext.FindProductByIdAsync(ProductId.Of(command.Id));
-        Guard.Against.NotFound(product, new ProductNotFoundException(command.Id));
+        var (
+            id,
+            name,
+            price,
+            restockThreshold,
+            maxStockThreshold,
+            productStatus,
+            width,
+            height,
+            depth,
+            size,
+            categoryId,
+            supplierId,
+            brandId,
+            description
+        ) = command;
 
-        var category = await _catalogDbContext.FindCategoryAsync(CategoryId.Of(command.CategoryId));
-        Guard.Against.NotFound(category, new CategoryNotFoundException(command.CategoryId));
+        var product = await _catalogDbContext.FindProductByIdAsync(ProductId.Of(id));
+        if (product is null)
+        {
+            throw new ProductNotFoundException(id);
+        }
 
-        var brand = await _catalogDbContext.FindBrandAsync(BrandId.Of(command.BrandId));
-        Guard.Against.NotFound(brand, new BrandNotFoundException(command.BrandId));
+        var category = await _catalogDbContext.FindCategoryAsync(CategoryId.Of(id));
+        if (category is null)
+            throw new CategoryNotFoundException(categoryId);
 
-        var supplier = await _catalogDbContext.FindSupplierByIdAsync(SupplierId.Of(command.SupplierId));
-        Guard.Against.NotFound(supplier, new SupplierNotFoundException(command.SupplierId));
+        var brand = await _catalogDbContext.FindBrandAsync(BrandId.Of(brandId));
+        if (brand is null)
+            throw new BrandNotFoundException(brandId);
 
-        product!.ChangeCategory(CategoryId.Of(command.CategoryId));
-        product.ChangeBrand(BrandId.Of(command.BrandId));
-        product.ChangeSupplier(SupplierId.Of(command.SupplierId));
+        var supplier = await _catalogDbContext.FindSupplierByIdAsync(SupplierId.Of(supplierId));
+        if (supplier is null)
+            throw new SupplierNotFoundException(supplierId);
 
-        product.ChangeDescription(command.Description);
-        product.ChangeName(Name.Of(command.Name));
-        product.ChangePrice(Price.Of(command.Price));
-        product.ChangeSize(Size.Of(command.Size));
-        product.ChangeStatus(command.Status);
-        product.ChangeDimensions(Dimensions.Of(command.Width, command.Height, command.Depth));
-        product.ChangeMaxStockThreshold(command.MaxStockThreshold);
-        product.ChangeRestockThreshold(command.RestockThreshold);
+        product.ChangeCategory(CategoryId.Of(categoryId));
+        product.ChangeBrand(BrandId.Of(brandId));
+        product.ChangeSupplier(SupplierId.Of(supplierId));
+
+        product.ChangeDescription(description);
+        product.ChangeName(Name.Of(name));
+        product.ChangePrice(Price.Of(price));
+        product.ChangeSize(Size.Of(size));
+        product.ChangeStatus(productStatus);
+        product.ChangeDimensions(Dimensions.Of(width, height, depth));
+        product.ChangeMaxStockThreshold(maxStockThreshold);
+        product.ChangeRestockThreshold(restockThreshold);
 
         await _catalogDbContext.SaveChangesAsync(cancellationToken);
         return Unit.Value;

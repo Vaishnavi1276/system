@@ -1,46 +1,60 @@
-using Ardalis.GuardClauses;
+using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Catalogs.Products.Dtos.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Catalogs.Products.Features.GettingProductById.v1;
 
 // GET api/v1/catalog/products/{id}
-public static class GetProductByIdEndpoint
+internal static class GetProductByIdEndpoint
 {
-    internal static RouteHandlerBuilder MapGetProductByIdEndpoint(this IEndpointRouteBuilder endpoints)
+    internal static RouteHandlerBuilder MapGetProductByIdEndpoint(this IEndpointRouteBuilder app)
     {
-        return endpoints
-            .MapGet("/{id}", GetProductById)
+        // return app.MapQueryEndpoint<GetProductByIdRequestParameters, GetProductByIdResponse, GetProductById,
+        //         GetProductByIdResult>("/{id}")
+        return app.MapGet("/{id}", Handle)
             // .RequireAuthorization()
-            .Produces<GetProductByIdResponse>(StatusCodes.Status200OK)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
-            .WithMetadata(
-                new SwaggerOperationAttribute(
-                    "Getting Product by InternalCommandId",
-                    "Getting Product by InternalCommandId"
-                )
-            )
-            .WithName("GetProductById")
-            .WithDisplayName("Get product By InternalCommandId.");
-    }
+            .WithTags(ProductsConfigs.Tag)
+            .WithName(nameof(GetProductById))
+            .WithDisplayName(nameof(GetProductById).Humanize())
+            .WithSummaryAndDescription(nameof(GetProductById).Humanize(), nameof(GetProductById).Humanize())
+            // .Produces<GetProductByIdResponse>("Product fetched successfully.", StatusCodes.Status200OK)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem(StatusCodes.Status404NotFound)
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .MapToApiVersion(1.0);
 
-    private static async Task<IResult> GetProductById(
-        long id,
-        IQueryProcessor queryProcessor,
-        CancellationToken cancellationToken
-    )
-    {
-        Guard.Against.Null(id, nameof(id));
-
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetProductByIdEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("ProductId", id))
+        async Task<
+            Results<
+                Ok<GetProductByIdResponse>,
+                ValidationProblem,
+                NotFoundHttpProblemResult,
+                UnAuthorizedHttpProblemResult
+            >
+        > Handle([AsParameters] GetProductByIdRequestParameters requestParameters)
         {
+            var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
             var result = await queryProcessor.SendAsync(new GetProductById(id), cancellationToken);
 
-            return Results.Ok(result);
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+            return TypedResults.Ok(new GetProductByIdResponse(result.Product));
         }
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetProductByIdRequestParameters(
+    [FromRoute] long Id,
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpQuery;
+
+internal record GetProductByIdResponse(ProductDto Product);

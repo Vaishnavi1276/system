@@ -11,7 +11,6 @@ namespace Tests.Shared.TestBase;
 //https://bartwullems.blogspot.com/2019/09/xunit-async-lifetime.html
 //https://www.danclarke.com/cleaner-tests-with-iasynclifetime
 //https://xunit.net/docs/shared-context
-[CategoryTrait(TestCategory.Integration)]
 public abstract class IntegrationTest<TEntryPoint> : XunitContextBase, IAsyncLifetime
     where TEntryPoint : class
 {

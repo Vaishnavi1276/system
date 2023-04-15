@@ -1,6 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Catalogs.Products.Exceptions.Application;
 using ECommerce.Services.Catalogs.Products.ValueObjects;
 using ECommerce.Services.Catalogs.Shared.Contracts;
@@ -10,17 +10,26 @@ using MediatR;
 
 namespace ECommerce.Services.Catalogs.Products.Features.ReplenishingProductStock.v1;
 
-public record ReplenishProductStock(long ProductId, int Quantity) : ITxCommand;
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/notes_about_csharp_records_and_nullable_reference_types/
+// https://buildplease.com/pages/vos-in-events/
+// https://codeopinion.com/leaking-value-objects-from-your-domain/
+// https://www.youtube.com/watch?v=CdanF8PWJng
+// we don't pass value-objects and domains to our commands and events, just primitive types
+public record ReplenishProductStock(long ProductId, int Quantity) : ITxCommand
+{
+    public static ReplenishProductStock Of(long productId, int quantity)
+    {
+        return new ReplenishingProductStockValidator().HandleValidation(new ReplenishProductStock(productId, quantity));
+    }
+}
 
 internal class ReplenishingProductStockValidator : AbstractValidator<ReplenishProductStock>
 {
     public ReplenishingProductStockValidator()
     {
-        // https://docs.fluentvalidation.net/en/latest/conditions.html#stop-vs-stoponfirstfailure
-        CascadeMode = CascadeMode.Stop;
-
         RuleFor(x => x.Quantity).GreaterThan(0);
-
         RuleFor(x => x.ProductId).NotEmpty().WithMessage("ProductId must be greater than 0");
     }
 }
@@ -31,17 +40,20 @@ internal class ReplenishingProductStockHandler : ICommandHandler<ReplenishProduc
 
     public ReplenishingProductStockHandler(ICatalogDbContext catalogDbContext)
     {
-        _catalogDbContext = Guard.Against.Null(catalogDbContext, nameof(catalogDbContext));
+        _catalogDbContext = catalogDbContext;
     }
 
     public async Task<Unit> Handle(ReplenishProductStock command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
-        var product = await _catalogDbContext.FindProductByIdAsync(ProductId.Of(command.ProductId));
-        Guard.Against.NotFound(product, new ProductNotFoundException(command.ProductId));
+        var (productId, quantity) = command;
 
-        product!.ReplenishStock(command.Quantity);
+        var product = await _catalogDbContext.FindProductByIdAsync(ProductId.Of(productId));
+        if (product is null)
+            throw new ProductNotFoundException(productId);
+
+        product.ReplenishStock(quantity);
         await _catalogDbContext.SaveChangesAsync(cancellationToken);
 
         return Unit.Value;

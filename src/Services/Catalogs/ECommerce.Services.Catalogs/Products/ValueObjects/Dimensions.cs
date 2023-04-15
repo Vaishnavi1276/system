@@ -1,11 +1,12 @@
-using Ardalis.GuardClauses;
-using BuildingBlocks.Core.Exception;
-using ECommerce.Services.Catalogs.Products.Exceptions.Domain;
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 
 // https://github.com/NimblePros/ValueObjects
 // https://learn.microsoft.com/en-us/ef/core/modeling/constructors
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public record Dimensions
 {
     // EF
@@ -17,9 +18,9 @@ public record Dimensions
 
     public static Dimensions Of(int width, int height, int depth)
     {
-        Guard.Against.NegativeOrZero(height);
-        Guard.Against.NegativeOrZero(width);
-        Guard.Against.NegativeOrZero(depth);
+        height.NotBeNegativeOrZero();
+        width.NotBeNegativeOrZero();
+        depth.NotBeNegativeOrZero();
 
         return new Dimensions
         {
@@ -28,6 +29,18 @@ public record Dimensions
             Depth = depth,
         };
     }
+
+    public static Dimensions Of([NotNull] int? width, [NotNull] int? height, [NotNull] int? depth)
+    {
+        height.NotBeNull();
+        width.NotBeNull();
+        depth.NotBeNull();
+
+        return Of(width.Value, height.Value, depth.Value);
+    }
+
+    public void Deconstruct(out int width, out int height, out int depth) =>
+        (width, height, depth) = (Width, Height, Depth);
 
     public override string ToString()
     {

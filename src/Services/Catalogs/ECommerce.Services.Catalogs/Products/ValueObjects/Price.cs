@@ -1,9 +1,12 @@
-using Ardalis.GuardClauses;
-
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
+
 namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 
 // https://learn.microsoft.com/en-us/ef/core/modeling/constructors
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public record Price
 {
     // EF
@@ -19,11 +22,20 @@ public record Price
 
     public static Price Of(decimal value)
     {
-        // validations should be placed here instead of constructor
-        Guard.Against.NegativeOrZero(value);
+        value.NotBeNegativeOrZero();
 
+        // validations should be placed here instead of constructor
         return new Price(value);
     }
 
+    public static Price Of([NotNull] decimal? value)
+    {
+        value.NotBeNull();
+
+        return Of(value.Value);
+    }
+
     public static implicit operator decimal(Price value) => value.Value;
+
+    public void Deconstruct(out decimal value) => value = Value;
 }

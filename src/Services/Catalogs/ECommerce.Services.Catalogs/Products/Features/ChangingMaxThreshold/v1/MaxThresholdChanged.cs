@@ -1,5 +1,15 @@
 using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Products.Features.ChangingMaxThreshold.v1;
 
-public record MaxThresholdChanged(long ProductId, int MaxThreshold) : DomainEvent;
+internal record MaxThresholdChanged(long ProductId, int MaxThreshold) : DomainEvent
+{
+    public static MaxThresholdChanged Of(long productId, int maxThreshold)
+    {
+        productId.NotBeNegativeOrZero();
+        maxThreshold.NotBeNegativeOrZero();
+
+        return new MaxThresholdChanged(productId, maxThreshold);
+    }
+}

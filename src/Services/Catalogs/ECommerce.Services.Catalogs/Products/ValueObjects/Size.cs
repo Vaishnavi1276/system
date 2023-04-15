@@ -1,10 +1,12 @@
-using Ardalis.GuardClauses;
-
-// https://learn.microsoft.com/en-us/ef/core/modeling/constructors
-
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
+
 namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 
+// https://learn.microsoft.com/en-us/ef/core/modeling/constructors
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public record Size
 {
     private Size(string value)
@@ -17,12 +19,14 @@ public record Size
     // in the constructor it should not be read only without set (for bypassing calculate fields)- https://learn.microsoft.com/en-us/ef/core/modeling/constructors#read-only-properties
     public string Value { get; private set; }
 
-    public static Size Of(string value)
+    public static Size Of([NotNull] string? value)
     {
         // validations should be placed here instead of constructor
-        Guard.Against.NullOrWhiteSpace(value);
+        value.NotBeNullOrWhiteSpace();
         return new Size(value);
     }
 
     public static implicit operator string(Size value) => value.Value;
+
+    public void Deconstruct(out string value) => value = Value;
 }

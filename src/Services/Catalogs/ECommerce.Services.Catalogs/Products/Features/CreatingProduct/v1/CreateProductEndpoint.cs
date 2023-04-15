@@ -1,81 +1,92 @@
-using System.Globalization;
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Requests;
-using Hellang.Middleware.ProblemDetails;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Catalogs.Products.Models;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1;
 
 // POST api/v1/catalog/products
-public static class CreateProductEndpoint
+internal static class CreateProductEndpoint
 {
     internal static RouteHandlerBuilder MapCreateProductsEndpoint(this IEndpointRouteBuilder endpoints)
     {
+        // return endpoints.MapCommandEndpoint<
+        //     CreateProductRequest,
+        //     CreateProductResponse,
+        //     CreateProduct,
+        //     CreateProductResult
+        // >("/", StatusCodes.Status201Created, getId: response => response.Id);
+
         // https://github.com/dotnet/aspnetcore/issues/45082
         // https://github.com/dotnet/aspnetcore/issues/40753
         // https://github.com/domaindrivendev/Swashbuckle.AspNetCore/pull/2414
         // https://github.com/dotnet/aspnetcore/issues/45871
         return endpoints
-            .MapPost("/", CreateProducts)
-            // WithOpenApi should placed before versioning and other things - this fixed in Aps.Versioning.Http 7.0.0-preview.1
-            .WithOpenApi(operation =>
-            {
-                // we could use our `WithResponseDescription` extension method also
-                operation.Summary = "Creating a New Product";
-                operation.Description = "Creating a New Product";
-                operation.Responses[
-                    StatusCodes.Status401Unauthorized.ToString(CultureInfo.InvariantCulture)
-                ].Description = "UnAuthorized request.";
-                operation.Responses[
-                    StatusCodes.Status400BadRequest.ToString(CultureInfo.InvariantCulture)
-                ].Description = "Invalid input for creating product.";
-                operation.Responses[StatusCodes.Status201Created.ToString(CultureInfo.InvariantCulture)].Description =
-                    "Product created successfully.";
-
-                return operation;
-            })
+            .MapPost("/", Handle)
+            .WithTags(ProductsConfigs.Tag)
             .RequireAuthorization()
-            .Produces<CreateProductResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .WithName("CreateProduct")
-            .WithDisplayName("Create a new product.")
+            .WithName(nameof(CreateProduct))
+            .WithDisplayName(nameof(CreateProduct).Humanize())
+            .WithSummaryAndDescription(nameof(CreateProduct).Humanize(), nameof(CreateProduct).Humanize())
+            // .Produces<CreateProductResponse>("Product created successfully.", StatusCodes.Status201Created)
+            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+            // .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
             .MapToApiVersion(1.0);
 
-        // .WithMetadata(new SwaggerResponseAttribute(
-        //     StatusCodes.Status401Unauthorized,
-        //     "UnAuthorized request.",
-        //     typeof(StatusCodeProblemDetails)))
-        // .WithMetadata(new SwaggerResponseAttribute(
-        //     StatusCodes.Status400BadRequest,
-        //     "Invalid input for creating product.",
-        //     typeof(StatusCodeProblemDetails)))
-        // .WithMetadata(
-        //     new SwaggerResponseAttribute(
-        //         StatusCodes.Status201Created,
-        //         "Product created successfully.",
-        //         typeof(CreateProductResponse)))
-        // .WithMetadata(new SwaggerOperationAttribute("Creating a New Product", "Creating a New Product"))
-        // .IsApiVersionNeutral()
-    }
-
-    private static async Task<IResult> CreateProducts(
-        CreateProductRequest request,
-        ICommandProcessor commandProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
-    {
-        Guard.Against.Null(request, nameof(request));
-
-        var command = mapper.Map<CreateProduct>(request);
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(CreateProductEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("ProductId", command.Id))
+        async Task<
+            Results<CreatedAtRoute<CreateProductResponse>, UnAuthorizedHttpProblemResult, ValidationProblem>
+        > Handle([AsParameters] CreateProductRequestParameters requestParameters)
         {
+            var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
+
+            var command = mapper.Map<CreateProduct>(request);
+
             var result = await commandProcessor.SendAsync(command, cancellationToken);
 
-            return Results.CreatedAtRoute("GetProductById", new { id = result.Product.Id }, result);
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+            return TypedResults.CreatedAtRoute(
+                new CreateProductResponse(result.Id),
+                "GetProductById",
+                new { id = result.Id }
+            );
         }
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record CreateProductRequestParameters(
+    [FromBody] CreateProductRequest Request,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<CreateProductRequest>;
+
+internal record CreateProductResponse(long Id);
+
+internal record CreateProductRequest(
+    string? Name,
+    decimal Price,
+    int Stock,
+    int RestockThreshold,
+    int MaxStockThreshold,
+    int Height,
+    int Width,
+    int Depth,
+    string Size,
+    long CategoryId,
+    long SupplierId,
+    long BrandId,
+    string? Description = null,
+    ProductColor Color = ProductColor.Black,
+    ProductStatus Status = ProductStatus.Available,
+    IEnumerable<CreateProductImageRequest>? Images = null
+);
+
+internal record CreateProductImageRequest(string ImageUrl, bool IsMain);

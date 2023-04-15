@@ -12,7 +12,7 @@ using MongoDB.Driver.Linq;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.GettingRestockSubscriptions.v1;
 
-public record GetRestockSubscriptions : ListQuery<GetRestockSubscriptionsResponse>
+public record GetRestockSubscriptions : PageQuery<GetRestockSubscriptionsResponse>
 {
     public IList<string> Emails { get; init; } = null!;
     public DateTime? From { get; init; }
@@ -23,9 +23,9 @@ internal class GetRestockSubscriptionsValidator : AbstractValidator<GetRestockSu
 {
     public GetRestockSubscriptionsValidator()
     {
-        CascadeMode = CascadeMode.Stop;
-
-        RuleFor(x => x.Page).GreaterThanOrEqualTo(1).WithMessage("Page should at least greater than or equal to 1.");
+        RuleFor(x => x.PageNumber)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Page should at least greater than or equal to 1.");
 
         RuleFor(x => x.PageSize)
             .GreaterThanOrEqualTo(1)

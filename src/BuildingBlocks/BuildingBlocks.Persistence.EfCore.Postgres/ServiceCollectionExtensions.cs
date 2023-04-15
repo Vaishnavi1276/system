@@ -1,9 +1,9 @@
 using System.Reflection;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.EfCore;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Persistence.EfCore.Interceptors;
 using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
@@ -29,8 +29,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IConnectionFactory>(sp =>
         {
-            var postgresOptions = sp.GetService<PostgresOptions>();
-            Guard.Against.NullOrEmpty(postgresOptions?.ConnectionString);
+            var postgresOptions = sp.GetRequiredService<PostgresOptions>();
+            postgresOptions.ConnectionString.NotBeNullOrWhiteSpace();
             return new NpgsqlConnectionFactory(postgresOptions.ConnectionString);
         });
 

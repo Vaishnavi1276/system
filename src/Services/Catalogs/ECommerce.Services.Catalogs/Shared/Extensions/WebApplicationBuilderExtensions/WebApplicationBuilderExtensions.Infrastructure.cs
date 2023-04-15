@@ -1,6 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Caching.Behaviours;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Registrations;
 using BuildingBlocks.Core.Web.Extensions;
@@ -15,6 +15,7 @@ using BuildingBlocks.Security.Extensions;
 using BuildingBlocks.Security.Jwt;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Validation;
+using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Catalogs.Products;
 
@@ -72,7 +73,7 @@ public static partial class WebApplicationBuilderExtensions
         builder.Services.AddPostgresMessagePersistence(builder.Configuration);
 
         builder.AddCompression();
-        builder.AddCustomProblemDetails();
+        builder.AddAppProblemDetails();
 
         builder.AddCustomSerilog();
 
@@ -95,8 +96,8 @@ public static partial class WebApplicationBuilderExtensions
                 var postgresOptions = builder.Configuration.BindOptions<PostgresOptions>(nameof(PostgresOptions));
                 var rabbitMqOptions = builder.Configuration.BindOptions<RabbitMqOptions>(nameof(RabbitMqOptions));
 
-                Guard.Against.Null(postgresOptions, nameof(postgresOptions));
-                Guard.Against.Null(rabbitMqOptions, nameof(rabbitMqOptions));
+                postgresOptions.NotBeNull();
+                rabbitMqOptions.NotBeNull();
 
                 healthChecksBuilder
                     .AddNpgSql(

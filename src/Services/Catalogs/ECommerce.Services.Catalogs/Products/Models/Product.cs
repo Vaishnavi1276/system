@@ -1,8 +1,8 @@
-using Ardalis.GuardClauses;
+using System.Collections.Immutable;
 using BuildingBlocks.Core.Domain;
-using BuildingBlocks.Core.Exception;
 using ECommerce.Services.Catalogs.Brands;
 using ECommerce.Services.Catalogs.Categories;
+using ECommerce.Services.Catalogs.Products.Dtos.v1;
 using ECommerce.Services.Catalogs.Products.Exceptions.Domain;
 using ECommerce.Services.Catalogs.Products.Features.ChangingMaxThreshold.v1;
 using ECommerce.Services.Catalogs.Products.Features.ChangingProductBrand.v1.Events.Domain;
@@ -23,6 +23,8 @@ namespace ECommerce.Services.Catalogs.Products.Models;
 // https://ardalis.com/avoid-collections-as-properties/?utm_sq=grcpqjyka3
 // https://learn.microsoft.com/en-us/ef/core/modeling/constructors
 // https://github.com/dotnet/efcore/issues/29940
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public class Product : Aggregate<ProductId>
 {
     private List<ProductImage> _images = new();
@@ -36,12 +38,12 @@ public class Product : Aggregate<ProductId>
     public Price Price { get; private set; } = default!;
     public ProductColor Color { get; private set; }
     public ProductStatus ProductStatus { get; private set; }
-    public Category? Category { get; private set; }
+    public Category? Category { get; private set; } = default!;
     public CategoryId CategoryId { get; private set; } = default!;
     public SupplierId SupplierId { get; private set; } = default!;
-    public Supplier? Supplier { get; private set; }
+    public Supplier? Supplier { get; private set; } = default!;
     public BrandId BrandId { get; private set; } = default!;
-    public Brand? Brand { get; private set; }
+    public Brand? Brand { get; private set; } = default!;
     public Size Size { get; private set; } = default!;
     public Stock Stock { get; set; } = default!;
     public Dimensions Dimensions { get; private set; } = default!;
@@ -63,10 +65,11 @@ public class Product : Aggregate<ProductId>
         IList<ProductImage>? images = null
     )
     {
-        Guard.Against.Null(id, new ProductDomainException("Product id can not be null"));
-        Guard.Against.Null(stock, new ProductDomainException("Product stock can not be null"));
-
+        // input validation will do in the command and our value objects, here we just do business validation
         var product = new Product { Id = id, Stock = stock };
+
+        var (available, restockThreshold, maxStockThreshold) = stock;
+        var (width, height, depth) = dimensions;
 
         product.ChangeName(name);
         product.ChangeSize(size);
@@ -80,7 +83,28 @@ public class Product : Aggregate<ProductId>
         product.ChangeBrand(brandId);
         product.ChangeSupplier(supplierId);
 
-        product.AddDomainEvents(new ProductCreated(product));
+        product.AddDomainEvents(
+            ProductCreated.Of(
+                product.Id,
+                product.Name.Value,
+                product.Price.Value,
+                available,
+                restockThreshold,
+                maxStockThreshold,
+                product.ProductStatus,
+                width,
+                height,
+                depth,
+                product.Size,
+                product.Color,
+                product.CategoryId,
+                product.SupplierId,
+                product.BrandId,
+                DateTime.Now,
+                product.Description,
+                product.Images.Select(x => new ProductImageDto(x.Id, x.ProductId, x.ImageUrl, x.IsMain))
+            )
+        );
 
         return product;
     }
@@ -92,15 +116,11 @@ public class Product : Aggregate<ProductId>
 
     public void ChangeDimensions(Dimensions dimensions)
     {
-        Guard.Against.Null(dimensions, new ProductDomainException("Dimensions cannot be null."));
-
         Dimensions = dimensions;
     }
 
     public void ChangeSize(Size size)
     {
-        Guard.Against.Null(size, new ProductDomainException("Size cannot be null."));
-
         Size = size;
     }
 
@@ -115,8 +135,6 @@ public class Product : Aggregate<ProductId>
     /// <param name="name">The name to be changed.</param>
     public void ChangeName(Name name)
     {
-        Guard.Against.Null(name, new ProductDomainException("Product name cannot be null."));
-
         Name = name;
     }
 
@@ -138,14 +156,12 @@ public class Product : Aggregate<ProductId>
     /// <param name="price">The price to be changed.</param>
     public void ChangePrice(Price price)
     {
-        Guard.Against.Null(price, new ProductDomainException("Price cannot be null."));
-
         if (Price == price)
             return;
 
         Price = price;
 
-        AddDomainEvents(new ProductPriceChanged(price));
+        AddDomainEvents(ProductPriceChanged.Of(price));
     }
 
     /// <summary>
@@ -166,16 +182,22 @@ public class Product : Aggregate<ProductId>
             );
         }
 
-        int removed = Math.Min(quantity, Stock.Available);
+        var (available, restockThreshold, maxStockThreshold) = Stock;
 
-        Stock = Stock.Of(Stock.Available - removed, Stock.RestockThreshold, Stock.MaxStockThreshold);
+        int removed = Math.Min(quantity, available);
 
-        if (Stock.Available <= Stock.RestockThreshold)
+        Stock = Stock.Of(available - removed, restockThreshold, maxStockThreshold);
+
+        var (newAvailable, newRestockThreshold, newMaxStockThreshold) = Stock;
+
+        if (newAvailable <= newRestockThreshold)
         {
-            AddDomainEvents(new ProductRestockThresholdReachedEvent(Id, Stock, quantity));
+            AddDomainEvents(
+                ProductRestockThresholdReached.Of(Id, newAvailable, newRestockThreshold, newMaxStockThreshold, quantity)
+            );
         }
 
-        AddDomainEvents(new ProductStockDebited(Id, Stock, quantity));
+        AddDomainEvents(ProductStockDebited.Of(Id, newAvailable, newRestockThreshold, newMaxStockThreshold, quantity));
 
         return removed;
     }
@@ -187,39 +209,42 @@ public class Product : Aggregate<ProductId>
     /// <param name="quantity">The number of items to Replenish.</param>
     public Stock ReplenishStock(int quantity)
     {
+        var (available, restockThreshold, maxStockThreshold) = Stock;
+
         // we don't have enough space in the inventory
-        if (Stock.Available + quantity > Stock.MaxStockThreshold)
+        if (available + quantity > maxStockThreshold)
         {
             throw new MaxStockThresholdReachedException(
-                $"Max stock threshold has been reached. Max stock threshold is {Stock.MaxStockThreshold}"
+                $"Max stock threshold has been reached. Max stock threshold is {maxStockThreshold}"
             );
         }
 
-        Stock = Stock.Of(Stock.Available + quantity, Stock.RestockThreshold, Stock.MaxStockThreshold);
+        Stock = Stock.Of(available + quantity, restockThreshold, maxStockThreshold);
 
-        AddDomainEvents(new ProductStockReplenished(Id, Stock, quantity));
+        var (newAvailable, newRestockThreshold, newMaxStockThreshold) = Stock;
+
+        AddDomainEvents(
+            ProductStockReplenished.Of(Id, newAvailable, newRestockThreshold, newMaxStockThreshold, quantity)
+        );
 
         return Stock;
     }
 
-    public Stock ChangeMaxStockThreshold(int maxStockThreshold)
+    public Stock ChangeMaxStockThreshold(int newMaxStockThreshold)
     {
-        Guard.Against.NegativeOrZero(maxStockThreshold, nameof(maxStockThreshold));
+        var (available, restockThreshold, maxStockThreshold) = Stock;
+        Stock = Stock.Of(available, restockThreshold, maxStockThreshold);
 
-        Stock = Stock.Of(Stock.Available, Stock.RestockThreshold, maxStockThreshold);
-
-        AddDomainEvents(new MaxThresholdChanged(Id, maxStockThreshold));
+        AddDomainEvents(MaxThresholdChanged.Of(Id, maxStockThreshold));
 
         return Stock;
     }
 
     public Stock ChangeRestockThreshold(int restockThreshold)
     {
-        Guard.Against.NegativeOrZero(restockThreshold, nameof(restockThreshold));
-
         Stock = Stock.Of(Stock.Available, restockThreshold, Stock.MaxStockThreshold);
 
-        AddDomainEvents(new RestockThresholdChanged(Id, restockThreshold));
+        AddDomainEvents(RestockThresholdChanged.Of(Id, restockThreshold));
 
         return Stock;
     }
@@ -239,13 +264,10 @@ public class Product : Aggregate<ProductId>
     /// <param name="categoryId">The categoryId to be changed.</param>
     public void ChangeCategory(CategoryId categoryId)
     {
-        Guard.Against.Null(categoryId, new ProductDomainException("CategoryId cannot be null"));
-        Guard.Against.NegativeOrZero(categoryId);
-
         CategoryId = categoryId;
 
         // add event to domain events list that will be raise during commiting transaction
-        AddDomainEvents(new ProductCategoryChanged(categoryId, Id));
+        AddDomainEvents(ProductCategoryChanged.Of(categoryId, Id));
     }
 
     /// <summary>
@@ -254,12 +276,9 @@ public class Product : Aggregate<ProductId>
     /// <param name="supplierId">The supplierId to be changed.</param>
     public void ChangeSupplier(SupplierId supplierId)
     {
-        Guard.Against.Null(supplierId, new ProductDomainException("SupplierId cannot be null"));
-        Guard.Against.NegativeOrZero(supplierId);
-
         SupplierId = supplierId;
 
-        AddDomainEvents(new ProductSupplierChanged(supplierId, Id));
+        AddDomainEvents(ProductSupplierChanged.Of(supplierId, Id));
     }
 
     /// <summary>
@@ -268,12 +287,9 @@ public class Product : Aggregate<ProductId>
     /// <param name="brandId">The brandId to be changed.</param>
     public void ChangeBrand(BrandId brandId)
     {
-        Guard.Against.Null(brandId, new ProductDomainException("brandId cannot be null"));
-        Guard.Against.NegativeOrZero(brandId);
-
         BrandId = brandId;
 
-        AddDomainEvents(new ProductBrandChanged(brandId, Id));
+        AddDomainEvents(ProductBrandChanged.Of(brandId, Id));
     }
 
     public void AddProductImages(IList<ProductImage>? productImages)
@@ -286,4 +302,61 @@ public class Product : Aggregate<ProductId>
 
         _images.AddRange(productImages);
     }
+
+    public void Deconstruct(
+        out long id,
+        out string name,
+        out int availableStock,
+        out int restockThreshold,
+        out int maxStockThreshold,
+        out ProductStatus status,
+        out int width,
+        out int height,
+        out int depth,
+        out string size,
+        out ProductColor color,
+        out string? description,
+        out decimal price,
+        out long categoryId,
+        out long supplierId,
+        out long brandId,
+        out IList<ProductImage>? images
+    ) =>
+        (
+            id,
+            name,
+            availableStock,
+            restockThreshold,
+            maxStockThreshold,
+            status,
+            width,
+            height,
+            depth,
+            size,
+            color,
+            description,
+            price,
+            categoryId,
+            supplierId,
+            brandId,
+            images
+        ) = (
+            Id,
+            Name,
+            Stock.Available,
+            Stock.RestockThreshold,
+            Stock.MaxStockThreshold,
+            ProductStatus,
+            Dimensions.Width,
+            Dimensions.Height,
+            Dimensions.Depth,
+            Size,
+            Color,
+            Description,
+            Price.Value,
+            CategoryId,
+            SupplierId,
+            BrandId,
+            Images.ToImmutableList()
+        );
 }

@@ -1,10 +1,12 @@
-using Ardalis.GuardClauses;
-using BuildingBlocks.Core.Exception;
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Catalogs.Products.Exceptions.Domain;
 
 namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 
 // https://learn.microsoft.com/en-us/ef/core/modeling/constructors
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
 public record Stock
 {
     // EF
@@ -28,11 +30,15 @@ public record Stock
     public static Stock Of(int available, int restockThreshold, int maxStockThreshold)
     {
         // validations should be placed here instead of constructor
+        available.NotBeNegativeOrZero();
+        restockThreshold.NotBeNegativeOrZero();
+        maxStockThreshold.NotBeNegativeOrZero();
+
         var stock = new Stock
         {
-            Available = Guard.Against.Negative(available),
-            RestockThreshold = Guard.Against.NegativeOrZero(restockThreshold),
-            MaxStockThreshold = Guard.Against.NegativeOrZero(maxStockThreshold),
+            Available = available,
+            RestockThreshold = restockThreshold,
+            MaxStockThreshold = maxStockThreshold,
         };
 
         if (stock.Available > stock.MaxStockThreshold)
@@ -40,4 +46,16 @@ public record Stock
 
         return stock;
     }
+
+    public static Stock Of([NotNull] int? available, [NotNull] int? restockThreshold, [NotNull] int? maxStockThreshold)
+    {
+        available.NotBeNull();
+        restockThreshold.NotBeNull();
+        maxStockThreshold.NotBeNull();
+
+        return Of(available.Value, restockThreshold.Value, maxStockThreshold.Value);
+    }
+
+    public void Deconstruct(out int available, out int restockThreshold, out int maxStockThreshold) =>
+        (available, restockThreshold, maxStockThreshold) = (Available, RestockThreshold, MaxStockThreshold);
 }

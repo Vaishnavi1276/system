@@ -13,6 +13,7 @@ using ECommerce.Services.Customers.TestShared.Fakes.RestockSubscriptions.Entitie
 using ECommerce.Services.Customers.TestShared.Fakes.Shared.Dtos;
 using ECommerce.Services.Customers.UnitTests.Common;
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
@@ -122,7 +123,7 @@ public class CreateRestockSubscriptionTests : CustomerServiceUnitTestBase
         await act.Should()
             .ThrowAsync<HttpResponseException>()
             .WithMessage("*")
-            .Where(e => e.StatusCode == HttpStatusCode.NotFound);
+            .Where(e => e.StatusCode == StatusCodes.Status404NotFound);
     }
 
     [CategoryTrait(TestCategory.Unit)]

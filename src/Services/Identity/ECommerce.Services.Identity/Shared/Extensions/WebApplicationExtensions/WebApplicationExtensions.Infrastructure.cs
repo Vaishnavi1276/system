@@ -1,10 +1,10 @@
-using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.HealthCheck;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Messaging.Persistence.Postgres.Extensions;
 using BuildingBlocks.Web.Extensions;
-using Hellang.Middleware.ProblemDetails;
+using BuildingBlocks.Web.Middlewares.CaptureExceptionMiddleware;
+using BuildingBlocks.Web.Middlewares.RequestLogContextMiddleware;
 using Serilog;
 
 namespace ECommerce.Services.Identity.Shared.Extensions.WebApplicationExtensions;
@@ -13,6 +13,22 @@ public static partial class WebApplicationExtensions
 {
     public static async Task UseInfrastructure(this WebApplication app)
     {
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/error-handling
+        // Does nothing if a response body has already been provided. when our next `DeveloperExceptionMiddleware` is written response for exception (in dev mode) when we back to `ExceptionHandlerMiddlewareImpl` because `context.Response.HasStarted` it doesn't do anything
+        // By default `ExceptionHandlerMiddlewareImpl` middleware register original exceptions with `IExceptionHandlerFeature` feature, we don't have this in `DeveloperExceptionPageMiddleware` and we should handle it with a middleware like `CaptureExceptionMiddleware`
+        // Just for handling exceptions in production mode
+        app.UseExceptionHandler();
+
+        // Configure the HTTP request pipeline.
+        if (app.Environment.IsDevelopment())
+        {
+            // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/handle-errrors
+            app.UseDeveloperExceptionPage();
+
+            // https://github.com/dotnet/aspnetcore/issues/47651
+            app.UseCaptureException();
+        }
+
         // this middleware should be first middleware
         // request logging just log in information level and above as default
         app.UseSerilogRequestLogging(opts =>
@@ -23,9 +39,6 @@ public static partial class WebApplicationExtensions
             // https://andrewlock.net/using-serilog-aspnetcore-in-asp-net-core-3-excluding-health-check-endpoints-from-serilog-request-logging/#customising-the-log-level-used-for-serilog-request-logs
             opts.GetLevel = LogEnricher.GetLogLevel;
         });
-
-        // orders for middlewares is important and problemDetails middleware should be placed on top
-        app.UseProblemDetails();
 
         app.UseRequestLogContextMiddleware();
 

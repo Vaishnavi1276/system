@@ -1,4 +1,3 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
 using BuildingBlocks.Core.Domain;
 using ECommerce.Services.Catalogs.Products.ValueObjects;
@@ -11,8 +10,6 @@ public class ProductImage : Entity<EntityId>
     {
         SetImageUrl(imageUrl);
         SetIsMain(isMain);
-        Id = Guard.Against.Null(id, nameof(id));
-        ProductId = Guard.Against.Null(productId, nameof(productId));
     }
 
     // Just for EF
@@ -20,8 +17,8 @@ public class ProductImage : Entity<EntityId>
 
     public string ImageUrl { get; private set; } = default!;
     public bool IsMain { get; private set; }
-    public Product Product { get; private set; } = null!;
-    public ProductId ProductId { get; private set; }
+    public Product Product { get; private set; } = default!;
+    public ProductId ProductId { get; private set; } = default!;
 
     public void SetIsMain(bool isMain) => IsMain = isMain;
 

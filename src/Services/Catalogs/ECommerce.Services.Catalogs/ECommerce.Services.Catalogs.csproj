@@ -40,6 +40,9 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="ECommerce.Services.Catalogs.IntegrationTests" />
+    <InternalsVisibleTo Include="ECommerce.Services.Catalogs.EndToEndTests" />
+    <InternalsVisibleTo Include="ECommerce.Services.Catalogs.TestShared" />
+    <InternalsVisibleTo Include="ECommerce.Services.Catalogs.UnitTests" />
   </ItemGroup>
 
 </Project>

@@ -1,29 +1,81 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Commands;
-using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Shared.Contracts;
-using ECommerce.Services.Customers.Shared.Data;
+using FluentValidation;
 
 namespace ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.Read.Mongo;
 
-public record UpdateCustomerRead : InternalCommand
+internal record UpdateCustomerRead(
+    Guid Id,
+    long CustomerId,
+    Guid IdentityId,
+    string Email,
+    string FirstName,
+    string LastName,
+    string PhoneNumber,
+    DateTime? BirthDate = null,
+    string? Country = null,
+    string? City = null,
+    string? DetailAddress = null,
+    string? Nationality = null
+) : InternalCommand
 {
-    public new Guid Id { get; init; }
-    public long CustomerId { get; init; }
-    public Guid IdentityId { get; init; }
-    public string Email { get; init; } = null!;
-    public string FirstName { get; init; } = null!;
-    public string LastName { get; init; } = null!;
-    public string FullName { get; init; } = null!;
-    public string? Country { get; init; }
-    public string? City { get; init; }
-    public string? DetailAddress { get; init; }
-    public string? Nationality { get; init; }
-    public DateTime? BirthDate { get; init; }
-    public string? PhoneNumber { get; init; }
+    public string FullName => $"{FirstName} {LastName}";
+
+    public static UpdateCustomerRead Of(
+        Guid id,
+        long customerId,
+        Guid identityId,
+        string? email,
+        string? firstName,
+        string? lastName,
+        string? phoneNumber,
+        DateTime? birthDate = null,
+        string? country = null,
+        string? city = null,
+        string? detailAddress = null,
+        string? nationality = null
+    )
+    {
+        return new UpdateCustomerReadValidator().HandleValidation(
+            new UpdateCustomerRead(
+                id,
+                customerId,
+                identityId,
+                email!,
+                firstName!,
+                lastName!,
+                phoneNumber!,
+                birthDate,
+                country,
+                city,
+                detailAddress,
+                nationality
+            )
+        );
+    }
+}
+
+internal class UpdateCustomerReadValidator : AbstractValidator<UpdateCustomerRead>
+{
+    public UpdateCustomerReadValidator()
+    {
+        RuleFor(x => x.Email).NotNull().NotEmpty().EmailAddress().WithMessage("Email address is invalid.");
+        RuleFor(x => x.Id).NotEmpty();
+        RuleFor(x => x.FirstName).NotEmpty();
+        RuleFor(x => x.LastName).NotEmpty();
+        RuleFor(p => p.PhoneNumber)
+            .NotEmpty()
+            .WithMessage("Phone Number is required.")
+            .MinimumLength(7)
+            .WithMessage("PhoneNumber must not be less than 7 characters.")
+            .MaximumLength(15)
+            .WithMessage("PhoneNumber must not exceed 15 characters.");
+    }
 }
 
 internal class UpdateCustomerReadHandler : ICommandHandler<UpdateCustomerRead>
@@ -41,7 +93,7 @@ internal class UpdateCustomerReadHandler : ICommandHandler<UpdateCustomerRead>
 
     public async Task<Unit> Handle(UpdateCustomerRead command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var existingCustomer = await _customersReadUnitOfWork.CustomersRepository.FindOneAsync(
             x => x.CustomerId == command.CustomerId,

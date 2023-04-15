@@ -1,15 +1,16 @@
-using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace BuildingBlocks.Core.Exception.Types;
 
 public class CustomException : System.Exception
 {
-    public CustomException(
+    protected CustomException(
         string message,
-        HttpStatusCode statusCode = HttpStatusCode.InternalServerError,
+        int statusCode = StatusCodes.Status500InternalServerError,
+        System.Exception? innerException = null,
         params string[] errors
     )
-        : base(message)
+        : base(message, innerException)
     {
         ErrorMessages = errors;
         StatusCode = statusCode;
@@ -17,5 +18,5 @@ public class CustomException : System.Exception
 
     public IEnumerable<string> ErrorMessages { get; protected set; }
 
-    public HttpStatusCode StatusCode { get; protected set; }
+    public int StatusCode { get; protected set; }
 }

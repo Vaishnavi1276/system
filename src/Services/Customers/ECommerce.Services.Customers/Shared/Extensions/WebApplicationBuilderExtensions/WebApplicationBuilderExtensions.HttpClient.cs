@@ -1,4 +1,4 @@
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using BuildingBlocks.Resiliency;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
@@ -20,7 +20,7 @@ public static partial class WebApplicationBuilderExtensions
             {
                 var catalogApiOptions = sp.GetRequiredService<IOptions<CatalogsApiClientOptions>>();
                 var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>();
-                Guard.Against.Null(catalogApiOptions.Value);
+                catalogApiOptions.Value.NotBeNull();
 
                 var baseAddress = catalogApiOptions.Value.BaseApiAddress;
                 client.BaseAddress = new Uri(baseAddress);
@@ -33,7 +33,7 @@ public static partial class WebApplicationBuilderExtensions
             {
                 var identityApiOptions = sp.GetRequiredService<IOptions<IdentityApiClientOptions>>();
                 var policyOptions = sp.GetRequiredService<IOptions<PolicyOptions>>();
-                Guard.Against.Null(identityApiOptions.Value);
+                identityApiOptions.Value.NotBeNull();
 
                 var baseAddress = identityApiOptions.Value.BaseApiAddress;
                 client.BaseAddress = new Uri(baseAddress);

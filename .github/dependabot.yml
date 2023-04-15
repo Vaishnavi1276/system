@@ -4,7 +4,7 @@ updates:
   - package-ecosystem: nuget
     directory: '/'
     schedule:
-      interval: daily
+      interval: weekly
     reviewers:
       - mehdihadeli
     assignees:

@@ -1,10 +1,9 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
+using BuildingBlocks.Core.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
-using Serilog;
 
 namespace BuildingBlocks.Core.CQRS.Events;
 
@@ -60,7 +59,7 @@ public class EventProcessor : IEventProcessor
     public async Task DispatchAsync<TEvent>(TEvent @event, CancellationToken cancellationToken = default)
         where TEvent : IEvent
     {
-        Guard.Against.Null(@event, nameof(@event));
+        @event.NotBeNull();
 
         if (@event is IIntegrationEvent integrationEvent)
         {

@@ -1,12 +1,9 @@
-using System.Net;
+using Microsoft.AspNetCore.Http;
 
 namespace BuildingBlocks.Core.Exception.Types;
 
 public class NotFoundException : CustomException
 {
-    public NotFoundException(string message)
-        : base(message)
-    {
-        StatusCode = HttpStatusCode.NotFound;
-    }
+    public NotFoundException(string message, System.Exception? innerException = null)
+        : base(message, StatusCodes.Status404NotFound, innerException) { }
 }

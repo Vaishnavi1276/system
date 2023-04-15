@@ -18,6 +18,7 @@ using BuildingBlocks.Security.Extensions;
 using BuildingBlocks.Security.Jwt;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Validation;
+using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Orders.Customers;
 using Serilog.Events;
@@ -48,7 +49,7 @@ internal static partial class WebApplicationBuilderExtensions
 
         builder.AddCompression();
 
-        builder.AddCustomProblemDetails();
+        builder.AddAppProblemDetails();
 
         builder.AddCustomSerilog();
 

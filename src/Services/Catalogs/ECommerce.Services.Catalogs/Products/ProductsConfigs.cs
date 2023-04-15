@@ -34,22 +34,22 @@ internal class ProductsConfigs : IModuleConfiguration
     {
         // https://github.com/dotnet/aspnet-api-versioning/commit/b789e7e980e83a7d2f82ce3b75235dee5e0724b4
         // changed from MapApiGroup to NewVersionedApi in v7.0.0
-        var productsVersionGroup = endpoints.NewVersionedApi(Tag).WithTags(Tag);
+        var products = endpoints.NewVersionedApi(Tag);
 
         // create a new sub group for each version
-        var productsGroupV1 = productsVersionGroup.MapGroup(ProductsPrefixUri).HasApiVersion(1.0);
+        var productsV1 = products.MapGroup(ProductsPrefixUri).HasDeprecatedApiVersion(0.9).HasApiVersion(1.0);
 
         // create a new sub group for each version
-        var productsGroupV2 = productsVersionGroup.MapGroup(ProductsPrefixUri).HasApiVersion(2.0);
+        var productsV2 = products.MapGroup(ProductsPrefixUri).HasApiVersion(2.0);
 
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis?view=aspnetcore-7.0#route-groups
         // https://github.com/dotnet/aspnet-api-versioning/blob/main/examples/AspNetCore/WebApi/MinimalOpenApiExample/Program.cs
-        productsGroupV1.MapCreateProductsEndpoint();
-        productsGroupV1.MapUpdateProductEndpoint();
-        productsGroupV1.MapDebitProductStockEndpoint();
-        productsGroupV1.MapReplenishProductStockEndpoint();
-        productsGroupV1.MapGetProductByIdEndpoint();
-        productsGroupV1.MapGetProductsViewEndpoint();
+        productsV1.MapCreateProductsEndpoint();
+        productsV1.MapUpdateProductEndpoint();
+        productsV1.MapDebitProductStockEndpoint();
+        productsV1.MapReplenishProductStockEndpoint();
+        productsV1.MapGetProductByIdEndpoint();
+        productsV1.MapGetProductsViewEndpoint();
 
         return endpoints;
     }

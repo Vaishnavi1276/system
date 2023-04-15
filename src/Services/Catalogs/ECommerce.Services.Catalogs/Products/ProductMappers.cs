@@ -1,12 +1,12 @@
 using AutoMapper;
-using ECommerce.Services.Catalogs.Products.Dtos;
 using ECommerce.Services.Catalogs.Products.Dtos.v1;
-using ECommerce.Services.Catalogs.Products.Features.CreatingProduct;
 using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1;
-using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Requests;
-using ECommerce.Services.Catalogs.Products.Features.GettingProductsView;
+using ECommerce.Services.Catalogs.Products.Features.GettingProductById.v1;
+using ECommerce.Services.Catalogs.Products.Features.GettingProducts.v1;
 using ECommerce.Services.Catalogs.Products.Features.GettingProductsView.v1;
+using ECommerce.Services.Catalogs.Products.Features.UpdatingProduct.v1;
 using ECommerce.Services.Catalogs.Products.Models;
+using ECommerce.Services.Catalogs.Products.Models.Read;
 
 namespace ECommerce.Services.Catalogs.Products;
 
@@ -14,7 +14,7 @@ public class ProductMappers : Profile
 {
     public ProductMappers()
     {
-        CreateMap<Product, ProductDto>()
+        CreateMap<Product, ProductReadModel>()
             .ForMember(x => x.Depth, opt => opt.MapFrom(x => x.Dimensions.Depth))
             .ForMember(x => x.Height, opt => opt.MapFrom(x => x.Dimensions.Height))
             .ForMember(x => x.Width, opt => opt.MapFrom(x => x.Dimensions.Width))
@@ -36,35 +36,26 @@ public class ProductMappers : Profile
             .ForMember(x => x.Description, opt => opt.MapFrom(x => x.Description))
             .ForMember(x => x.Images, opt => opt.MapFrom(x => x.Images));
 
-        CreateMap<ProductImage, ProductImageDto>()
+        CreateMap<ProductImage, ProductImageReadModel>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id.Value))
             .ForMember(x => x.ProductId, opt => opt.MapFrom(x => x.ProductId.Value));
 
+        CreateMap<ProductImageReadModel, ProductImageDto>();
+
+        CreateMap<ProductReadModel, ProductDto>();
+
         CreateMap<ProductView, ProductViewDto>();
+
+        CreateMap<GetProductsRequestParameters, GetProducts>();
+
+        CreateMap<GetProductsViewRequestParameters, GetProductsView>();
+
+        CreateMap<GetProductByIdRequestParameters, GetProductById>();
 
         CreateMap<CreateProduct, Product>();
 
-        CreateMap<CreateProductRequest, CreateProduct>()
-            .ConstructUsing(
-                req =>
-                    new CreateProduct(
-                        req.Name,
-                        req.Price,
-                        req.Stock,
-                        req.RestockThreshold,
-                        req.MaxStockThreshold,
-                        req.Status,
-                        req.Width,
-                        req.Height,
-                        req.Depth,
-                        req.Size,
-                        req.Color,
-                        req.CategoryId,
-                        req.SupplierId,
-                        req.BrandId,
-                        req.Description,
-                        req.Images
-                    )
-            );
+        CreateMap<CreateProductRequest, CreateProduct>();
+
+        CreateMap<UpdateProductRequest, UpdateProduct>();
     }
 }

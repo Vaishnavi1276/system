@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Domain;
 
 // ReSharper disable AutoPropertyCanBeMadeGetOnly.Local
@@ -19,9 +21,11 @@ public record Nationality
     // in the constructor it should not be read only without set (for bypassing calculate fields)- https://learn.microsoft.com/en-us/ef/core/modeling/constructors#read-only-properties
     public string Value { get; private set; } = default!;
 
-    public static Nationality Of(string value)
+    public static Nationality Of([NotNull] string? value)
     {
-        if (string.IsNullOrWhiteSpace(value) || value.Length != 2)
+        value.NotBeNullOrWhiteSpace();
+
+        if (value.Length != 2)
         {
             throw new InvalidNationalityException(value);
         }

@@ -1,4 +1,6 @@
+using System.Diagnostics.CodeAnalysis;
 using BuildingBlocks.Core.Domain;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Domain;
 
 namespace ECommerce.Services.Customers.Customers.ValueObjects;
@@ -13,20 +15,25 @@ public class CustomerName : ValueObject
     public string LastName { get; private set; } = default!;
     public string FullName => FirstName + " " + LastName;
 
-    public static CustomerName Of(string firstName, string lastName)
+    public static CustomerName Of([NotNull] string? firstName, [NotNull] string? lastName)
     {
-        if (string.IsNullOrWhiteSpace(firstName) || firstName.Length is > 100 or < 3)
+        firstName.NotBeNullOrWhiteSpace();
+        lastName.NotBeNullOrWhiteSpace();
+
+        if (firstName.Length is > 100 or < 3)
         {
             throw new InvalidNameException(firstName);
         }
 
-        if (string.IsNullOrWhiteSpace(lastName) || lastName.Length is > 100 or < 3)
+        if (lastName.Length is > 100 or < 3)
         {
             throw new InvalidNameException(lastName);
         }
 
         return new CustomerName { FirstName = firstName, LastName = lastName };
     }
+
+    public void Deconstruct(out string firstName, out string lastName) => (firstName, lastName) = (FirstName, LastName);
 
     // will call for equality(==) checks.
     protected override IEnumerable<object> GetEqualityComponents()

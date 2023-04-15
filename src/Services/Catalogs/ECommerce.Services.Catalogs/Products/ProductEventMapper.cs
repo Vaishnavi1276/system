@@ -1,50 +1,93 @@
 using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Domain;
 using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Notification;
 using ECommerce.Services.Catalogs.Products.Features.DebitingProductStock.v1.Events.Domain;
 using ECommerce.Services.Catalogs.Products.Features.ReplenishingProductStock.v1.Events.Domain;
+using ECommerce.Services.Catalogs.Products.Features.UpdatingProduct.v1;
+using ECommerce.Services.Catalogs.Shared.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Catalogs.Products;
 
 public class ProductEventMapper : IEventMapper
 {
-    public ProductEventMapper() { }
+    private readonly CatalogDbContext _catalogDbContext;
+
+    public ProductEventMapper(CatalogDbContext catalogDbContext)
+    {
+        _catalogDbContext = catalogDbContext;
+    }
 
     public IIntegrationEvent? MapToIntegrationEvent(IDomainEvent domainEvent)
     {
-        return domainEvent switch
+        switch (domainEvent)
         {
-            ProductCreated e
-                => new Services.Shared.Catalogs.Products.Events.v1.Integration.ProductCreatedV1(
-                    e.Product.Id,
-                    e.Product.Name,
-                    e.Product.Category.Id,
-                    e.Product.Category.Name,
-                    e.Product.Stock.Available
-                ),
-            ProductStockDebited e
-                => new Services.Shared.Catalogs.Products.Events.v1.Integration.ProductStockDebitedV1(
-                    e.ProductId,
-                    e.NewStock.Available,
-                    e.DebitedQuantity
-                ),
-            ProductStockReplenished e
-                => new Services.Shared.Catalogs.Products.Events.v1.Integration.ProductStockReplenishedV1(
-                    e.ProductId,
-                    e.NewStock.Available,
-                    e.ReplenishedQuantity
-                ),
-            _ => null
-        };
+            // Materialize domain event to integration event
+            case ProductCreated productCreated:
+            {
+                var product = _catalogDbContext.Products
+                    .Include(x => x.Brand)
+                    .Include(x => x.Category)
+                    .Include(x => x.Supplier)
+                    .FirstOrDefault(x => x.Id == productCreated.Id);
+
+                product.NotBeNull();
+                product.Category.NotBeNull();
+
+                return Services.Shared.Catalogs.Products.Events.v1.Integration.ProductCreatedV1.Of(
+                    productCreated.Id,
+                    productCreated.Name,
+                    productCreated.CategoryId,
+                    product.Category.Name,
+                    productCreated.AvailableStock
+                );
+            }
+
+            case ProductUpdated productUpdated:
+            {
+                var product = _catalogDbContext.Products
+                    .Include(x => x.Brand)
+                    .Include(x => x.Category)
+                    .Include(x => x.Supplier)
+                    .FirstOrDefault(x => x.Id == productUpdated.Id);
+
+                product.NotBeNull();
+                product.Category.NotBeNull();
+
+                return Services.Shared.Catalogs.Products.Events.v1.Integration.ProductUpdatedV1.Of(
+                    productUpdated.Id,
+                    productUpdated.Name,
+                    productUpdated.CategoryId,
+                    product.Category.Name,
+                    productUpdated.AvailableStock
+                );
+            }
+
+            case ProductStockDebited productStockDebited:
+                return Services.Shared.Catalogs.Products.Events.v1.Integration.ProductStockDebitedV1.Of(
+                    productStockDebited.ProductId,
+                    productStockDebited.AvailableStock,
+                    productStockDebited.DebitQuantity
+                );
+            case ProductStockReplenished productStockReplenished:
+                return Services.Shared.Catalogs.Products.Events.v1.Integration.ProductStockReplenishedV1.Of(
+                    productStockReplenished.ProductId,
+                    productStockReplenished.AvailableStock,
+                    productStockReplenished.ReplenishedQuantity
+                );
+            default:
+                return null;
+        }
     }
 
     public IDomainNotificationEvent? MapToDomainNotificationEvent(IDomainEvent domainEvent)
     {
         return domainEvent switch
         {
-            ProductCreated e => new ProductCreatedNotification(e),
+            ProductCreated productCreated => new ProductCreatedNotification(productCreated),
             _ => null
         };
     }

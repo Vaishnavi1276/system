@@ -1,7 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using System.Text;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Exception.Types;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Web.Extensions;
@@ -9,6 +7,7 @@ using BuildingBlocks.Security.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
@@ -32,7 +31,7 @@ public static class Extensions
         AddJwtServices(services, configuration, optionConfigurator);
 
         var jwtOptions = configuration.BindOptions<JwtOptions>(nameof(JwtOptions));
-        Guard.Against.Null(jwtOptions, nameof(jwtOptions));
+        jwtOptions.NotBeNull();
 
         // https://docs.microsoft.com/en-us/aspnet/core/security/authentication
         // https://learn.microsoft.com/en-us/aspnet/core/security/authorization/limitingidentitybyscheme?view=aspnetcore-6.0#use-multiple-authentication-schemes
@@ -73,7 +72,7 @@ public static class Extensions
 
                         throw new IdentityException(
                             context.Exception.Message,
-                            statusCode: HttpStatusCode.InternalServerError
+                            statusCode: StatusCodes.Status500InternalServerError
                         );
                     },
                     OnChallenge = context =>
@@ -100,7 +99,7 @@ public static class Extensions
     )
     {
         var jwtOptions = configuration.BindOptions<JwtOptions>(nameof(JwtOptions));
-        Guard.Against.Null(jwtOptions, nameof(jwtOptions));
+        jwtOptions.NotBeNull();
 
         optionConfigurator?.Invoke(jwtOptions);
 
@@ -178,7 +177,7 @@ public static class Extensions
     public static void AddExternalLogins(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtOptions = configuration.BindOptions<JwtOptions>(nameof(JwtOptions));
-        Guard.Against.Null(jwtOptions, nameof(jwtOptions));
+        jwtOptions.NotBeNull();
 
         if (jwtOptions.GoogleLoginConfigs is { })
         {

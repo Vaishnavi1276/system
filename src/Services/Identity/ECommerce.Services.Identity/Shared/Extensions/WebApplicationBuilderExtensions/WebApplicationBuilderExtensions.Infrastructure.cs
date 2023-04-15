@@ -1,6 +1,5 @@
 using BuildingBlocks.Caching;
 using BuildingBlocks.Caching.Behaviours;
-using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Registrations;
 using BuildingBlocks.Core.Web.Extensions;
@@ -15,9 +14,9 @@ using BuildingBlocks.Security.Extensions;
 using BuildingBlocks.Security.Jwt;
 using BuildingBlocks.Swagger;
 using BuildingBlocks.Validation;
+using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Identity.Users;
-using Serilog.Events;
 
 namespace ECommerce.Services.Identity.Shared.Extensions.WebApplicationBuilderExtensions;
 
@@ -45,7 +44,7 @@ public static partial class WebApplicationBuilderExtensions
 
         builder.AddCompression();
 
-        builder.AddCustomProblemDetails();
+        builder.AddAppProblemDetails();
 
         builder.AddCustomSerilog();
 

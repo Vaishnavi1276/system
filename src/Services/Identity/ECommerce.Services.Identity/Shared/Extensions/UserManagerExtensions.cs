@@ -1,4 +1,5 @@
 using AutoMapper;
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
 using BuildingBlocks.Core.Extensions;

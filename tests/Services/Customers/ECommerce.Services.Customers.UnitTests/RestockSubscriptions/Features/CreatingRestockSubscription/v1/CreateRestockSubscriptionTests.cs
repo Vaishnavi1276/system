@@ -47,7 +47,7 @@ public class CreateRestockSubscriptionTests : CustomerServiceUnitTestBase
         //https://nsubstitute.github.io/help/argument-matchers/
         _catalogApiClient
             .GetProductByIdAsync(Arg.Is<long>(x => x == fakeProductDto!.Id), Arg.Any<CancellationToken>())
-            .Returns(new GetProductByIdResponse(fakeProductDto));
+            .Returns(new GetProductByIdOutput(fakeProductDto));
 
         var command = new CreateRestockSubscription(customer.Id, fakeProductDto.Id, customer.Email);
         var handler = new CreateRestockSubscriptionHandler(CustomersDbContext, _catalogApiClient, Mapper, _logger);
@@ -140,7 +140,7 @@ public class CreateRestockSubscriptionTests : CustomerServiceUnitTestBase
         //https://nsubstitute.github.io/help/argument-matchers/
         _catalogApiClient
             .GetProductByIdAsync(Arg.Is<long>(x => x == fakeProductDto!.Id), Arg.Any<CancellationToken>())
-            .Returns(new GetProductByIdResponse(fakeProductDto));
+            .Returns(new GetProductByIdOutput(fakeProductDto));
 
         // Arrange
         var command = new CreateRestockSubscription(customer.Id, ProductId.Of(1), customer.Email.Value);
@@ -171,7 +171,7 @@ public class CreateRestockSubscriptionTests : CustomerServiceUnitTestBase
         //https://nsubstitute.github.io/help/argument-matchers/
         _catalogApiClient
             .GetProductByIdAsync(Arg.Is<long>(x => x == fakeProductDto!.Id), Arg.Any<CancellationToken>())
-            .Returns(new GetProductByIdResponse(fakeProductDto));
+            .Returns(new GetProductByIdOutput(fakeProductDto));
 
         var fakeRestockSubscription = new FakeRestockSubscriptions()
             .RuleFor(x => x.Email, customer.Email)

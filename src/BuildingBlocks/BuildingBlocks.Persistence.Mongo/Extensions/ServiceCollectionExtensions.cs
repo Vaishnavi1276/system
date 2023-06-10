@@ -1,7 +1,7 @@
 using System.Reflection;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.Mongo;
-using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Conventions;

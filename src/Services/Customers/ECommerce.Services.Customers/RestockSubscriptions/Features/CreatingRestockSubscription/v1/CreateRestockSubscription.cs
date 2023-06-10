@@ -1,20 +1,17 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Domain.ValueObjects;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.ValueObjects;
 using ECommerce.Services.Customers.Products;
-using ECommerce.Services.Customers.Products.Exceptions;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1.Exceptions;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Write;
 using ECommerce.Services.Customers.RestockSubscriptions.ValueObjects;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Data;
-using ECommerce.Services.Customers.Shared.Extensions;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
@@ -64,15 +61,19 @@ internal class CreateRestockSubscriptionHandler
         CancellationToken cancellationToken
     )
     {
-        Guard.Against.Null(request, nameof(request));
+        request.NotBeNull();
 
         var existsCustomer = await _customersDbContext.Customers.AnyAsync(
             x => x.Id == CustomerId.Of(request.CustomerId),
             cancellationToken: cancellationToken
         );
-        Guard.Against.NotExists(existsCustomer, new CustomerNotFoundException(request.CustomerId));
 
-        var product = (await _catalogApiClient.GetProductByIdAsync(request.ProductId, cancellationToken))?.Product;
+        if (!existsCustomer)
+        {
+            throw new CustomerNotFoundException(request.CustomerId);
+        }
+
+        var product = await _catalogApiClient.GetProductByIdAsync(request.ProductId, cancellationToken);
 
         if (product!.AvailableStock > 0)
             throw new ProductHasStockException(product.Id, product.AvailableStock, product.Name);

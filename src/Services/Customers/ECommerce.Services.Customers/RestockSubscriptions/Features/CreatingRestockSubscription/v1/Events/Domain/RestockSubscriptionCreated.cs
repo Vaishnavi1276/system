@@ -1,8 +1,7 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
-using BuildingBlocks.Core.CQRS.Events.Internal;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Write;
 using ECommerce.Services.Customers.Shared.Data;
@@ -44,11 +43,14 @@ internal class RestockSubscriptionCreatedHandler : IDomainEventHandler<RestockSu
 
     public async Task Handle(RestockSubscriptionCreated notification, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(notification, nameof(notification));
+        notification.NotBeNull();
 
         var customer = await _customersDbContext.FindCustomerByIdAsync(notification.RestockSubscription.CustomerId);
 
-        Guard.Against.NotFound(customer, new CustomerNotFoundException(notification.RestockSubscription.CustomerId));
+        if (customer is null)
+        {
+            throw new CustomerNotFoundException(notification.RestockSubscription.CustomerId);
+        }
 
         var mongoReadCommand = notification.ToCreateMongoRestockSubscriptionReadModels(
             customer!.Id,

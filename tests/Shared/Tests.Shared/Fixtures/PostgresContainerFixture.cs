@@ -1,4 +1,4 @@
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using Dapper;
 using Npgsql;
 using Respawn;
@@ -20,12 +20,10 @@ public class PostgresContainerFixture : IAsyncLifetime
     {
         _messageSink = messageSink;
         PostgresContainerOptions = ConfigurationHelper.BindOptions<PostgresContainerOptions>();
-        Guard.Against.Null(PostgresContainerOptions);
+        PostgresContainerOptions.NotBeNull();
 
         var postgresContainerBuilder = new PostgreSqlBuilder()
             .WithDatabase(PostgresContainerOptions.DatabaseName)
-            .WithUsername(PostgresContainerOptions.UserName)
-            .WithPassword(PostgresContainerOptions.Password)
             .WithCleanUp(true)
             .WithName(PostgresContainerOptions.Name)
             .WithImage(PostgresContainerOptions.ImageName);
@@ -105,6 +103,4 @@ public sealed class PostgresContainerOptions
     public string Name { get; set; } = "postgres_" + Guid.NewGuid();
     public string ImageName { get; set; } = "postgres:latest";
     public string DatabaseName { get; set; } = "test_db";
-    public string UserName { get; set; } = "postgres";
-    public string Password { get; set; } = "postgres";
 }

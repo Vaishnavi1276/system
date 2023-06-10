@@ -1,4 +1,5 @@
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Paging;
 
 namespace ECommerce.Services.Identity.Users.Features.GettingUsers.v1;
 

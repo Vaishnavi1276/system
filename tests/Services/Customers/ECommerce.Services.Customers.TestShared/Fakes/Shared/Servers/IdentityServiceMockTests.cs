@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Customers.Shared.Clients.Identity;
 using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Events;
@@ -41,7 +41,7 @@ public class IdentityServiceMockTests
         var httpResponse = await client.GetAsync(endpoint);
 
         await httpResponse.EnsureSuccessStatusCodeWithDetailAsync();
-        var data = await httpResponse.Content.ReadFromJsonAsync<GetUserByEmailResponse>();
+        var data = await httpResponse.Content.ReadFromJsonAsync<GetUserByEmailOutput>();
         data.Should().NotBeNull();
         data!.UserIdentity.Should().BeEquivalentTo(fakeIdentityUser, options => options.ExcludingMissingMembers());
     }
@@ -58,7 +58,7 @@ public class IdentityServiceMockTests
         var res = await client.GetAsync(endpoint);
         res.EnsureSuccessStatusCode();
 
-        var g = await res.Content.ReadFromJsonAsync<GetUserByEmailResponse>();
+        var g = await res.Content.ReadFromJsonAsync<GetUserByEmailOutput>();
         g.Should().NotBeNull();
         g!.UserIdentity.Should().BeEquivalentTo(fakeIdentityUser, options => options.ExcludingMissingMembers());
     }

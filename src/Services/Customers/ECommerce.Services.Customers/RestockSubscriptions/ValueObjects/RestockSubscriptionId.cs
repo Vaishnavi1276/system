@@ -1,5 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.ValueObjects;
 
@@ -12,5 +12,5 @@ public record RestockSubscriptionId : AggregateId<long>
     public static implicit operator long(RestockSubscriptionId id) => id.Value;
 
     // validations should be placed here instead of constructor
-    public static RestockSubscriptionId Of(long id) => new(Guard.Against.NegativeOrZero(id));
+    public static RestockSubscriptionId Of(long id) => new(id.NotBeNegativeOrZero());
 }

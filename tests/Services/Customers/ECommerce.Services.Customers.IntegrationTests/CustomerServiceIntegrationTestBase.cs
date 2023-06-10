@@ -13,11 +13,15 @@ namespace ECommerce.Services.Customers.IntegrationTests;
 // note: each class could have only one collection
 [Collection(IntegrationTestCollection.Name)]
 public class CustomerServiceIntegrationTestBase
-    : IntegrationTestBase<Api.Program, CustomersDbContext, CustomersReadDbContext>
+    : IntegrationTestBase<Api.CustomersApiMetadata, CustomersDbContext, CustomersReadDbContext>
 {
     // We don't need to inject `CustomersServiceMockServersFixture` class fixture in the constructor because it initialized by `collection fixture` and its static properties are accessible in the codes
     public CustomerServiceIntegrationTestBase(
-        SharedFixtureWithEfCoreAndMongo<Api.Program, CustomersDbContext, CustomersReadDbContext> sharedFixture,
+        SharedFixtureWithEfCoreAndMongo<
+            Api.CustomersApiMetadata,
+            CustomersDbContext,
+            CustomersReadDbContext
+        > sharedFixture,
         ITestOutputHelper outputHelper
     )
         : base(sharedFixture, outputHelper)

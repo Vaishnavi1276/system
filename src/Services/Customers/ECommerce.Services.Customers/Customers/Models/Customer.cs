@@ -33,7 +33,7 @@ public class Customer : Aggregate<CustomerId>
         Nationality? nationality = null
     )
     {
-        // input validation will do in the command and our value objects, here we just do business validation
+        // input validation will do in the `command` and our `value objects` before arriving to entity and makes or domain cleaner, here we just do business validation
         var customer = new Customer
         {
             Id = id,

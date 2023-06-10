@@ -1,14 +1,14 @@
 using System.Reflection;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Abstractions.CQRS.Events;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
 using BuildingBlocks.Abstractions.CQRS.Queries;
+using BuildingBlocks.Abstractions.Domain.Events;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Scheduler;
 using BuildingBlocks.Core.CQRS.Commands;
-using BuildingBlocks.Core.CQRS.Events;
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Domain.Events;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Core.Scheduler;
-using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using MediatR;
 
 namespace BuildingBlocks.Core.Registrations;
@@ -49,12 +49,7 @@ public static class CQRSRegistrationRegistrationExtensions
         services
             .Add<ICommandProcessor, CommandProcessor>(serviceLifetime)
             .Add<IQueryProcessor, QueryProcessor>(serviceLifetime)
-            .Add<IEventProcessor, EventProcessor>(serviceLifetime)
-            .Add<ICommandScheduler, NullCommandScheduler>(serviceLifetime)
-            .Add<IDomainEventPublisher, DomainEventPublisher>(serviceLifetime)
-            .Add<IDomainNotificationEventPublisher, DomainNotificationEventPublisher>(serviceLifetime);
-
-        services.AddScoped<IDomainEventsAccessor, NullDomainEventsAccessor>();
+            .Add<ICommandScheduler, NullCommandScheduler>(serviceLifetime);
 
         return services;
     }

@@ -1,6 +1,7 @@
 using Bogus;
 using BuildingBlocks.Abstractions.Persistence;
 using ECommerce.Services.Catalogs.Brands;
+using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Categories;
 using ECommerce.Services.Catalogs.Products.Models;
 using ECommerce.Services.Catalogs.Products.ValueObjects;

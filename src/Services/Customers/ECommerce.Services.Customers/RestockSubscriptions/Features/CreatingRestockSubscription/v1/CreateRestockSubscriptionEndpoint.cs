@@ -1,8 +1,7 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using Hellang.Middleware.ProblemDetails;
+using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1;
 
@@ -32,7 +31,7 @@ public class CreateRestockSubscriptionEndpoint : ICommandMinimalEndpoint<CreateR
         CancellationToken cancellationToken
     )
     {
-        Guard.Against.Null(request, nameof(request));
+        request.NotBeNull();
 
         var command = new CreateRestockSubscription(request.CustomerId, request.ProductId, request.Email);
 

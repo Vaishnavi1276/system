@@ -1,4 +1,4 @@
-using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
 
 namespace ECommerce.Services.Customers;
 

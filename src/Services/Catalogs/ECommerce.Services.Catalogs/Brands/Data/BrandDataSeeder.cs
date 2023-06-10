@@ -1,5 +1,6 @@
 using AutoBogus;
 using BuildingBlocks.Abstractions.Persistence;
+using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Shared.Contracts;
 using Microsoft.EntityFrameworkCore;
 

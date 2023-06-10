@@ -1,9 +1,10 @@
 using System.Linq.Expressions;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using BuildingBlocks.Abstractions.CQRS.Events;
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Abstractions.Domain.Events;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Core.Exception.Types;
 using BuildingBlocks.Core.Extensions;

@@ -11,7 +11,7 @@ public class Category : Aggregate<CategoryId>
 {
     // EF
     // this constructor is needed when we have a parameter constructor that has some navigation property classes in the parameters and ef will skip it and try to find other constructor, here default constructor (maybe will fix .net 8)
-    public Category() { }
+    private Category() { }
 
     public string Name { get; private set; } = default!;
     public string Description { get; private set; } = default!;
@@ -19,7 +19,7 @@ public class Category : Aggregate<CategoryId>
 
     public static Category Create(CategoryId id, string name, string code, string description = "")
     {
-        // input validation will do in the command and our value objects, here we just do business validation
+        // input validation will do in the `command` and our `value objects` before arriving to entity and makes or domain cleaner (but we have to check against for our value objects), here we just do business validation
         var category = new Category { Id = id };
 
         category.ChangeName(name);

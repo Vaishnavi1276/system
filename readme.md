@@ -27,12 +27,12 @@ Thanks a bunch for supporting me!
 
 - [Features](#features)
 - [Plan](#plan)
+- [Technologies - Libraries](#technologies---libraries)
 - [Setup](#setup)
   - [Dev Certificate](#dev-certificate)
   - [Conventional Commit](#conventional-commit)
   - [Formatting](#formatting)
   - [Analizers](#analizers)
-- [Technologies - Libraries](#technologies---libraries)
 - [The Domain and Bounded Context - Service Boundary](#the-domain-and-bounded-context---service-boundary)
 - [Application Architecture](#application-architecture)
 - [Application Structure](#application-structure)
@@ -48,7 +48,6 @@ Thanks a bunch for supporting me!
 - [License](#license)
 
 ## Features
-
 - ✅ Using `Vertical Slice Architecture` as a high level architecture
 - ✅ Using `Event Driven Architecture` on top of RabbitMQ Message Broker and MassTransit
 - ✅ Using `Domain Driven Design`in most of services like Customers, Catalogs, ...
@@ -62,6 +61,8 @@ Thanks a bunch for supporting me!
 - ✅ Using `Postgres` for write database as relational DB and `MongoDB` and `Elasric Search` for read database
 - ✅ Using docker and `docker-compose` for deployment
 - ✅ Using [Microsoft Tye](https://github.com/dotnet/tye) for deployment
+- ✅ Using [YARP](https://microsoft.github.io/reverse-proxy/) reverse proxy as API Gateway
+- ✅ Using different type of tests like `Unit Tests`, `Integration Tests`, `End-To-End Tests` and using [testcontainers](https://microsoft.github.io/reverse-proxy/) for testing in isolation
 - 🚧 Using `Helm` and `Kubernetes` for deployment
 - 🚧 Using `OpenTelemetry` for collection `Metrics` and `Distributed Tracing`
 
@@ -78,7 +79,6 @@ Thanks a bunch for supporting me!
 | Order Service    | Event Sourccing, Domain Driven Design | In Progress👷  | -                                                                                                                                                                                                                                                      |
 | Shipping Service | Domain Driven Design                  | Not Started 🚩 | -                                                                                                                                                                                                                                                      |
 | Payment Service  | Event Sourccing, Domain Driven Design | Not Started 🚩 | -                                                                                                                                                                                                                                                      |
-
 ## Technologies - Libraries
 
 - ✔️ **[`.NET 7`](https://dotnet.microsoft.com/download)** - .NET Framework and .NET Core, including ASP.NET and ASP.NET Core
@@ -97,7 +97,6 @@ Thanks a bunch for supporting me!
 - ✔️ **[`NSubstitute`](https://github.com/nsubstitute/NSubstitute)** - A friendly substitute for .NET mocking libraries.
 - ✔️ **[`StyleCopAnalyzers`](https://github.com/DotNetAnalyzers/StyleCopAnalyzers)** - An implementation of StyleCop rules using the .NET Compiler Platform
 - ✔️ **[`AutoMapper`](https://github.com/AutoMapper/AutoMapper)** - Convention-based object-object mapper in .NET.
-- ✔️ **[`Hellang.Middleware.ProblemDetails`](https://github.com/khellang/Middleware/tree/master/src/ProblemDetails)** - A middleware for handling exception in .Net Core
 - ✔️ **[`IdGen`](https://github.com/RobThree/IdGen)** - Twitter Snowflake-alike ID generator for .Net
 - ✔️ **[`MassTransit`](https://github.com/MassTransit/MassTransit)** - Distributed Application Framework for .NET
 
@@ -202,7 +201,13 @@ npm init
 npm install husky --save-dev
 ```
 
-3. Install manifest file with `dotnet new tool-manifest` because it doesn't exist at first time and then install our required packages as dependency with [dotnet tool install](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install), that will add to [dotnet-tools.json](.config/dotnet-tools.json) file in a `.config` directory:
+3. To install a tool for local access only (for the current directory and subdirectories), it has to be added to a manifest file. So we [Create a manifest file](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use#create-a-manifest-file) by running the dotnet new command:
+
+``` bash
+dotnet new tool-manifest
+```
+
+4. Adds the tool to the manifest file that we created in the preceding step and then install our required packages as dependency with [dotnet tool install](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install), that will add to [dotnet-tools.json](.config/dotnet-tools.json) file in a `.config` directory:
 
 ```bash
 dotnet new tool-manifest
@@ -211,19 +216,19 @@ dotnet tool install csharpier
 dotnet tool install dotnet-format
 ```
 
-4. Add `prepare` command for installing and activating `husky hooks` and `restoring` our installed [dotnet tools](.config/dotnet-tools.json) in the previous step to the [package.json](package.json) file:
+5. Add `prepare` command for installing and activating `husky hooks` and `restoring` our installed [dotnet tools](.config/dotnet-tools.json) in the previous step to the [package.json](package.json) file:
 
 ```bash
 npm pkg set scripts.prepare="husky install && dotnet tool restore"
 ```
 
-5. Create the Husky folder:
+6. Create the Husky folder:
 
 ```bash
 mkdir .husky
 ```
 
-6. Link Husky and formatting tools:
+7. Link Husky and formatting tools:
 
 ```bash
 npx husky add .husky/pre-commit "dotnet format && git add -A ."
@@ -232,7 +237,7 @@ npx husky add .husky/pre-commit "dotnet format && git add -A ."
 npx husky add .husky/pre-commit "dotnet csharpier . && git add -A ."
 ```
 
-7. Activate and installing all husky hooks with this command:
+8. Activate and installing all husky hooks with this command:
 
 ```bash
 npm run prepare
@@ -603,7 +608,18 @@ We could run our microservices with new microsoft tools with name of [Project Ty
 
 Project Tye is an experimental developer tool that makes developing, testing, and deploying microservices and distributed applications easier.
 
-For installing `Tye` globally on our machine we should use this command:
+For installing `Tye` [local tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools#install-a-local-tool) to our existing [.Net tools](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install) we can use following command:
+
+``` bash
+dotnet tool install Microsoft.Tye --version "0.11.0-alpha.22111.1"
+```
+Then this tool will add to [.net tools manifest file](./.config/dotnet-tools.json) and After you check in the manifest file to the repository. To install all of the tools listed in the manifest file, we run the dotnet tool restore command:
+
+``` bash
+dotnet tool restore
+```
+
+For installing `Tye` [globally](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools#install-a-global-tool) on our machine we should use this command:
 
 ```bash
 dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
@@ -688,7 +704,13 @@ fi
 
 ## Contribution
 
-The application is in development status. You are feel free to submit pull request or create the issue.
+Contributions are always welcome! Please take a look at the [contribution guidelines](https://github.com/mehdihadeli/awesome-software-architecture/blob/main/contributing.md) pages first.
+
+Thanks to all [contributors](https://github.com/mehdihadeli/awesome-software-architecture/graphs/contributors), you're awesome and this wouldn't be possible without you! 
+
+<a href="https://github.com/mehdihadeli/awesome-software-architecture/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=mehdihadeli/awesome-software-architecture" />
+</a>
 
 ## Project References
 

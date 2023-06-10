@@ -1,7 +1,7 @@
 using BuildingBlocks.Abstractions.Caching;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Security.Jwt;
+using BuildingBlocks.Web.Extensions;
 using EasyCaching.Core;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;

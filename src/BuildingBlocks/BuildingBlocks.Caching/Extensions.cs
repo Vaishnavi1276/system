@@ -1,8 +1,5 @@
-using System.Reflection;
 using BuildingBlocks.Abstractions.Caching;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Reflection;
-using BuildingBlocks.Core.Web.Extensions;
 using EasyCaching.Redis;
 using Microsoft.AspNetCore.Builder;
 
@@ -10,16 +7,11 @@ namespace BuildingBlocks.Caching;
 
 public static class Extensions
 {
-    public static WebApplicationBuilder AddCustomCaching(
-        this WebApplicationBuilder builder,
-        params Assembly[] scanAssemblies
-    )
+    public static WebApplicationBuilder AddCustomCaching(this WebApplicationBuilder builder)
     {
         // https://www.twilio.com/blog/provide-default-configuration-to-dotnet-applications
         var cacheOptions = builder.Configuration.BindOptions<CacheOptions>();
         cacheOptions.NotBeNull();
-
-        AddCachingRequests(builder.Services, scanAssemblies);
 
         builder.Services.AddEasyCaching(option =>
         {
@@ -63,37 +55,5 @@ public static class Extensions
         });
 
         return builder;
-    }
-
-    private static IServiceCollection AddCachingRequests(
-        this IServiceCollection services,
-        params Assembly[] scanAssemblies
-    )
-    {
-        // Assemblies are lazy loaded so using AppDomain.GetAssemblies is not reliable (it is possible to get ReflectionTypeLoadException, because some dependent type assembly are lazy and not loaded yet), so we use `GetAllReferencedAssemblies` and it
-        // load all referenced assemblies explicitly.
-        var assemblies = scanAssemblies.Any()
-            ? scanAssemblies
-            : ReflectionUtilities.GetReferencedAssemblies(Assembly.GetCallingAssembly()).ToArray();
-
-        // ICacheRequest discovery and registration
-        services.Scan(
-            scan =>
-                scan.FromAssemblies(assemblies)
-                    .AddClasses(classes => classes.AssignableTo(typeof(ICacheRequest<,>)), false)
-                    .AsImplementedInterfaces()
-                    .WithTransientLifetime()
-        );
-
-        // IInvalidateCacheRequest discovery and registration
-        services.Scan(
-            scan =>
-                scan.FromAssemblies(assemblies)
-                    .AddClasses(classes => classes.AssignableTo(typeof(IInvalidateCacheRequest<,>)), false)
-                    .AsImplementedInterfaces()
-                    .WithTransientLifetime()
-        );
-
-        return services;
     }
 }

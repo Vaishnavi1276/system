@@ -10,7 +10,7 @@ namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 public record Dimensions
 {
     // EF
-    public Dimensions() { }
+    private Dimensions() { }
 
     public int Height { get; private set; }
     public int Width { get; private set; }

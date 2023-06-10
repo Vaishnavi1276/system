@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using BuildingBlocks.Core.Domain;
 using ECommerce.Services.Catalogs.Brands;
+using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Categories;
 using ECommerce.Services.Catalogs.Products.Dtos.v1;
 using ECommerce.Services.Catalogs.Products.Exceptions.Domain;
@@ -31,7 +32,7 @@ public class Product : Aggregate<ProductId>
 
     // EF
     // this constructor is needed when we have a parameter constructor that has some navigation property classes in the parameters and ef will skip it and try to find other constructor, here default constructor (maybe will fix .net 8)
-    public Product() { }
+    private Product() { }
 
     public Name Name { get; private set; } = default!;
     public string? Description { get; private set; }
@@ -65,7 +66,7 @@ public class Product : Aggregate<ProductId>
         IList<ProductImage>? images = null
     )
     {
-        // input validation will do in the command and our value objects, here we just do business validation
+        // input validation will do in the `command` and our `value objects` before arriving to entity and makes or domain cleaner, here we just do business validation
         var product = new Product { Id = id, Stock = stock };
 
         var (available, restockThreshold, maxStockThreshold) = stock;
@@ -83,6 +84,7 @@ public class Product : Aggregate<ProductId>
         product.ChangeBrand(brandId);
         product.ChangeSupplier(supplierId);
 
+        // here we do not use auto-mapping because we want to validate the data
         product.AddDomainEvents(
             ProductCreated.Of(
                 product.Id,

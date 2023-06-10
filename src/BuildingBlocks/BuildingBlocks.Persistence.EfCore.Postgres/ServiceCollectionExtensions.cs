@@ -1,12 +1,11 @@
 using System.Reflection;
-using BuildingBlocks.Abstractions.CQRS.Events;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Abstractions.Persistence.EfCore;
 using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Persistence.EfCore.Interceptors;
-using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Core.Persistence.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -71,7 +70,6 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IDbFacadeResolver>(provider => provider.GetService<TDbContext>()!);
         services.AddScoped<IDomainEventContext>(provider => provider.GetService<TDbContext>()!);
-        services.AddScoped<IDomainEventsAccessor, EfDomainEventAccessor>();
 
         services.AddPostgresRepositories(assembliesToScan);
         services.AddPostgresUnitOfWork(assembliesToScan);

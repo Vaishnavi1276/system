@@ -1,3 +1,4 @@
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
@@ -21,11 +22,10 @@ internal static partial class WebApplicationBuilderExtensions
     {
         if (configuration.GetValue<bool>("PostgresOptions.UseInMemory"))
         {
-            services.AddDbContext<OrdersDbContext>(
-                options => options.UseInMemoryDatabase("ECommerce.Services.Customers")
-            );
+            services.AddDbContext<OrdersDbContext>(options => options.UseInMemoryDatabase("ECommerce.Services.Orders"));
 
             services.AddScoped<IDbFacadeResolver>(provider => provider.GetService<OrdersDbContext>()!);
+            services.AddScoped<IDomainEventContext>(provider => provider.GetService<OrdersDbContext>()!);
         }
         else
         {

@@ -1,4 +1,5 @@
 using BuildingBlocks.Abstractions.CQRS.Queries;
+using BuildingBlocks.Core.Paging;
 
 namespace BuildingBlocks.Core.CQRS.Queries;
 

@@ -58,21 +58,15 @@ public class CreateCustomerTests : CustomerServiceEndToEndTestBase
         // Act
         var response = await SharedFixture.AdminHttpClient.PostAsJsonAsync(route, fakeCreateCustomerRequest);
 
-        // response.Should().BeAs(new
-        //                        {
-        //                            IdentityUserId = fakeIdentityUser.Id
-        //                        });
+        //response.Should().Satisfy<CreateCustomerResponse>(x => x.CustomerId.Should().BeGreaterThan(0));
 
         // Assert
         response
             .Should()
-            .HasResponse<CreateCustomerResponse>(
-                expectedObject: new { IdentityUserId = fakeIdentityUser.Id },
-                responseAction: customerResponse =>
-                {
-                    customerResponse!.CustomerId.Should().BeGreaterThan(0);
-                }
-            );
+            .HasResponse<CreateCustomerResponse>(responseAction: customerResponse =>
+            {
+                customerResponse!.CustomerId.Should().BeGreaterThan(0);
+            });
     }
 
     [Fact]

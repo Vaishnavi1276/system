@@ -3,7 +3,7 @@ using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.Read.Mong
 
 namespace ECommerce.Services.Customers.TestShared.Fakes.Customers.Commands;
 
-public sealed class FakeUpdateCustomerRead : AutoFaker<UpdateCustomerRead>
+internal sealed class FakeUpdateCustomerRead : AutoFaker<UpdateCustomerRead>
 {
     public FakeUpdateCustomerRead()
     {

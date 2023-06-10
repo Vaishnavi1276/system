@@ -25,7 +25,7 @@ public class ProductEntityTypeConfiguration : IEntityTypeConfiguration<Product>
             ci => ci.Name,
             a =>
             {
-                // configuration just for  changing column name in db (instead of name_value)
+                // configuration just for changing column name in db (instead of name_value)
                 a.Property(p => p.Value).HasColumnName(nameof(Product.Name).Underscore()).IsRequired();
             }
         );

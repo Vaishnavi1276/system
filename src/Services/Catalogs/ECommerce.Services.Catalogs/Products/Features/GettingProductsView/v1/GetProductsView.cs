@@ -2,6 +2,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Paging;
 using BuildingBlocks.Validation.Extensions;
 using Dapper;
 using ECommerce.Services.Catalogs.Products.Dtos.v1;

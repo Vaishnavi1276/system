@@ -1,3 +1,4 @@
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
 

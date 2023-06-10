@@ -8,9 +8,10 @@ namespace BuildingBlocks.Core.Domain.Exceptions;
 /// </summary>
 public class DomainException : CustomException
 {
-    public DomainException(string message, int statusCode = StatusCodes.Status400BadRequest)
-        : base(message)
-    {
-        StatusCode = statusCode;
-    }
+    public DomainException(
+        string message,
+        int statusCode = StatusCodes.Status400BadRequest,
+        System.Exception? innerException = null
+    )
+        : base(message, statusCode, innerException) { }
 }

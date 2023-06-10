@@ -1,9 +1,9 @@
 using BuildingBlocks.Caching;
 using BuildingBlocks.Caching.Behaviours;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Registrations;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Email;
 using BuildingBlocks.HealthCheck;
 using BuildingBlocks.Integration.MassTransit;
@@ -106,18 +106,20 @@ public static partial class WebApplicationBuilderExtensions
 
         builder.AddCustomSerilog();
 
+        builder.AddCustomCors();
+
         builder.AddCustomVersioning();
-        builder.AddCustomSwagger(typeof(CustomersAssemblyInfo).Assembly);
+        builder.AddCustomSwagger();
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddCqrs(
             pipelines: new[]
             {
+                typeof(LoggingBehavior<,>),
+                typeof(StreamLoggingBehavior<,>),
                 typeof(RequestValidationBehavior<,>),
                 typeof(StreamRequestValidationBehavior<,>),
-                typeof(StreamLoggingBehavior<,>),
                 typeof(StreamCachingBehavior<,>),
-                typeof(LoggingBehavior<,>),
                 typeof(CachingBehavior<,>),
                 typeof(InvalidateCachingBehavior<,>),
                 typeof(EfTxBehavior<,>)

@@ -17,6 +17,14 @@ public class BrandEntityConfiguration : IEntityTypeConfiguration<Brand>
         builder.HasIndex(x => x.Id).IsUnique();
 
         builder.Property(x => x.Name).HasColumnType(EfConstants.ColumnTypes.NormalText).IsRequired();
+        builder.OwnsOne(
+            ci => ci.Name,
+            a =>
+            {
+                // configuration just for changing column name in db (instead of name_value)
+                a.Property(p => p.Value).HasColumnName(nameof(Brand.Name).Underscore()).IsRequired();
+            }
+        );
         builder.Property(x => x.Created).HasDefaultValueSql(EfConstants.DateAlgorithm);
     }
 }

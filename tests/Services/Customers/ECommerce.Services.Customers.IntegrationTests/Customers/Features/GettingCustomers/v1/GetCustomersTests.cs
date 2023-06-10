@@ -37,6 +37,8 @@ public class GetCustomersTests : CustomerServiceIntegrationTestBase
         listResult.PageNumber.Should().Be(1);
         listResult.PageSize.Should().Be(10);
         listResult.TotalCount.Should().Be(3);
+
+        listResult.Items.Should().BeEquivalentTo(fakeProducts, options => options.ExcludingMissingMembers());
     }
 
     [Fact]

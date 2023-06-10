@@ -3,7 +3,6 @@ using BuildingBlocks.Caching.Behaviours;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Registrations;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Email;
 using BuildingBlocks.HealthCheck;
 using BuildingBlocks.Integration.MassTransit;
@@ -18,6 +17,7 @@ using BuildingBlocks.Validation;
 using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Catalogs.Products;
+using ECommerce.Services.Catalogs.Shared.Workers;
 
 namespace ECommerce.Services.Catalogs.Shared.Extensions.WebApplicationBuilderExtensions;
 
@@ -25,7 +25,7 @@ public static partial class WebApplicationBuilderExtensions
 {
     public static WebApplicationBuilder AddInfrastructure(this WebApplicationBuilder builder)
     {
-        builder.Services.AddCore(builder.Configuration);
+        builder.Services.AddCore();
 
         builder.Services.AddCustomJwtAuthentication(builder.Configuration);
         builder.Services.AddCustomAuthorization(
@@ -40,11 +40,11 @@ public static partial class WebApplicationBuilderExtensions
         builder.Services.AddCqrs(
             pipelines: new[]
             {
+                typeof(StreamLoggingBehavior<,>),
+                typeof(LoggingBehavior<,>),
                 typeof(RequestValidationBehavior<,>),
                 typeof(StreamRequestValidationBehavior<,>),
-                typeof(StreamLoggingBehavior<,>),
                 typeof(StreamCachingBehavior<,>),
-                typeof(LoggingBehavior<,>),
                 typeof(CachingBehavior<,>),
                 typeof(InvalidateCachingBehavior<,>),
                 typeof(EfTxBehavior<,>)
@@ -66,13 +66,16 @@ public static partial class WebApplicationBuilderExtensions
 
         builder.AddCustomVersioning();
 
-        builder.AddCustomSwagger(typeof(CatalogAssemblyInfo).Assembly);
+        builder.AddCustomSwagger();
+
+        builder.AddCustomCors();
 
         builder.Services.AddHttpContextAccessor();
 
         builder.Services.AddPostgresMessagePersistence(builder.Configuration);
 
         builder.AddCompression();
+
         builder.AddAppProblemDetails();
 
         builder.AddCustomSerilog();

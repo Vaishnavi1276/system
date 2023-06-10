@@ -1,11 +1,12 @@
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
+using BuildingBlocks.Core.Domain.Events.Internal;
 using ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Domain;
 
 namespace ECommerce.Services.Catalogs.Products.Features.CreatingProduct.v1.Events.Notification;
 
 internal record ProductCreatedNotification(ProductCreated DomainEvent)
-    : BuildingBlocks.Core.CQRS.Events.Internal.DomainNotificationEventWrapper<ProductCreated>(DomainEvent);
+    : DomainNotificationEventWrapper<ProductCreated>(DomainEvent);
 
 internal class ProductCreatedHandler : IDomainNotificationEventHandler<ProductCreatedNotification>
 {

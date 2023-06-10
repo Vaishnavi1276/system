@@ -6,7 +6,7 @@ namespace ECommerce.Services.Customers.TestShared.Fakes.Shared.Dtos;
 //https://github.com/bchavez/Bogus#the-great-c-example
 //https://github.com/bchavez/Bogus#bogus-api-support
 //https://github.com/nickdodd79/AutoBogus/issues/99
-public sealed class FakeProductDto : AutoFaker<ProductDto>
+public sealed class FakeProductDto : AutoFaker<ProductClientDto>
 {
     public FakeProductDto()
     {

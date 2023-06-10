@@ -1,7 +1,6 @@
-using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Security.Extensions;
 using BuildingBlocks.Security.Jwt;
+using BuildingBlocks.Web.Extensions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -17,8 +16,6 @@ using Serilog;
 using Serilog.Events;
 using Tests.Shared.Auth;
 using WebMotions.Fake.Authentication.JwtBearer;
-using Xunit;
-using Xunit.Abstractions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace Tests.Shared.Factory;
@@ -106,6 +103,8 @@ public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TE
         {
             wb.ConfigureTestServices(services =>
             {
+                //// https://andrewlock.net/converting-integration-tests-to-net-core-3/
+                //// Don't run IHostedServices when running as a test
                 // services.RemoveAll(typeof(IHostedService));
 
                 // TODO: Web could use this in E2E test for running another service during our test

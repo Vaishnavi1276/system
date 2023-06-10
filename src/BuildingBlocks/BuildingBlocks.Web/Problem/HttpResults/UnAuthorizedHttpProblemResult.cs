@@ -47,6 +47,8 @@ public class UnAuthorizedHttpProblemResult
     {
         ArgumentNullException.ThrowIfNull(method);
         ArgumentNullException.ThrowIfNull(builder);
-        builder.Metadata.Add(new ResponseMetadata(StatusCodes.Status401Unauthorized, typeof(ProblemDetails)));
+        builder.Metadata.Add(
+            new ProducesResponseTypeAttribute(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)
+        );
     }
 }

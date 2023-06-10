@@ -1,5 +1,4 @@
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Resiliency.CircuitBreaker;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

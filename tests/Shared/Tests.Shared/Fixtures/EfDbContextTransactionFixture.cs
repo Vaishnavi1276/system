@@ -1,11 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.Reflection.Extensions;
-using BuildingBlocks.Core.Types.Extensions;
 using BuildingBlocks.Persistence.EfCore.Postgres;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Configurations;
-using DotNet.Testcontainers.Containers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Testcontainers.PostgreSql;
@@ -33,12 +28,10 @@ public class EfDbContextTransactionFixture<TContext> : IAsyncLifetime
         _messageSink = messageSink;
         _migrationAssembly = typeof(TContext).Assembly.GetName().Name;
         PostgresContainerOptions = ConfigurationHelper.BindOptions<PostgresContainerOptions>();
-        Guard.Against.Null(PostgresContainerOptions);
+        PostgresContainerOptions.NotBeNull();
 
         var postgresContainerBuilder = new PostgreSqlBuilder()
             .WithDatabase(PostgresContainerOptions.DatabaseName)
-            .WithUsername(PostgresContainerOptions.UserName)
-            .WithPassword(PostgresContainerOptions.Password)
             .WithCleanUp(true)
             .WithName(PostgresContainerOptions.Name)
             .WithImage(PostgresContainerOptions.ImageName);

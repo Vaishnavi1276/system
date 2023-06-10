@@ -1,5 +1,6 @@
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Events.Domain;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1.Events.Domain;
+using ECommerce.Services.Customers.TestShared.Fakes.Customers.Commands;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Entities;
 using FluentAssertions;
 using Tests.Shared.XunitCategories;

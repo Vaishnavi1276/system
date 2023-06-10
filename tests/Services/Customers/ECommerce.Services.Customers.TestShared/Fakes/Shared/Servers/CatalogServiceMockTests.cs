@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs.Dtos;
 using FluentAssertions;
@@ -41,7 +41,7 @@ public class CatalogServiceMockTests
         var httpResponse = await client.GetAsync(endpoint);
 
         await httpResponse.EnsureSuccessStatusCodeWithDetailAsync();
-        var data = await httpResponse.Content.ReadFromJsonAsync<GetProductByIdResponse>();
+        var data = await httpResponse.Content.ReadFromJsonAsync<GetProductByIdOutput>();
         data.Should().NotBeNull();
         data!.Product.Should().BeEquivalentTo(fakeProduct, options => options.ExcludingMissingMembers());
     }

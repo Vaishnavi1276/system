@@ -1,5 +1,5 @@
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
-using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
 using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Products.Features.DebitingProductStock.v1.Events.Domain;

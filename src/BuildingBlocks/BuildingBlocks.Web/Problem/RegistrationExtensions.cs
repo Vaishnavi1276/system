@@ -1,7 +1,7 @@
 using System.Reflection;
 using BuildingBlocks.Abstractions.Web.Problem;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Core.Reflection;
-using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Microsoft.AspNetCore.Http;
 using Scrutor;
 
@@ -12,32 +12,29 @@ public static class RegistrationExtensions
 {
     public static IServiceCollection AddCustomProblemDetails(
         this IServiceCollection services,
-        Action<ProblemDetailsOptions>? configure,
+        Action<ProblemDetailsOptions>? configure = null,
         params Assembly[] scanAssemblies
     )
     {
+        var assemblies = scanAssemblies.Any()
+            ? scanAssemblies
+            : ReflectionUtilities.GetReferencedAssemblies(Assembly.GetCallingAssembly()).Distinct().ToArray();
+
         services.AddProblemDetails(configure);
         services.ReplaceSingleton<IProblemDetailsService, ProblemDetailsService>();
-        // services.TryAddSingleton<IProblemDetailMapper, DefaultProblemDetailMapper>();
-        RegisterAllMappers(services, scanAssemblies);
+        // services.AddSingleton<IProblemDetailsWriter, ProblemDetailsWriter>();
+
+        RegisterAllMappers(services, assemblies);
 
         return services;
     }
 
     private static void RegisterAllMappers(IServiceCollection services, Assembly[] scanAssemblies)
     {
-        var assemblies = scanAssemblies.Any()
-            ? scanAssemblies
-            : ReflectionUtilities
-                .GetReferencedAssemblies(Assembly.GetCallingAssembly())
-                .Concat(ReflectionUtilities.GetApplicationPartAssemblies(Assembly.GetCallingAssembly()))
-                .Distinct()
-                .ToArray();
-
         services.Scan(
             scan =>
-                scan.FromAssemblies(assemblies)
-                    .AddClasses(classes => classes.AssignableTo(typeof(IProblemDetailMapper)))
+                scan.FromAssemblies(scanAssemblies)
+                    .AddClasses(classes => classes.AssignableTo(typeof(IProblemDetailMapper)), false)
                     .UsingRegistrationStrategy(RegistrationStrategy.Append)
                     .As<IProblemDetailMapper>()
                     .WithLifetime(ServiceLifetime.Singleton)

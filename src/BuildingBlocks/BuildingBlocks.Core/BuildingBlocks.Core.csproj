@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
     <PackageReference Include="Microsoft.Extensions.Options.DataAnnotations" />
     <PackageReference Include="Microsoft.Extensions.Http.Polly" />
+    <PackageReference Include="Open.ChannelExtensions" />
     <PackageReference Include="System.Net.Http.Json" />
     <PackageReference Include="EFCore.NamingConventions" />
   </ItemGroup>
@@ -64,6 +65,10 @@
 
   <ItemGroup>
     <PackageVersion Update="Sieve" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Web\Extensions" />
   </ItemGroup>
 
 </Project>

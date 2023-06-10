@@ -44,13 +44,13 @@ public class IdentityServiceMock : WireMockServer
         return mock;
     }
 
-    public (GetUserByEmailResponse Response, string Endpoint) SetupGetUserByEmail(string? email = null)
+    public (GetUserByEmailOutput Response, string Endpoint) SetupGetUserByEmail(string? email = null)
     {
         var fakeIdentityUser = new FakeUserIdentityDto().Generate();
         if (!string.IsNullOrWhiteSpace(email))
             fakeIdentityUser = fakeIdentityUser with { Email = email };
 
-        var response = new GetUserByEmailResponse(fakeIdentityUser);
+        var response = new GetUserByEmailOutput(fakeIdentityUser);
 
         //https://github.com/WireMock-Net/WireMock.Net/wiki/Request-Matching
         // we should put / in the beginning of the endpoint
@@ -62,10 +62,10 @@ public class IdentityServiceMock : WireMockServer
         return (response, endpointPath);
     }
 
-    public (GetUserByEmailResponse Response, string Endpoint) SetupGetUserByEmail(UserRegisteredV1 userRegisteredV1)
+    public (GetUserByEmailOutput Response, string Endpoint) SetupGetUserByEmail(UserRegisteredV1 userRegisteredV1)
     {
-        var response = new GetUserByEmailResponse(
-            new UserIdentityDto(
+        var response = new GetUserByEmailOutput(
+            new IdentityUserClientDto(
                 userRegisteredV1.IdentityId,
                 userRegisteredV1.UserName,
                 userRegisteredV1.Email,

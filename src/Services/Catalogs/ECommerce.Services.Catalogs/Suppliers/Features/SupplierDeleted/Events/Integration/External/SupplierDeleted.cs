@@ -1,4 +1,4 @@
-using BuildingBlocks.Abstractions.CQRS.Events;
+using BuildingBlocks.Abstractions.Domain.Events;
 
 namespace ECommerce.Services.Catalogs.Suppliers.Features.SupplierDeleted.Events.Integration.External;
 

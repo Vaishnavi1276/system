@@ -1,4 +1,4 @@
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using EasyNetQ.Management.Client;
 using Testcontainers.RabbitMq;
 using Tests.Shared.Helpers;
@@ -24,7 +24,7 @@ public class RabbitMQContainerFixture : IAsyncLifetime
     {
         _messageSink = messageSink;
         RabbitMqContainerOptions = ConfigurationHelper.BindOptions<RabbitMQContainerOptions>();
-        Guard.Against.Null(RabbitMqContainerOptions);
+        RabbitMqContainerOptions.NotBeNull();
 
         var rabbitmqContainerBuilder = new RabbitMqBuilder()
             .WithUsername(RabbitMqContainerOptions.UserName)

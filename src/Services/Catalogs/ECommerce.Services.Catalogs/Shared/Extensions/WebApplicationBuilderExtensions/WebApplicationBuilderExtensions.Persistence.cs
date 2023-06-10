@@ -1,8 +1,10 @@
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
 using ECommerce.Services.Catalogs.Shared.Contracts;
 using ECommerce.Services.Catalogs.Shared.Data;
+using ECommerce.Services.Catalogs.Shared.Workers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Catalogs.Shared.Extensions.WebApplicationBuilderExtensions;
@@ -19,17 +21,21 @@ public static partial class WebApplicationBuilderExtensions
 
     private static void AddPostgresWriteStorage(IServiceCollection services, IConfiguration configuration)
     {
-        if (configuration.GetValue<bool>("PostgresOptions:UseInMemory"))
+        if (configuration.GetValue<bool>($"{nameof(PostgresOptions)}:{nameof(PostgresOptions.UseInMemory)}"))
         {
             services.AddDbContext<CatalogDbContext>(
                 options => options.UseInMemoryDatabase("ECommerce.Services.ECommerce.Services.Catalogs")
             );
 
             services.AddScoped<IDbFacadeResolver>(provider => provider.GetService<CatalogDbContext>()!);
+            services.AddScoped<IDomainEventContext>(provider => provider.GetService<CatalogDbContext>()!);
         }
         else
         {
             services.AddPostgresDbContext<CatalogDbContext>();
+
+            services.AddHostedService<MigrationWorker>();
+            services.AddHostedService<SeedWorker>();
         }
 
         services.AddScoped<ICatalogDbContext>(provider => provider.GetRequiredService<CatalogDbContext>());

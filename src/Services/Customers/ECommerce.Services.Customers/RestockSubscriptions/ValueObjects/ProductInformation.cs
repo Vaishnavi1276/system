@@ -1,4 +1,5 @@
-using Ardalis.GuardClauses;
+using System.Diagnostics.CodeAnalysis;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Products;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.ValueObjects;
@@ -12,10 +13,10 @@ public record ProductInformation
     public string Name { get; private set; } = default!;
     public ProductId Id { get; private set; } = default!;
 
-    public static ProductInformation Of(ProductId id, string name)
+    public static ProductInformation Of([NotNull] ProductId? id, [NotNull] string? name)
     {
-        Guard.Against.NullOrWhiteSpace(name);
-        Guard.Against.Null(id);
+        name.NotBeNullOrWhiteSpace();
+        id.NotBeNull();
 
         return new ProductInformation { Name = name, Id = id };
     }

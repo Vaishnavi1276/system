@@ -9,7 +9,7 @@ namespace ECommerce.Services.Catalogs.Products.ValueObjects;
 public record Name
 {
     // EF
-    public Name() { }
+    private Name() { }
 
     public string Value { get; private set; } = default!;
 

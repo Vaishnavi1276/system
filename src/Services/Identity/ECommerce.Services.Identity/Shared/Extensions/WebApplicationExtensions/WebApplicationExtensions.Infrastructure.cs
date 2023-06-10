@@ -1,4 +1,3 @@
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.HealthCheck;
 using BuildingBlocks.Logging;
 using BuildingBlocks.Messaging.Persistence.Postgres.Extensions;
@@ -17,10 +16,11 @@ public static partial class WebApplicationExtensions
         // Does nothing if a response body has already been provided. when our next `DeveloperExceptionMiddleware` is written response for exception (in dev mode) when we back to `ExceptionHandlerMiddlewareImpl` because `context.Response.HasStarted` it doesn't do anything
         // By default `ExceptionHandlerMiddlewareImpl` middleware register original exceptions with `IExceptionHandlerFeature` feature, we don't have this in `DeveloperExceptionPageMiddleware` and we should handle it with a middleware like `CaptureExceptionMiddleware`
         // Just for handling exceptions in production mode
-        app.UseExceptionHandler();
+        // https://github.com/dotnet/aspnetcore/pull/26567
+        app.UseExceptionHandler(new ExceptionHandlerOptions { AllowStatusCode404Response = true });
 
         // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
+        if (app.Environment.IsDevelopment() || app.Environment.IsTest())
         {
             // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/handle-errrors
             app.UseDeveloperExceptionPage();
@@ -41,6 +41,8 @@ public static partial class WebApplicationExtensions
         });
 
         app.UseRequestLogContextMiddleware();
+
+        app.UseCustomCors();
 
         app.UseAuthentication();
         app.UseAuthorization();

@@ -9,11 +9,7 @@ namespace ECommerce.Services.Customers.IntegrationTests;
 [CollectionDefinition(Name)]
 public class IntegrationTestCollection
     : ICollectionFixture<
-        SharedFixtureWithEfCoreAndMongo<
-            ECommerce.Services.Customers.Api.Program,
-            CustomersDbContext,
-            CustomersReadDbContext
-        >
+        SharedFixtureWithEfCoreAndMongo<Api.CustomersApiMetadata, CustomersDbContext, CustomersReadDbContext>
     >,
         ICollectionFixture<CustomersServiceMockServersFixture>
 {

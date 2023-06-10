@@ -40,6 +40,7 @@ public class MongoDbContext : IMongoDbContext, ITxDbContextExecution
     {
         var result = _commands.Count;
 
+        // Standalone servers do not support transactions.
         using (Session = await MongoClient.StartSessionAsync(cancellationToken: cancellationToken))
         {
             try

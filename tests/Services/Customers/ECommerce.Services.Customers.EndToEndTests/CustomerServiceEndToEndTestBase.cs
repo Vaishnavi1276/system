@@ -10,11 +10,16 @@ using Xunit.Abstractions;
 namespace ECommerce.Services.Customers.EndToEndTests;
 
 [Collection(EndToEndTestCollection.Name)]
-public class CustomerServiceEndToEndTestBase : EndToEndTestTestBase<Program, CustomersDbContext, CustomersReadDbContext>
+public class CustomerServiceEndToEndTestBase
+    : EndToEndTestTestBase<CustomersApiMetadata, CustomersDbContext, CustomersReadDbContext>
 {
     // We don't need to inject `CustomersServiceMockServersFixture` class fixture in the constructor because it initialized by `collection fixture` and its static properties are accessible in the codes
     public CustomerServiceEndToEndTestBase(
-        SharedFixtureWithEfCoreAndMongo<Api.Program, CustomersDbContext, CustomersReadDbContext> sharedFixture,
+        SharedFixtureWithEfCoreAndMongo<
+            Api.CustomersApiMetadata,
+            CustomersDbContext,
+            CustomersReadDbContext
+        > sharedFixture,
         ITestOutputHelper outputHelper
     )
         : base(sharedFixture, outputHelper)

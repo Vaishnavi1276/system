@@ -2,9 +2,9 @@
 version: 2
 updates:
   - package-ecosystem: nuget
-    directory: '/'
+    directory: "/"
     schedule:
-      interval: weekly
+      interval: monthly
     reviewers:
       - mehdihadeli
     assignees:
@@ -20,4 +20,3 @@ updates:
     open-pull-requests-limit: 5
     # By default, Dependabot checks for manifest files on the default branch and raises pull requests for version updates against this branch. Use target-branch to specify a different branch
     target-branch: "develop"
-

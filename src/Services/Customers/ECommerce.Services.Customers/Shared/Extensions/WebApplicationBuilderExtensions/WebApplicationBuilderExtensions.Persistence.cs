@@ -1,3 +1,4 @@
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
@@ -22,13 +23,14 @@ public static partial class WebApplicationBuilderExtensions
 
     private static void AddPostgresWriteStorage(IServiceCollection services, IConfiguration configuration)
     {
-        if (configuration.GetValue<bool>("PostgresOptions:UseInMemory"))
+        if (configuration.GetValue<bool>($"{nameof(PostgresOptions)}:{nameof(PostgresOptions.UseInMemory)}"))
         {
             services.AddDbContext<CustomersDbContext>(
                 options => options.UseInMemoryDatabase("ECommerce.Services.ECommerce.Services.Customers")
             );
 
             services.AddScoped<IDbFacadeResolver>(provider => provider.GetService<CustomersDbContext>()!);
+            services.AddScoped<IDomainEventContext>(provider => provider.GetService<CustomersDbContext>()!);
         }
         else
         {

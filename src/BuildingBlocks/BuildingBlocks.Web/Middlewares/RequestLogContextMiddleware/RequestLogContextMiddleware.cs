@@ -1,4 +1,4 @@
-using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Web.Extensions;
 using Microsoft.AspNetCore.Http;
 using Serilog.Context;
 

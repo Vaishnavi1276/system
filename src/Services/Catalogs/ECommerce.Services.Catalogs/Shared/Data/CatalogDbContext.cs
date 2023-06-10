@@ -15,16 +15,16 @@ public class CatalogDbContext : EfDbContextBase, ICatalogDbContext
     public CatalogDbContext(DbContextOptions<CatalogDbContext> options)
         : base(options) { }
 
+    public DbSet<Product> Products { get; set; } = default!;
+    public DbSet<ProductView> ProductsView { get; set; } = default!;
+    public DbSet<Category> Categories { get; set; } = default!;
+    public DbSet<Supplier> Suppliers { get; set; } = default!;
+    public DbSet<Brand> Brands { get; set; } = default!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         base.OnModelCreating(modelBuilder);
     }
-
-    public DbSet<Product> Products { get; set; } = default!;
-    public DbSet<ProductView> ProductsView { get; set; } = default!;
-    public DbSet<Category> Categories { get; set; } = default!;
-    public DbSet<Supplier> Suppliers { get; set; } = default!;
-    public DbSet<Brand> Brands { get; set; } = default!;
 }

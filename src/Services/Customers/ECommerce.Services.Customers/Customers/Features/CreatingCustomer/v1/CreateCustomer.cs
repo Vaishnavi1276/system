@@ -50,9 +50,7 @@ internal class CreateCustomerHandler : ICommandHandler<CreateCustomer, CreateCus
         if (_customersDbContext.Customers.Any(x => x.Email.Value == command.Email))
             throw new CustomerAlreadyExistsException($"Customer with email '{command.Email}' already exists.");
 
-        var identityUser = (
-            await _identityApiClient.GetUserByEmailAsync(command.Email, cancellationToken)
-        )?.UserIdentity;
+        var identityUser = await _identityApiClient.GetUserByEmailAsync(command.Email, cancellationToken);
 
         var customer = Customer.Create(
             CustomerId.Of(command.Id),

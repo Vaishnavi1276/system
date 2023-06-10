@@ -1,5 +1,5 @@
-using BuildingBlocks.Abstractions.CQRS.Events;
 using BuildingBlocks.Abstractions.Domain;
+using BuildingBlocks.Abstractions.Domain.Events;
 using Microsoft.EntityFrameworkCore;
 using Sieve.Services;
 

@@ -1,6 +1,7 @@
 using BuildingBlocks.Validation;
 using ECommerce.Services.Customers.Api;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
+using ECommerce.Services.Customers.Customers.Features.GettingCustomerById.v1;
 using ECommerce.Services.Customers.Shared.Data;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Entities;
 using FluentAssertions;
@@ -52,19 +53,22 @@ public class GetCustomerByIdTests : CustomerServiceEndToEndTestBase
         var response = await SharedFixture.NormalUserHttpClient.GetAsync(route);
 
         // Assert
-        response
-            .Should()
-            .BeAs(
-                new
-                {
-                    Customer = new
-                    {
-                        Id = fakeCustomer.Id,
-                        CustomerId = fakeCustomer.CustomerId,
-                        IdentityId = fakeCustomer.IdentityId
-                    }
-                }
-            );
+        response.Should().Satisfy<GetCustomerByIdResponse>(x => x.Customer.Should().BeEquivalentTo(fakeCustomer));
+
+        // // OR
+        // response
+        //     .Should()
+        //     .BeAs(
+        //         new
+        //         {
+        //             Customer = new
+        //             {
+        //                 Id = fakeCustomer.Id,
+        //                 CustomerId = fakeCustomer.CustomerId,
+        //                 IdentityId = fakeCustomer.IdentityId
+        //             }
+        //         }
+        //     );
 
         // // OR
         //  response
@@ -102,10 +106,21 @@ public class GetCustomerByIdTests : CustomerServiceEndToEndTestBase
         // Assert
         response
             .Should()
-            .HaveError("title", nameof(CustomerNotFoundException))
-            .And.HaveError("type", "https://somedomain/not-found-error")
-            .And.HaveErrorMessage($"Customer with id '{notExistsId}' not found.")
+            .Satisfy<ProblemDetails>(pr =>
+            {
+                pr.Detail.Should().Be($"Customer with id '{notExistsId}' not found.");
+                pr.Title.Should().Be(nameof(CustomerNotFoundException));
+                pr.Type.Should().Be("https://tools.ietf.org/html/rfc7231#section-6.5.4");
+            })
             .And.Be404NotFound();
+
+        // // OR
+        // response
+        //     .Should()
+        //     .HaveError("title", nameof(CustomerNotFoundException))
+        //     .And.HaveError("type", "https://tools.ietf.org/html/rfc7231#section-6.5.4")
+        //     .And.HaveErrorMessage($"Customer with id '{notExistsId}' not found.")
+        //     .And.Be404NotFound();
     }
 
     [Fact]
@@ -120,16 +135,28 @@ public class GetCustomerByIdTests : CustomerServiceEndToEndTestBase
         var response = await SharedFixture.AdminHttpClient.GetAsync(route);
 
         // Assert
+
         response
             .Should()
-            .ContainsProblemDetail(
-                new ProblemDetails
-                {
-                    Detail = "'Id' must not be empty.",
-                    Title = nameof(ValidationException),
-                    Type = "https://somedomain/input-validation-rules-error",
-                }
-            )
+            .Satisfy<ProblemDetails>(pr =>
+            {
+                pr.Detail.Should().Be("'Id' must not be empty.");
+                pr.Title.Should().Be(nameof(ValidationException));
+                pr.Type.Should().Be("https://tools.ietf.org/html/rfc7231#section-6.5.1");
+            })
             .And.Be400BadRequest();
+
+        // // OR
+        // response
+        //     .Should()
+        //     .ContainsProblemDetail(
+        //         new ProblemDetails
+        //         {
+        //             Detail = "'Id' must not be empty.",
+        //             Title = nameof(ValidationException),
+        //             Type = "https://somedomain/input-validation-rules-error",
+        //         }
+        //     )
+        //     .And.Be400BadRequest();
     }
 }

@@ -1,12 +1,9 @@
 using System.Threading.RateLimiting;
-using Ardalis.GuardClauses;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Caching.Behaviours;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.IdsGenerator;
 using BuildingBlocks.Core.Persistence.EfCore;
 using BuildingBlocks.Core.Registrations;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Email;
 using BuildingBlocks.HealthCheck;
 using BuildingBlocks.Integration.MassTransit;
@@ -21,7 +18,6 @@ using BuildingBlocks.Validation;
 using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Orders.Customers;
-using Serilog.Events;
 
 namespace ECommerce.Services.Orders.Shared.Extensions.WebApplicationBuilderExtensions;
 
@@ -55,7 +51,9 @@ internal static partial class WebApplicationBuilderExtensions
 
         builder.AddCustomVersioning();
 
-        builder.AddCustomSwagger(typeof(OrdersAssemblyInfo).Assembly);
+        builder.AddCustomSwagger();
+
+        builder.AddCustomCors();
 
         builder.Services.AddHttpContextAccessor();
 
@@ -65,11 +63,11 @@ internal static partial class WebApplicationBuilderExtensions
         {
             builder.AddCustomHealthCheck(healthChecksBuilder =>
             {
-                var postgresOptions = builder.Configuration.BindOptions<PostgresOptions>(nameof(PostgresOptions));
-                var rabbitMqOptions = builder.Configuration.BindOptions<RabbitMqOptions>(nameof(RabbitMqOptions));
+                var postgresOptions = builder.Configuration.BindOptions<PostgresOptions>();
+                var rabbitMqOptions = builder.Configuration.BindOptions<RabbitMqOptions>();
 
-                Guard.Against.Null(postgresOptions, nameof(postgresOptions));
-                Guard.Against.Null(rabbitMqOptions, nameof(rabbitMqOptions));
+                postgresOptions.NotBeNull();
+                rabbitMqOptions.NotBeNull();
 
                 healthChecksBuilder
                     .AddNpgSql(
@@ -91,11 +89,11 @@ internal static partial class WebApplicationBuilderExtensions
         builder.Services.AddCqrs(
             pipelines: new[]
             {
+                typeof(LoggingBehavior<,>),
+                typeof(StreamLoggingBehavior<,>),
                 typeof(RequestValidationBehavior<,>),
                 typeof(StreamRequestValidationBehavior<,>),
-                typeof(StreamLoggingBehavior<,>),
                 typeof(StreamCachingBehavior<,>),
-                typeof(LoggingBehavior<,>),
                 typeof(CachingBehavior<,>),
                 typeof(InvalidateCachingBehavior<,>),
                 typeof(EfTxBehavior<,>)

@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using BuildingBlocks.Core.Exception.Types;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Security.Jwt;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;

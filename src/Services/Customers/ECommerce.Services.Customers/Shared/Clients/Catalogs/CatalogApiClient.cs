@@ -1,7 +1,9 @@
 using System.Net.Http.Json;
+using AutoMapper;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Resiliency;
+using BuildingBlocks.Web.Extensions;
+using ECommerce.Services.Customers.Products.Models;
 using ECommerce.Services.Customers.Shared.Clients.Catalogs.Dtos;
 using Microsoft.Extensions.Options;
 using Polly;
@@ -12,16 +14,19 @@ namespace ECommerce.Services.Customers.Shared.Clients.Catalogs;
 
 public class CatalogApiClient : ICatalogApiClient
 {
+    private readonly IMapper _mapper;
     private readonly HttpClient _httpClient;
     private readonly CatalogsApiClientOptions _options;
     private readonly AsyncPolicyWrap<HttpResponseMessage> _combinedPolicy;
 
     public CatalogApiClient(
         HttpClient httpClient,
+        IMapper mapper,
         IOptions<CatalogsApiClientOptions> options,
         IOptions<PolicyOptions> policyOptions
     )
     {
+        _mapper = mapper;
         _httpClient = httpClient.NotBeNull();
         _options = options.Value;
 
@@ -49,10 +54,7 @@ public class CatalogApiClient : ICatalogApiClient
         _combinedPolicy = combinedPolicy.WrapAsync(timeoutPolicy);
     }
 
-    public async Task<GetProductByIdResponse?> GetProductByIdAsync(
-        long id,
-        CancellationToken cancellationToken = default
-    )
+    public async Task<Product?> GetProductByIdAsync(long id, CancellationToken cancellationToken = default)
     {
         id.NotBeNegativeOrZero();
 
@@ -69,8 +71,12 @@ public class CatalogApiClient : ICatalogApiClient
         // throw HttpResponseException instead of HttpRequestException (because we want detail response exception) with corresponding status code
         await httpResponse.EnsureSuccessStatusCodeWithDetailAsync();
 
-        return await httpResponse.Content.ReadFromJsonAsync<GetProductByIdResponse>(
+        var productDto = await httpResponse.Content.ReadFromJsonAsync<GetProductByIdClientDto>(
             cancellationToken: cancellationToken
         );
+
+        var product = _mapper.Map<Product>(productDto?.Product);
+
+        return product;
     }
 }

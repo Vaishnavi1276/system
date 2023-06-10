@@ -1,8 +1,6 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Caching;
 using BuildingBlocks.Core.Exception.Types;
-using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
+using BuildingBlocks.Web.Extensions;
 using EasyCaching.Core;
 using Microsoft.Extensions.Options;
 
@@ -17,10 +15,7 @@ public class RevokeAccessTokenMiddleware : IMiddleware
         IOptions<CacheOptions> options
     )
     {
-        Guard.Against.Null(options);
-        _cachingProvider = Guard.Against
-            .Null(cachingProviderFactory)
-            .GetCachingProvider(options.Value.DefaultCacheType);
+        _cachingProvider = cachingProviderFactory.GetCachingProvider(options.Value.DefaultCacheType);
     }
 
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)

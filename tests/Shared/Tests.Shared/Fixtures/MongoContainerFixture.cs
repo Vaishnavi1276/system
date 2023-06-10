@@ -1,4 +1,4 @@
-using Ardalis.GuardClauses;
+using BuildingBlocks.Core.Extensions;
 using Tests.Shared.Helpers;
 using MongoDB.Driver;
 using Testcontainers.MongoDb;
@@ -19,12 +19,10 @@ public class MongoContainerFixture : IAsyncLifetime
     {
         _messageSink = messageSink;
         var mongoContainerOptions = ConfigurationHelper.BindOptions<MongoContainerOptions>();
-        Guard.Against.Null(mongoContainerOptions);
+        mongoContainerOptions.NotBeNull();
         MongoContainerOptions = mongoContainerOptions;
 
         var postgresContainerBuilder = new MongoDbBuilder()
-            .WithUsername(mongoContainerOptions.UserName)
-            .WithPassword(mongoContainerOptions.Password)
             .WithName(mongoContainerOptions.Name)
             .WithCleanUp(true)
             // https://github.com/testcontainers/testcontainers-dotnet/issues/734
@@ -82,6 +80,4 @@ public sealed class MongoContainerOptions
     public string Name { get; set; } = "mongo_" + Guid.NewGuid();
     public string ImageName { get; set; } = "mongo:latest";
     public string DatabaseName { get; set; } = "test_db";
-    public string UserName { get; set; } = "admin";
-    public string Password { get; set; } = "admin";
 }

@@ -1,12 +1,16 @@
-using System.Net;
+using System.Net.Http.Headers;
 using System.Security.Claims;
-using Ardalis.GuardClauses;
 using AutoBogus;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Messaging;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Core.Messaging.MessagePersistence;
 using BuildingBlocks.Core.Types;
+using BuildingBlocks.Integration.MassTransit;
+using BuildingBlocks.Persistence.EfCore.Postgres;
+using BuildingBlocks.Persistence.Mongo;
 using DotNet.Testcontainers.Configurations;
 using FluentAssertions;
 using FluentAssertions.Extensions;
@@ -20,7 +24,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using NSubstitute;
 using Serilog;
-using Serilog.AspNetCore;
 using Tests.Shared.Auth;
 using Tests.Shared.Extensions;
 using Tests.Shared.Factory;
@@ -61,9 +64,22 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
     public IHttpContextAccessor HttpContextAccessor =>
         _httpContextAccessor ??= ServiceProvider.GetRequiredService<IHttpContextAccessor>();
 
+    public HttpClient GuestClient
+    {
+        get
+        {
+            if (_guestClient == null)
+            {
+                _guestClient = Factory.CreateClient();
+                // Set the media type of the request to JSON - we need this for getting problem details result for all http calls because problem details just return response for request with media type JSON
+                _guestClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            }
+            return _guestClient;
+        }
+    }
+
     public HttpClient AdminHttpClient => _adminClient ??= CreateAdminHttpClient();
     public HttpClient NormalUserHttpClient => _normalClient ??= CreateNormalUserHttpClient();
-    public HttpClient GuestClient => _guestClient ??= Factory.CreateClient();
     public WireMockServer WireMockServer { get; }
     public string? WireMockServerUrl { get; }
 
@@ -127,20 +143,38 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
                     new TestConfigurations
                     {
                         {
-                            "PostgresOptions:ConnectionString",
+                            $"{nameof(PostgresOptions)}:{nameof(PostgresOptions.ConnectionString)}",
                             PostgresContainerFixture.Container.GetConnectionString()
                         },
                         {
-                            "MessagePersistenceOptions:ConnectionString",
+                            $"{nameof(MessagePersistenceOptions)}:{nameof(PostgresOptions.ConnectionString)}",
                             PostgresContainerFixture.Container.GetConnectionString()
                         },
-                        { "MongoOptions:ConnectionString", MongoContainerFixture.Container.GetConnectionString() },
-                        { "MongoOptions:DatabaseName", MongoContainerFixture.MongoContainerOptions.DatabaseName },
+                        {
+                            $"{nameof(MongoOptions)}:{nameof(MongoOptions.ConnectionString)}",
+                            MongoContainerFixture.Container.GetConnectionString()
+                        },
+                        {
+                            $"{nameof(MongoOptions)}:{nameof(MongoOptions.DatabaseName)}",
+                            MongoContainerFixture.MongoContainerOptions.DatabaseName
+                        },
                         //{"MongoOptions:ConnectionString", Mongo2GoFixture.MongoDbRunner.ConnectionString}, //initialize mongo2go connection
-                        { "RabbitMqOptions:UserName", RabbitMqContainerFixture.RabbitMqContainerOptions.UserName },
-                        { "RabbitMqOptions:Password", RabbitMqContainerFixture.RabbitMqContainerOptions.Password },
-                        { "RabbitMqOptions:Host", RabbitMqContainerFixture.Container.Hostname },
-                        { "RabbitMqOptions:Port", RabbitMqContainerFixture.HostPort.ToString() },
+                        {
+                            $"{nameof(RabbitMqOptions)}:{nameof(RabbitMqOptions.UserName)}",
+                            RabbitMqContainerFixture.RabbitMqContainerOptions.UserName
+                        },
+                        {
+                            $"{nameof(RabbitMqOptions)}:{nameof(RabbitMqOptions.Password)}",
+                            RabbitMqContainerFixture.RabbitMqContainerOptions.Password
+                        },
+                        {
+                            $"{nameof(RabbitMqOptions)}:{nameof(RabbitMqOptions.Host)}",
+                            RabbitMqContainerFixture.Container.Hostname
+                        },
+                        {
+                            $"{nameof(RabbitMqOptions)}:{nameof(RabbitMqOptions.Port)}",
+                            RabbitMqContainerFixture.HostPort.ToString()
+                        },
                     }
                 );
 
@@ -283,7 +317,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         ICommand<TResponse> request,
         CancellationToken cancellationToken = default
     )
-        where TResponse : notnull
+        where TResponse : class
     {
         return await ExecuteScopeAsync(async sp =>
         {
@@ -300,7 +334,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         {
             var commandProcessor = sp.GetRequiredService<ICommandProcessor>();
 
-            return await commandProcessor.SendAsync(request, cancellationToken);
+            await commandProcessor.SendAsync(request, cancellationToken);
         });
     }
 
@@ -334,7 +368,11 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
     }
 
     // Ref: https://tech.energyhelpline.com/in-memory-testing-with-masstransit/
-    public async ValueTask WaitUntilConditionMet(Func<Task<bool>> conditionToMet, int? timeoutSecond = null)
+    public async ValueTask WaitUntilConditionMet(
+        Func<Task<bool>> conditionToMet,
+        int? timeoutSecond = null,
+        string? exception = null
+    )
     {
         var time = timeoutSecond ?? 300;
 
@@ -345,7 +383,9 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         {
             if (timeoutExpired)
             {
-                throw new TimeoutException("Condition not met for the test.");
+                throw new TimeoutException(
+                    exception ?? $"Condition not met for the test in the '{timeoutExpired}' second."
+                );
             }
 
             await Task.Delay(100);
@@ -441,7 +481,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
             return await ExecuteScopeAsync(async sp =>
             {
                 var messagePersistenceService = sp.GetService<IMessagePersistenceService>();
-                Guard.Against.Null(messagePersistenceService, nameof(messagePersistenceService));
+                messagePersistenceService.NotBeNull();
 
                 var filter = await messagePersistenceService.GetByFilterAsync(
                     x =>
@@ -469,7 +509,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
             return await ExecuteScopeAsync(async sp =>
             {
                 var messagePersistenceService = sp.GetService<IMessagePersistenceService>();
-                Guard.Against.Null(messagePersistenceService, nameof(messagePersistenceService));
+                messagePersistenceService.NotBeNull();
 
                 var filter = await messagePersistenceService.GetByFilterAsync(
                     x =>
@@ -489,6 +529,9 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
     {
         var adminClient = Factory.CreateClient();
 
+        // Set the media type of the request to JSON - we need this for getting problem details result for all http calls because problem details just return response for request with media type JSON
+        adminClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
         //https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
         var claims = CreateAdminUserMock().Claims;
 
@@ -500,6 +543,9 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
     private HttpClient CreateNormalUserHttpClient()
     {
         var userClient = Factory.CreateClient();
+
+        // Set the media type of the request to JSON - we need this for getting problem details result for all http calls because problem details just return response for request with media type JSON
+        userClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         //https://github.com/webmotions/fake-authentication-jwtbearer/issues/14
         var claims = CreateNormalUserMock().Claims;

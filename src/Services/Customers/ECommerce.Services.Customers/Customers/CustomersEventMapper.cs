@@ -1,5 +1,5 @@
-using BuildingBlocks.Abstractions.CQRS.Events;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1.Events.Domain;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1.Events.Domain;

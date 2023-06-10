@@ -46,9 +46,6 @@ public class SharedModulesConfiguration : ISharedModulesConfiguration
 
         ServiceActivator.Configure(app.Services);
 
-        await app.ApplyDatabaseMigrations();
-        await app.SeedData();
-
         return app;
     }
 }

@@ -1,4 +1,4 @@
-using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
 using BuildingBlocks.Core.Extensions;
 
 namespace ECommerce.Services.Catalogs.Products.Features.ChangingRestockThreshold.v1;

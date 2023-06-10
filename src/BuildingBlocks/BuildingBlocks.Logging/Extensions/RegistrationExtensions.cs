@@ -1,5 +1,4 @@
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Serilog;
 using Serilog.Exceptions;

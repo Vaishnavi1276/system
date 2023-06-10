@@ -12,7 +12,7 @@ using FluentValidation;
 
 namespace ECommerce.Services.Catalogs.Products.Features.GettingProductById.v1;
 
-internal record GetProductById(long Id) : IQuery<GetProductByIdResult>
+internal record GetProductById(long Id) : CacheQuery<GetProductById, GetProductByIdResult>
 {
     /// <summary>
     /// GetProductById query with validation.
@@ -23,6 +23,11 @@ internal record GetProductById(long Id) : IQuery<GetProductByIdResult>
     {
         return new GetProductByIdValidator().HandleValidation(new GetProductById(id));
     }
+
+    public override string CacheKey(GetProductById request)
+    {
+        return $"{base.CacheKey(request)}_{request.Id}";
+    }
 }
 
 internal class GetProductByIdValidator : AbstractValidator<GetProductById>
@@ -30,14 +35,6 @@ internal class GetProductByIdValidator : AbstractValidator<GetProductById>
     public GetProductByIdValidator()
     {
         RuleFor(x => x.Id).GreaterThan(0);
-    }
-}
-
-internal class GetProductByIdCache : CacheRequest<GetProductById, GetProductByIdResult>
-{
-    public override string CacheKey(GetProductById request)
-    {
-        return $"{base.CacheKey(request)}_{request.Id}";
     }
 }
 

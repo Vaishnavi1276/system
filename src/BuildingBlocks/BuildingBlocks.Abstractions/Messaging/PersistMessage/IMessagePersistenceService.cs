@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 
 namespace BuildingBlocks.Abstractions.Messaging.PersistMessage;
 

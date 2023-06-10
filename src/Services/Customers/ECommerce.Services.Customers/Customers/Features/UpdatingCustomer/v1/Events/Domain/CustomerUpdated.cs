@@ -1,7 +1,7 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Abstractions.CQRS.Events.Internal;
-using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.Read.Mongo;

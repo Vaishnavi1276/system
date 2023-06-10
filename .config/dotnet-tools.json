@@ -31,6 +31,18 @@
       "commands": [
         "swagger"
       ]
+    },
+    "microsoft.tye": {
+      "version": "0.11.0-alpha.22111.1",
+      "commands": [
+        "tye"
+      ]
+    },
+    "dotnet-ef": {
+      "version": "7.0.5",
+      "commands": [
+        "dotnet-ef"
+      ]
     }
   }
 }

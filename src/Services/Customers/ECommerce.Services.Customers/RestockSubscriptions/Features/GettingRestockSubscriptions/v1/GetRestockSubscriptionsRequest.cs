@@ -1,4 +1,5 @@
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Paging;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.GettingRestockSubscriptions.v1;
 

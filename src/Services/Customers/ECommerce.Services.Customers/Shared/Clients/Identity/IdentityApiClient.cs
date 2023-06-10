@@ -1,8 +1,10 @@
 using System.Net.Http.Json;
+using AutoMapper;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Resiliency;
+using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
+using ECommerce.Services.Customers.Users.Model;
 using Microsoft.Extensions.Options;
 using Polly;
 using Polly.Timeout;
@@ -12,16 +14,19 @@ namespace ECommerce.Services.Customers.Shared.Clients.Identity;
 
 public class IdentityApiClient : IIdentityApiClient
 {
+    private readonly IMapper _mapper;
     private readonly HttpClient _httpClient;
     private readonly IdentityApiClientOptions _options;
     private readonly AsyncPolicyWrap<HttpResponseMessage> _combinedPolicy;
 
     public IdentityApiClient(
         HttpClient httpClient,
+        IMapper mapper,
         IOptions<IdentityApiClientOptions> options,
         IOptions<PolicyOptions> policyOptions
     )
     {
+        _mapper = mapper;
         _httpClient = httpClient.NotBeNull();
         _options = options.Value;
 
@@ -48,10 +53,7 @@ public class IdentityApiClient : IIdentityApiClient
         _combinedPolicy = combinedPolicy.WrapAsync(timeoutPolicy);
     }
 
-    public async Task<GetUserByEmailResponse?> GetUserByEmailAsync(
-        string email,
-        CancellationToken cancellationToken = default
-    )
+    public async Task<UserIdentity?> GetUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         email.NotBeNullOrWhiteSpace();
         email.NotBeInvalidEmail();
@@ -71,17 +73,20 @@ public class IdentityApiClient : IIdentityApiClient
         // throw HttpResponseException instead of HttpRequestException (because we want detail response exception) with corresponding status code
         await httpResponse.EnsureSuccessStatusCodeWithDetailAsync();
 
-        return await httpResponse.Content.ReadFromJsonAsync<GetUserByEmailResponse>(
+        var userDto = await httpResponse.Content.ReadFromJsonAsync<GetUserByEmailClientDto>(
             cancellationToken: cancellationToken
         );
+        var user = _mapper.Map<UserIdentity>(userDto?.UserIdentity);
+
+        return user;
     }
 
-    public async Task<CreateUserResponse?> CreateUserIdentityAsync(
-        CreateUserRequest createUserRequest,
+    public async Task<UserIdentity?> CreateUserIdentityAsync(
+        CreateUserClientDto createUserClientDto,
         CancellationToken cancellationToken = default
     )
     {
-        createUserRequest.NotBeNull();
+        createUserClientDto.NotBeNull();
 
         var httpResponse = await _combinedPolicy.ExecuteAsync(async () =>
         {
@@ -89,7 +94,7 @@ public class IdentityApiClient : IIdentityApiClient
             // https: //github.com/App-vNext/Polly#step-1--specify-the--exceptionsfaults-you-want-the-policy-to-handle
             var httpResponse = await _httpClient.PostAsJsonAsync(
                 _options.UsersEndpoint,
-                createUserRequest,
+                createUserClientDto,
                 cancellationToken
             );
             return httpResponse;
@@ -99,6 +104,11 @@ public class IdentityApiClient : IIdentityApiClient
         // throw HttpResponseException instead of HttpRequestException (because we want detail response exception) with corresponding status code
         await httpResponse.EnsureSuccessStatusCodeWithDetailAsync();
 
-        return await httpResponse.Content.ReadFromJsonAsync<CreateUserResponse>(cancellationToken: cancellationToken);
+        var userDto = await httpResponse.Content.ReadFromJsonAsync<CreateUserIdentityClientDto>(
+            cancellationToken: cancellationToken
+        );
+        var user = _mapper.Map<UserIdentity>(userDto?.UserIdentity);
+
+        return user;
     }
 }

@@ -1,14 +1,10 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.Domain;
 using BuildingBlocks.Core.Domain;
 using BuildingBlocks.Core.Domain.ValueObjects;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.ValueObjects;
-using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Domain;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1.Events.Domain;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.DeletingRestockSubscription.v1;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1.Events.Domain;
 using ECommerce.Services.Customers.RestockSubscriptions.ValueObjects;
 
@@ -35,12 +31,9 @@ public class RestockSubscription : Aggregate<RestockSubscriptionId>, IHaveSoftDe
         Email email
     )
     {
-        Guard.Against.Null(id, new RestockSubscriptionDomainException("InternalCommandId cannot be null"));
-        Guard.Against.Null(customerId, new RestockSubscriptionDomainException("CustomerId cannot be null"));
-        Guard.Against.Null(
-            productInformation,
-            new RestockSubscriptionDomainException("ProductInformation cannot be null")
-        );
+        id.NotBeNull();
+        customerId.NotBeNull();
+        productInformation.NotBeNull();
 
         var restockSubscription = new RestockSubscription
         {
@@ -58,7 +51,8 @@ public class RestockSubscription : Aggregate<RestockSubscriptionId>, IHaveSoftDe
 
     public void ChangeEmail(Email email)
     {
-        Email = Guard.Against.Null(email, new RestockSubscriptionDomainException("Email can't be null."));
+        email.NotBeNull();
+        Email = email;
     }
 
     public void Delete()

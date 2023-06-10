@@ -1,10 +1,9 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Commands;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
-using ECommerce.Services.Customers.Shared.Data;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1;
 
@@ -39,7 +38,7 @@ internal class CreateRestockSubscriptionReadModelHandler : ICommandHandler<Creat
         CancellationToken cancellationToken
     )
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var readModel = _mapper.Map<RestockSubscription>(command);
 

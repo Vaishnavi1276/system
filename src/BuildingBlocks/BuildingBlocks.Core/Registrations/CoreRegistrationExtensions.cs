@@ -1,21 +1,24 @@
 using System.Reflection;
 using BuildingBlocks.Abstractions.Core;
-using BuildingBlocks.Abstractions.CQRS.Events;
+using BuildingBlocks.Abstractions.Domain.Events;
+using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
 using BuildingBlocks.Abstractions.Serialization;
 using BuildingBlocks.Abstractions.Types;
-using BuildingBlocks.Core.CQRS.Events;
+using BuildingBlocks.Core.Domain;
+using BuildingBlocks.Core.Domain.Events;
 using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Core.IdsGenerator;
 using BuildingBlocks.Core.Messaging.BackgroundServices;
 using BuildingBlocks.Core.Messaging.MessagePersistence;
 using BuildingBlocks.Core.Messaging.MessagePersistence.InMemory;
+using BuildingBlocks.Core.Paging;
 using BuildingBlocks.Core.Reflection;
 using BuildingBlocks.Core.Serialization;
 using BuildingBlocks.Core.Types;
 using BuildingBlocks.Core.Utils;
-using BuildingBlocks.Core.Web.Extensions.ServiceCollection;
 using Microsoft.Extensions.Configuration;
 using Scrutor;
 using Sieve.Services;
@@ -24,11 +27,7 @@ namespace BuildingBlocks.Core.Registrations;
 
 public static class CoreRegistrationExtensions
 {
-    public static IServiceCollection AddCore(
-        this IServiceCollection services,
-        IConfiguration configuration,
-        params Assembly[] scanAssemblies
-    )
+    public static IServiceCollection AddCore(this IServiceCollection services, params Assembly[] scanAssemblies)
     {
         var systemInfo = MachineInstanceInfo.New();
 
@@ -41,15 +40,20 @@ public static class CoreRegistrationExtensions
         services.AddSingleton<IMachineInstanceInfo>(systemInfo);
         services.AddSingleton(systemInfo);
         services.AddSingleton<IExclusiveLock, ExclusiveLock>();
-        services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
 
         services.AddTransient<IAggregatesDomainEventsRequestStore, AggregatesDomainEventsStore>();
+        services.AddTransient<IDomainEventsAccessor, DomainEventAccessor>();
+        services.AddTransient<IDomainEventPublisher, DomainEventPublisher>();
+        services.AddTransient<IDomainNotificationEventPublisher, DomainNotificationEventPublisher>();
+
+        services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
+        services.ScanAndRegisterDbExecutors(assemblies);
 
         services.AddHttpContextAccessor();
 
         AddDefaultSerializer(services);
 
-        AddMessagingCore(services, configuration, assemblies);
+        AddMessagingCore(services, assemblies);
 
         RegisterEventMappers(services, assemblies);
 
@@ -75,25 +79,21 @@ public static class CoreRegistrationExtensions
 
     private static void AddMessagingCore(
         this IServiceCollection services,
-        IConfiguration configuration,
         Assembly[] scanAssemblies,
         ServiceLifetime serviceLifetime = ServiceLifetime.Transient
     )
     {
         AddMessagingMediator(services, serviceLifetime, scanAssemblies);
 
-        AddPersistenceMessage(services, configuration);
+        AddPersistenceMessage(services);
     }
 
-    private static void AddPersistenceMessage(IServiceCollection services, IConfiguration configuration)
+    private static void AddPersistenceMessage(IServiceCollection services)
     {
         services.AddScoped<IMessagePersistenceService, MessagePersistenceService>();
         services.AddScoped<IMessagePersistenceRepository, NullPersistenceRepository>();
         services.AddHostedService<MessagePersistenceBackgroundService>();
-        services
-            .AddOptions<MessagePersistenceOptions>()
-            .Bind(configuration.GetSection(nameof(MessagePersistenceOptions)))
-            .ValidateDataAnnotations();
+        services.AddValidatedOptions<MessagePersistenceOptions>();
     }
 
     private static void AddMessagingMediator(

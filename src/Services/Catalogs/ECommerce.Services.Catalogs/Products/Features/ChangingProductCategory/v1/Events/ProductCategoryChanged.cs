@@ -1,4 +1,4 @@
-using BuildingBlocks.Core.CQRS.Events.Internal;
+using BuildingBlocks.Core.Domain.Events.Internal;
 using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Catalogs.Categories;
 using ECommerce.Services.Catalogs.Products.ValueObjects;

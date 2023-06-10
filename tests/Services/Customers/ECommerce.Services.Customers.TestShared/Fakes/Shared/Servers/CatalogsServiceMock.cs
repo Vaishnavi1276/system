@@ -38,7 +38,7 @@ public class CatalogsServiceMock : WireMockServer
         };
     }
 
-    public (GetProductByIdResponse Response, string Endpoint) SetupGetProductById(long id = 0)
+    public (GetProductByIdOutput Response, string Endpoint) SetupGetProductById(long id = 0)
     {
         var fakeProduct = new FakeProductDto().Generate(1).First();
         if (id > 0)
@@ -46,7 +46,7 @@ public class CatalogsServiceMock : WireMockServer
 
         fakeProduct = fakeProduct with { AvailableStock = 0 };
 
-        var response = new GetProductByIdResponse(fakeProduct);
+        var response = new GetProductByIdOutput(fakeProduct);
 
         //https://github.com/WireMock-Net/WireMock.Net/wiki/Request-Matching
         // we should put / in the beginning of the endpoint

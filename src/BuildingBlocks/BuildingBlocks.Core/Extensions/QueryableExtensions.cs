@@ -1,8 +1,10 @@
 using System.Linq.Expressions;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
+using BuildingBlocks.Core.Paging;
 using Sieve.Models;
 using Sieve.Services;
 

@@ -4,6 +4,7 @@ using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Catalogs.Brands;
 using ECommerce.Services.Catalogs.Brands.Exceptions.Application;
+using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Categories;
 using ECommerce.Services.Catalogs.Categories.Exceptions.Application;
 using ECommerce.Services.Catalogs.Products.Exceptions.Application;

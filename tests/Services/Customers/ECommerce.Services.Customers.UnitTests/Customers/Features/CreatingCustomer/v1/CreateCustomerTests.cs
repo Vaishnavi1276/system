@@ -1,10 +1,8 @@
-using System.Net;
 using BuildingBlocks.Core.Exception.Types;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
 using ECommerce.Services.Customers.Customers.ValueObjects;
 using ECommerce.Services.Customers.Shared.Clients.Identity;
-using ECommerce.Services.Customers.Shared.Clients.Identity.Dtos;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Commands;
 using ECommerce.Services.Customers.TestShared.Fakes.Customers.Entities;
 using ECommerce.Services.Customers.TestShared.Fakes.Shared.Dtos;
@@ -54,7 +52,7 @@ public class CreateCustomerTests : CustomerServiceUnitTestBase
         //https://nsubstitute.github.io/help/argument-matchers/
         _identityApiClient
             .GetUserByEmailAsync(Arg.Is<string>(x => x == fakeIdentityUser!.Email), Arg.Any<CancellationToken>())
-            .Returns(new GetUserByEmailResponse(fakeIdentityUser));
+            .Returns(new GetUserByEmailOutput(fakeIdentityUser));
 
         var command = new FakeCreateCustomer(fakeIdentityUser!.Email).Generate();
         var handler = new CreateCustomerHandler(_identityApiClient, CustomersDbContext, _logger);

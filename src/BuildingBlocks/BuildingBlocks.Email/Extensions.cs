@@ -1,5 +1,4 @@
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Web.Extensions;
 using BuildingBlocks.Email.Options;
 using Microsoft.Extensions.Configuration;
 

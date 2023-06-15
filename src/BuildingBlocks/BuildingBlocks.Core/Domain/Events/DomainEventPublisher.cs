@@ -4,7 +4,6 @@ using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Messaging;
 using BuildingBlocks.Abstractions.Messaging.PersistMessage;
 using BuildingBlocks.Core.Extensions;
-using MediatR;
 using Microsoft.Extensions.Logging;
 
 namespace BuildingBlocks.Core.Domain.Events;
@@ -13,7 +12,7 @@ public class DomainEventPublisher : IDomainEventPublisher
 {
     private readonly IMessagePersistenceService _messagePersistenceService;
     private readonly IDomainEventsAccessor _domainEventsAccessor;
-    private readonly IMediator _mediator;
+    private readonly IInternalEventBus _internalEventBus;
     private readonly ILogger<DomainEventPublisher> _logger;
     private readonly IEnumerable<IIntegrationEventMapper>? _integrationEventMappers;
     private readonly IEnumerable<IIDomainNotificationEventMapper>? _domainNotificationEventMappers;
@@ -24,7 +23,7 @@ public class DomainEventPublisher : IDomainEventPublisher
         IMessagePersistenceService messagePersistenceService,
         IDomainNotificationEventPublisher domainNotificationEventPublisher,
         IDomainEventsAccessor domainEventsAccessor,
-        IMediator mediator,
+        IInternalEventBus internalEventBus,
         ILogger<DomainEventPublisher> logger,
         IEnumerable<IIntegrationEventMapper>? integrationEventMappers = null,
         IEnumerable<IIDomainNotificationEventMapper>? domainNotificationEventMappers = null,
@@ -33,7 +32,7 @@ public class DomainEventPublisher : IDomainEventPublisher
     {
         _messagePersistenceService = messagePersistenceService;
         _domainEventsAccessor = domainEventsAccessor;
-        _mediator = mediator;
+        _internalEventBus = internalEventBus;
         _logger = logger;
         _integrationEventMappers = integrationEventMappers;
         _domainNotificationEventMappers = domainNotificationEventMappers;
@@ -175,7 +174,7 @@ public class DomainEventPublisher : IDomainEventPublisher
 
         if (@event is IIntegrationEvent integrationEvent)
         {
-            await _mediator.Publish(integrationEvent, cancellationToken);
+            await _internalEventBus.Publish(integrationEvent, cancellationToken);
 
             _logger.LogDebug(
                 "Dispatched integration notification event {IntegrationEventName} with payload {IntegrationEventContent}",
@@ -188,7 +187,7 @@ public class DomainEventPublisher : IDomainEventPublisher
 
         if (@event is IDomainEvent domainEvent)
         {
-            await _mediator.Publish(domainEvent, cancellationToken);
+            await _internalEventBus.Publish(domainEvent, cancellationToken);
 
             _logger.LogDebug(
                 "Dispatched domain event {DomainEventName} with payload {DomainEventContent}",
@@ -201,7 +200,7 @@ public class DomainEventPublisher : IDomainEventPublisher
 
         if (@event is IDomainNotificationEvent notificationEvent)
         {
-            await _mediator.Publish(notificationEvent, cancellationToken);
+            await _internalEventBus.Publish(notificationEvent, cancellationToken);
 
             _logger.LogDebug(
                 "Dispatched domain notification event {DomainNotificationEventName} with payload {DomainNotificationEventContent}",
@@ -211,7 +210,7 @@ public class DomainEventPublisher : IDomainEventPublisher
             return;
         }
 
-        await _mediator.Publish(@event, cancellationToken);
+        await _internalEventBus.Publish(@event, cancellationToken);
     }
 
     private async Task DispatchAsync<TEvent>(TEvent[] events, CancellationToken cancellationToken = default)

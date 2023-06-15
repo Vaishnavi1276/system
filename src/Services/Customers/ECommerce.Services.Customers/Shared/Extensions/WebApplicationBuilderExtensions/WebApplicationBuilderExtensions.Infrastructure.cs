@@ -32,7 +32,7 @@ public static partial class WebApplicationBuilderExtensions
 {
     public static WebApplicationBuilder AddInfrastructure(this WebApplicationBuilder builder)
     {
-        builder.Services.AddCore(builder.Configuration);
+        builder.Services.AddCore();
 
         builder.Services.AddCustomJwtAuthentication(builder.Configuration);
         builder.Services.AddCustomAuthorization(

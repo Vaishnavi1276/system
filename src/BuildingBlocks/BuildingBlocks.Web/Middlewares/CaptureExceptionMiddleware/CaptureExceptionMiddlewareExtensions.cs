@@ -4,6 +4,8 @@ namespace BuildingBlocks.Web.Middlewares.CaptureExceptionMiddleware;
 
 public static class CaptureExceptionMiddlewareExtensions
 {
+    // https://github.com/dotnet/aspnetcore/issues/4765
+    // https://github.com/dotnet/aspnetcore/pull/47760
     public static IApplicationBuilder UseCaptureException(this IApplicationBuilder app)
     {
         if (app == null)

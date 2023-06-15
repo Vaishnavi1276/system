@@ -13,6 +13,9 @@ public static partial class WebApplicationBuilderExtensions
             problemDetailsOptions.CustomizeProblemDetails = problemDetailContext =>
             {
                 // with help of capture exception middleware for capturing actual exception
+                // https://github.com/dotnet/aspnetcore/issues/4765
+                // https://github.com/dotnet/aspnetcore/pull/47760
+                // `problemDetailContext` doesn't contain real `exception` it will add in this pull request in .net 8
                 if (problemDetailContext.HttpContext.Features.Get<IExceptionHandlerFeature>() is { } exceptionFeature)
                 { }
             };

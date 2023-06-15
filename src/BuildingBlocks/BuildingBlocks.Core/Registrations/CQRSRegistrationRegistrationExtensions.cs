@@ -49,7 +49,8 @@ public static class CQRSRegistrationRegistrationExtensions
         services
             .Add<ICommandProcessor, CommandProcessor>(serviceLifetime)
             .Add<IQueryProcessor, QueryProcessor>(serviceLifetime)
-            .Add<ICommandScheduler, NullCommandScheduler>(serviceLifetime);
+            .Add<ICommandScheduler, NullCommandScheduler>(serviceLifetime)
+            .Add<IInternalEventBus, InternalEventBus>();
 
         return services;
     }

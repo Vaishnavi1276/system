@@ -1,61 +1,101 @@
-using Ardalis.ApiEndpoints;
-using Ardalis.GuardClauses;
-using Asp.Versioning;
+using AutoMapper;
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
-using Hellang.Middleware.ProblemDetails;
-using Swashbuckle.AspNetCore.Annotations;
+using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Core.Paging;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.GettingRestockSubscriptions.v1;
 
-// https://www.youtube.com/watch?v=SDu0MA6TmuM
-// https://github.com/ardalis/ApiEndpoints
-public class GetRestockSubscriptionsEndpoint
-    : EndpointBaseAsync.WithRequest<GetRestockSubscriptionsRequest?>.WithActionResult<GetRestockSubscriptionsResponse>
+internal class GetRestockSubscriptionsEndpoint
+    : IQueryMinimalEndpoint<
+        GetRestockSubscriptionsRequestParameters,
+        Ok<GetRestockSubscriptionsResponse>,
+        ValidationProblem,
+        UnAuthorizedHttpProblemResult
+    >
 {
-    private readonly IQueryProcessor _queryProcessor;
+    public string GroupName => RestockSubscriptionsConfigs.Tag;
+    public string PrefixRoute => RestockSubscriptionsConfigs.RestockSubscriptionsUrl;
+    public double Version => 1.0;
 
-    public GetRestockSubscriptionsEndpoint(IQueryProcessor queryProcessor)
+    public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
     {
-        _queryProcessor = queryProcessor;
+        // return app.MapQueryEndpoint<GetCustomersRequestParameters, GetCustomersResponse, GetCustomers,
+        //         GetProductsResult>("/")
+
+        return builder
+            .MapGet("/", HandleAsync)
+            .RequireAuthorization()
+            .WithName(nameof(GetRestockSubscriptions))
+            .WithSummaryAndDescription(
+                nameof(GetRestockSubscriptions).Humanize(),
+                nameof(GetRestockSubscriptions).Humanize()
+            )
+            .WithDisplayName(nameof(GetRestockSubscriptions).Humanize());
+        // .Produces<GetCustomersResponse>("Customers fetched successfully.", StatusCodes.Status200OK)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem(StatusCodes.Status401Unauthorized)
     }
 
-    // We could use `SwaggerResponse` form `Swashbuckle.AspNetCore` package instead of `ProducesResponseType` for supporting custom description for status codes
-    [ProducesResponseType(typeof(GetRestockSubscriptionsResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(StatusCodeProblemDetails), StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(typeof(StatusCodeProblemDetails), StatusCodes.Status400BadRequest)]
-    [SwaggerOperation(
-        Summary = "Getting Restock Subscriptions.",
-        Description = "Getting Restock Subscriptions.",
-        OperationId = "GetRestockSubscriptions",
-        Tags = new[] { RestockSubscriptionsConfigs.Tag }
-    )]
-    [HttpGet(RestockSubscriptionsConfigs.RestockSubscriptionsUrl, Name = "GetRestockSubscriptions")]
-    [ApiVersion(1.0)]
-    [Authorize(Roles = CustomersConstants.Role.Admin)]
-    public override async Task<ActionResult<GetRestockSubscriptionsResponse>> HandleAsync(
-        [FromQuery] GetRestockSubscriptionsRequest? request,
-        CancellationToken cancellationToken = default
-    )
+    public async Task<
+        Results<Ok<GetRestockSubscriptionsResponse>, ValidationProblem, UnAuthorizedHttpProblemResult>
+    > HandleAsync([AsParameters] GetRestockSubscriptionsRequestParameters requestParameters)
     {
-        Guard.Against.Null(request, nameof(request));
+        var (
+            pageNumber,
+            pageSize,
+            filters,
+            sortOrder,
+            emails,
+            from,
+            to,
+            context,
+            queryProcessor,
+            mapper,
+            cancellationToken
+        ) = requestParameters;
 
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetRestockSubscriptionsEndpoint)))
-        {
-            var result = await _queryProcessor.SendAsync(
-                new GetRestockSubscriptions
+        var result = await queryProcessor.SendAsync(
+            GetRestockSubscriptions.Of(
+                new PageRequest
                 {
-                    PageNumber = request.PageNumber,
-                    SortOrder = request.SortOrder,
-                    PageSize = request.PageSize,
-                    Filters = request.Filters,
-                    Emails = request.Emails,
-                    From = request.From,
-                    To = request.To
+                    PageNumber = pageNumber,
+                    PageSize = pageSize,
+                    Filters = filters,
+                    SortOrder = sortOrder
                 },
-                cancellationToken
-            );
+                emails,
+                from,
+                to
+            ),
+            cancellationToken
+        );
 
-            return Ok(result);
-        }
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.Ok(new GetRestockSubscriptionsResponse(result.RestockSubscriptions));
     }
 }
+
+public record GetRestockSubscriptionsResponse(IPageList<RestockSubscriptionDto> RestockSubscriptions);
+
+// https://blog.codingmilitia.com/2022/01/03/getting-complex-type-as-simple-type-query-string-aspnet-core-api-controller/
+// https://benfoster.io/blog/minimal-apis-custom-model-binding-aspnet-6/
+public record GetRestockSubscriptionsRequestParameters(
+    int PageNumber,
+    int PageSize,
+    string? Filters,
+    string? SortOrder,
+    [FromBody] IList<string> Emails,
+    DateTime? From,
+    DateTime? To,
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpQuery, IPageRequest;

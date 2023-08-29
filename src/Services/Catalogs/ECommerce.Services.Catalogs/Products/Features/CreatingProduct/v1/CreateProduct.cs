@@ -4,7 +4,6 @@ using BuildingBlocks.Abstractions.Domain;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
 using BuildingBlocks.Validation.Extensions;
-using ECommerce.Services.Catalogs.Brands;
 using ECommerce.Services.Catalogs.Brands.Exceptions.Application;
 using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Categories;
@@ -48,6 +47,7 @@ internal record CreateProduct(
 {
     public long Id { get; } = SnowFlakIdGenerator.NewId();
 
+    // Create product with inline validation.
     public static CreateProduct Of(
         string? name,
         decimal price,

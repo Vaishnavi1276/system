@@ -1,5 +1,4 @@
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 using ECommerce.Services.Shared.Catalogs.Products.Events.v1.Integration;
 using MassTransit;
@@ -27,7 +26,7 @@ public class ProductStockReplenishedConsumer : IConsumer<ProductStockReplenished
         var productStockReplenished = context.Message;
 
         await _commandProcessor.SendAsync(
-            new ProcessRestockNotification(productStockReplenished.ProductId, productStockReplenished.NewStock)
+            ProcessRestockNotification.Of(productStockReplenished.ProductId, productStockReplenished.NewStock)
         );
 
         _logger.LogInformation(

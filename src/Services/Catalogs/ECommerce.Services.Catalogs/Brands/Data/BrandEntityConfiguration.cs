@@ -16,9 +16,8 @@ public class BrandEntityConfiguration : IEntityTypeConfiguration<Brand>
         builder.HasKey(x => x.Id);
         builder.HasIndex(x => x.Id).IsUnique();
 
-        builder.Property(x => x.Name).HasColumnType(EfConstants.ColumnTypes.NormalText).IsRequired();
         builder.OwnsOne(
-            ci => ci.Name,
+            x => x.Name,
             a =>
             {
                 // configuration just for changing column name in db (instead of name_value)

@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ECommerce.Services.Catalogs.Shared.Data.Migrations.Catalogs
 {
     [DbContext(typeof(CatalogDbContext))]
-    [Migration("20221229205410_InitialCatalogMigration")]
+    [Migration("20230829155043_InitialCatalogMigration")]
     partial class InitialCatalogMigration
     {
         /// <inheritdoc />
@@ -40,11 +40,6 @@ namespace ECommerce.Services.Catalogs.Shared.Data.Migrations.Catalogs
                     b.Property<int?>("CreatedBy")
                         .HasColumnType("integer")
                         .HasColumnName("created_by");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("varchar(50)")
-                        .HasColumnName("name");
 
                     b.Property<long>("OriginalVersion")
                         .IsConcurrencyToken()
@@ -299,6 +294,32 @@ namespace ECommerce.Services.Catalogs.Shared.Data.Migrations.Catalogs
                         .HasDatabaseName("ix_suppliers_id");
 
                     b.ToTable("suppliers", "catalog");
+                });
+
+            modelBuilder.Entity("ECommerce.Services.Catalogs.Brands.Brand", b =>
+                {
+                    b.OwnsOne("ECommerce.Services.Catalogs.Brands.ValueObjects.BrandName", "Name", b1 =>
+                        {
+                            b1.Property<long>("BrandId")
+                                .HasColumnType("bigint")
+                                .HasColumnName("id");
+
+                            b1.Property<string>("Value")
+                                .IsRequired()
+                                .HasColumnType("text")
+                                .HasColumnName("name");
+
+                            b1.HasKey("BrandId");
+
+                            b1.ToTable("brands", "catalog");
+
+                            b1.WithOwner()
+                                .HasForeignKey("BrandId")
+                                .HasConstraintName("fk_brands_brands_id");
+                        });
+
+                    b.Navigation("Name")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ECommerce.Services.Catalogs.Products.Models.Product", b =>

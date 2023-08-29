@@ -1,11 +1,8 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Commands;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
-using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
-using ECommerce.Services.Customers.Shared.Data;
-using MongoDB.Driver;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 
@@ -29,7 +26,7 @@ internal class UpdateMongoRestockSubscriptionsReadModelByTimeHandler
         CancellationToken cancellationToken
     )
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var itemsToUpdate = await _unitOfWork.RestockSubscriptionsRepository.FindAsync(
             x =>

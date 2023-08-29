@@ -158,6 +158,9 @@ public class EventStoreDbEventStore : IEventStore
             cancellationToken: cancellationToken
         );
 
+        if (await readResult.ReadState.ConfigureAwait(false) == ReadState.StreamNotFound)
+            return null;
+
         // var streamEvents = (await GetStreamEventsAsync(streamId, fromVersion, int.MaxValue, cancellationToken)).Select(x => x.Data);
         return await readResult
             .Select(@event => @event.DeserializeData()!)

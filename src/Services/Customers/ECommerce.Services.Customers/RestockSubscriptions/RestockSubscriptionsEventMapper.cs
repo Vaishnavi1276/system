@@ -18,8 +18,8 @@ public class RestockSubscriptionsEventMapper : IIntegrationEventMapper
         {
             RestockSubscriptionCreated e
                 => new Services.Shared.Customers.RestockSubscriptions.Events.v1.Integration.RestockSubscriptionCreatedV1(
-                    e.RestockSubscription.Id.Value,
-                    e.RestockSubscription.Email
+                    e.Id,
+                    e.Email
                 ),
             _ => null
         };

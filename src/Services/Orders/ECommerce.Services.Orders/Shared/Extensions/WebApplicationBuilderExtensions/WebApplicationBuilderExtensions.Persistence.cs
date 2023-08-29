@@ -2,6 +2,7 @@ using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
+using BuildingBlocks.Web.Workers;
 using ECommerce.Services.Orders.Shared.Contracts;
 using ECommerce.Services.Orders.Shared.Data;
 using Microsoft.EntityFrameworkCore;
@@ -30,6 +31,13 @@ internal static partial class WebApplicationBuilderExtensions
         else
         {
             services.AddPostgresDbContext<OrdersDbContext>();
+
+            services.AddHostedService<MigrationWorker>();
+            services.AddHostedService<SeedWorker>();
+
+            // add migrations and seeders dependencies, or we could add seeders inner each modules
+            services.AddScoped<IMigrationExecutor, OrdersMigrationExecutor>();
+            // services.AddScoped<IDataSeeder, Seeder>();
         }
 
         services.AddScoped<IOrdersDbContext>(provider => provider.GetRequiredService<OrdersDbContext>());

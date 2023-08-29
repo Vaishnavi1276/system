@@ -24,6 +24,7 @@ public static class Extensions
         // https://mderriey.com/2019/06/23/where-are-my-jwt-claims/
         // https://leastprivilege.com/2017/11/15/missing-claims-in-the-asp-net-core-2-openid-connect-handler/
         // https://stackoverflow.com/a/50012477/581476
+        // to compatibility with new versions of claim names standard
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
         JwtSecurityTokenHandler.DefaultOutboundClaimTypeMap.Clear();
 
@@ -56,6 +57,8 @@ public static class Extensions
                     ValidIssuer = jwtOptions.Issuer,
                     ValidAudience = jwtOptions.Audience,
                     SaveSigninToken = true,
+                    // default skew is 5 minutes,
+                    // The ClockSkew property allows you to specify the amount of leeway to account for any differences in clock times between the token issuer and the token validation server. This property defines the maximum amount of time (in seconds) by which the token's expiration or not-before time can differ from the system clock on the validation server.
                     ClockSkew = TimeSpan.Zero,
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey))
                 };

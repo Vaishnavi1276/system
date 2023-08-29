@@ -86,16 +86,22 @@ public class JwtService : IJwtService
         SigningCredentials signingCredentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var expireTime = now.AddSeconds(_jwtOptions.TokenLifeTimeSecond == 0 ? 300 : _jwtOptions.TokenLifeTimeSecond);
-        var jwt = new JwtSecurityToken(
-            _jwtOptions.Issuer,
-            _jwtOptions.Audience,
-            notBefore: now,
-            claims: jwtClaims,
-            expires: expireTime,
-            signingCredentials: signingCredentials
-        );
 
-        var token = new JwtSecurityTokenHandler().WriteToken(jwt);
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new Claim[] { new(ClaimTypes.Name, userId) }),
+            Expires = expireTime,
+            SigningCredentials = signingCredentials,
+            Claims = jwtClaims.ConvertClaimsToDictionary(),
+            Issuer = _jwtOptions.Issuer,
+            Audience = _jwtOptions.Issuer,
+            NotBefore = now
+        };
+
+        JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
+        jwtSecurityTokenHandler.OutboundClaimTypeMap.Clear();
+        var securityToken = jwtSecurityTokenHandler.CreateToken(tokenDescriptor);
+        var token = jwtSecurityTokenHandler.WriteToken(securityToken);
 
         return new GenerateTokenResult(token, expireTime);
     }
@@ -131,5 +137,13 @@ public class JwtService : IJwtService
         }
 
         return principal;
+    }
+}
+
+public static class JwtHelper
+{
+    public static IDictionary<string, object> ConvertClaimsToDictionary(this IList<Claim> claims)
+    {
+        return claims.ToDictionary(claim => claim.Type, claim => (object)claim.Value);
     }
 }

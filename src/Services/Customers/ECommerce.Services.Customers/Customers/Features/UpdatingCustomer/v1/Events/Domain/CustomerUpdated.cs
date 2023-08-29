@@ -9,6 +9,13 @@ using FluentValidation;
 
 namespace ECommerce.Services.Customers.Customers.Features.UpdatingCustomer.v1.Events.Domain;
 
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/notes_about_csharp_records_and_nullable_reference_types/
+// https://buildplease.com/pages/vos-in-events/
+// https://codeopinion.com/leaking-value-objects-from-your-domain/
+// https://www.youtube.com/watch?v=CdanF8PWJng
+
 public record CustomerUpdated(
     long Id,
     string FirstName,

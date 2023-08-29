@@ -2,6 +2,8 @@ using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
+using BuildingBlocks.Web.Workers;
+using ECommerce.Services.Catalogs.Shared.Data;
 using ECommerce.Services.Customers.Customers.Data.Repositories.Mongo;
 using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Data.Repositories.Mongo;
@@ -35,6 +37,13 @@ public static partial class WebApplicationBuilderExtensions
         else
         {
             services.AddPostgresDbContext<CustomersDbContext>();
+
+            services.AddHostedService<MigrationWorker>();
+            services.AddHostedService<SeedWorker>();
+
+            // add migrations and seeders dependencies, or we could add seeders inner each modules
+            services.AddScoped<IMigrationExecutor, CustomersMigrationExecutor>();
+            // services.AddScoped<IDataSeeder, Seeder>();
         }
 
         services.AddScoped<ICustomersDbContext>(provider => provider.GetRequiredService<CustomersDbContext>());

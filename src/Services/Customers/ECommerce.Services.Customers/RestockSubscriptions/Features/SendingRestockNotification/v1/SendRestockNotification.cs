@@ -1,11 +1,9 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Core.CQRS.Commands;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Email;
 using BuildingBlocks.Email.Options;
-using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Domain;
 using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
@@ -47,7 +45,7 @@ internal class SendRestockNotificationHandler : ICommandHandler<SendRestockNotif
 
     public async Task<Unit> Handle(SendRestockNotification command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, new RestockSubscriptionDomainException("Command cannot be null"));
+        command.NotBeNull();
 
         var restockSubscription = await _customersDbContext.RestockSubscriptions.FirstOrDefaultAsync(
             x => x.Id == command.RestockSubscriptionId,

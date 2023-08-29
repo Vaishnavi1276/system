@@ -1,16 +1,16 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Core.Domain.Events.Internal;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 using ECommerce.Services.Customers.RestockSubscriptions.Models.Write;
 using ECommerce.Services.Customers.Shared.Data;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.DeletingRestockSubscription.v1;
 
-public record RestockSubscriptionDeleted(RestockSubscription RestockSubscription) : DomainEvent;
+public record RestockSubscriptionDeleted(long RestockSubscriptionId) : DomainEvent;
 
 internal class RestockSubscriptionDeletedHandler : IDomainEventHandler<RestockSubscriptionDeleted>
 {
@@ -31,15 +31,31 @@ internal class RestockSubscriptionDeletedHandler : IDomainEventHandler<RestockSu
 
     public async Task Handle(RestockSubscriptionDeleted notification, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(notification, nameof(notification));
-
+        notification.NotBeNull();
         // var isDeleted = (bool)_customersDbContext.Entry(notification.RestockSubscription)
         //     .Property("IsDeleted")
         //     .CurrentValue!;
 
+        var restockSubscription = await _customersDbContext.RestockSubscriptions.FirstOrDefaultAsync(
+            x => x.Id == notification.RestockSubscriptionId,
+            cancellationToken
+        );
+
+        if (restockSubscription is null)
+            return;
+
         // https://github.com/kgrzybek/modular-monolith-with-ddd#38-internal-processing
         await _commandProcessor.SendAsync(
-            new UpdateMongoRestockSubscriptionReadModel(notification.RestockSubscription, true),
+            new UpdateMongoRestockSubscriptionReadModel(
+                restockSubscription.Id,
+                restockSubscription.CustomerId,
+                restockSubscription.Email,
+                restockSubscription.ProductInformation.Id,
+                restockSubscription.ProductInformation.Name,
+                restockSubscription.Processed,
+                restockSubscription.ProcessedTime,
+                true
+            ),
             cancellationToken
         );
     }

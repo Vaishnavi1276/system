@@ -25,15 +25,13 @@ internal class CreateCustomerEndpoint
     {
         return builder
             .MapPost("/", HandleAsync)
-            .WithTags(CustomersConfigs.Tag)
             .RequireAuthorization()
             .WithName(nameof(CreateCustomer))
             .WithDisplayName(nameof(CreateCustomer).Humanize())
-            .WithSummaryAndDescription(nameof(CreateCustomer).Humanize(), nameof(CreateCustomer).Humanize())
-            .Produces<CreateCustomerRequest>("Customer created successfully.", StatusCodes.Status201Created)
-            .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
-            .MapToApiVersion(1.0);
+            .WithSummaryAndDescription(nameof(CreateCustomer).Humanize(), nameof(CreateCustomer).Humanize());
+        // .Produces<CreateCustomerRequest>("Customer created successfully.", StatusCodes.Status201Created)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
     }
 
     public async Task<
@@ -42,7 +40,7 @@ internal class CreateCustomerEndpoint
     {
         var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
-        var command = mapper.Map<CreateCustomer>(request);
+        var command = CreateCustomer.Of(request.Email);
 
         var result = await commandProcessor.SendAsync(command, cancellationToken);
 
@@ -50,7 +48,7 @@ internal class CreateCustomerEndpoint
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
         return TypedResults.CreatedAtRoute(
             new CreateCustomerResponse(result.CustomerId),
-            "GetCustomerById",
+            nameof(GettingCustomerById),
             new { id = result.CustomerId }
         );
     }

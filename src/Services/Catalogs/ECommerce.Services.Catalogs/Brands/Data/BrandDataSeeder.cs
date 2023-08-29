@@ -1,4 +1,5 @@
 using AutoBogus;
+using Bogus;
 using BuildingBlocks.Abstractions.Persistence;
 using ECommerce.Services.Catalogs.Brands.ValueObjects;
 using ECommerce.Services.Catalogs.Shared.Contracts;
@@ -8,16 +9,6 @@ namespace ECommerce.Services.Catalogs.Brands.Data;
 
 public class BrandDataSeeder : IDataSeeder
 {
-    public sealed class BrandSeedFaker : AutoFaker<Brand>
-    {
-        public BrandSeedFaker()
-        {
-            long id = 1;
-            RuleFor(m => m.Id, f => BrandId.Of(id++));
-            RuleFor(m => m.Name, f => f.Company.CompanyName());
-        }
-    }
-
     private readonly ICatalogDbContext _context;
 
     public BrandDataSeeder(ICatalogDbContext context)
@@ -44,4 +35,20 @@ public class BrandDataSeeder : IDataSeeder
     }
 
     public int Order => 3;
+}
+
+// because AutoFaker generate data also for private set and init members (not read only get) it doesn't work properly with `CustomInstantiator` and we should exclude theme one by one
+public sealed class BrandSeedFaker : Faker<Brand>
+{
+    public BrandSeedFaker()
+    {
+        // https://www.youtube.com/watch?v=T9pwE1GAr_U
+        // https://jackhiston.com/2017/10/1/how-to-create-bogus-data-in-c/
+        // https://khalidabuhakmeh.com/seed-entity-framework-core-with-bogus
+        // https://github.com/bchavez/Bogus#bogus-api-support
+        // https://github.com/bchavez/Bogus/blob/master/Examples/EFCoreSeedDb/Program.cs#L74
+        long id = 1;
+
+        CustomInstantiator(f => Brand.Of(BrandId.Of(id++), BrandName.Of(f.Company.CompanyName())));
+    }
 }

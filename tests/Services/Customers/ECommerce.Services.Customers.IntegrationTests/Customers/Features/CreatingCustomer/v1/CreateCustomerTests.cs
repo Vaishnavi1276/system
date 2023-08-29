@@ -19,7 +19,11 @@ namespace ECommerce.Services.Customers.IntegrationTests.Customers.Features.Creat
 public class CreateCustomerTests : CustomerServiceIntegrationTestBase
 {
     public CreateCustomerTests(
-        SharedFixtureWithEfCoreAndMongo<Api.Program, CustomersDbContext, CustomersReadDbContext> sharedFixture,
+        SharedFixtureWithEfCoreAndMongo<
+            Api.CustomersApiMetadata,
+            CustomersDbContext,
+            CustomersReadDbContext
+        > sharedFixture,
         ITestOutputHelper outputHelper
     )
         : base(sharedFixture, outputHelper) { }

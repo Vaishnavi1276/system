@@ -2,6 +2,7 @@ using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Domain.ValueObjects;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.Models;
 using ECommerce.Services.Customers.Customers.ValueObjects;
@@ -11,9 +12,26 @@ using FluentValidation;
 
 namespace ECommerce.Services.Customers.Customers.Features.CreatingCustomer.v1;
 
-public record CreateCustomer(string Email) : ITxCreateCommand<CreateCustomerResult>
+// https://event-driven.io/en/explicit_validation_in_csharp_just_got_simpler/
+// https://event-driven.io/en/how_to_validate_business_logic/
+// https://event-driven.io/en/notes_about_csharp_records_and_nullable_reference_types/
+// https://buildplease.com/pages/vos-in-events/
+// https://codeopinion.com/leaking-value-objects-from-your-domain/
+// https://www.youtube.com/watch?v=CdanF8PWJng
+// we don't pass value-objects and domains to our commands and events, just primitive types
+internal record CreateCustomer(string Email) : ITxCreateCommand<CreateCustomerResult>
 {
     public long Id { get; } = SnowFlakIdGenerator.NewId();
+
+    /// <summary>
+    /// Create a new customer with inline validation
+    /// </summary>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public static CreateCustomer Of(string? email)
+    {
+        return new CreateCustomerValidator().HandleValidation(new CreateCustomer(email!));
+    }
 }
 
 internal class CreateCustomerValidator : AbstractValidator<CreateCustomer>

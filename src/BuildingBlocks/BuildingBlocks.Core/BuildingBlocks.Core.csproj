@@ -64,10 +64,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageVersion Update="Sieve" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Web\Extensions" />
   </ItemGroup>
 

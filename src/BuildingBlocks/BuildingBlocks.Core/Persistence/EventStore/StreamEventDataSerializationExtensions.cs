@@ -43,7 +43,7 @@ public static class StreamEventDataSerializationExtensions
         return ToJsonStreamEventData(@event.Data, @event.Metadata);
     }
 
-    public static StreamEventData ToJsonStreamEventData(this IDomainEvent @event, IStreamEventMetadata? metadata = null)
+    public static StreamEventData ToJsonStreamEventData(this object @event, IStreamEventMetadata? metadata = null)
     {
         return new StreamEventData
         {

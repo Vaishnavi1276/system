@@ -17,7 +17,7 @@ public class Category : Aggregate<CategoryId>
     public string Description { get; private set; } = default!;
     public string Code { get; private set; } = default!;
 
-    public static Category Create(CategoryId id, string name, string code, string description = "")
+    public static Category Of(CategoryId id, string name, string code, string description = "")
     {
         // input validation will do in the `command` and our `value objects` before arriving to entity and makes or domain cleaner (but we have to check against for our value objects), here we just do business validation
         var category = new Category { Id = id };

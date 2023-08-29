@@ -1,12 +1,13 @@
 # 🛍️ ECommerece Microservices Sample
 
-[![Coverage Status](https://coveralls.io/repos/github/mehdihadeli/ecommerce-microservices/badge.svg?branch=develop&style=flat-square)](https://coveralls.io/github/mehdihadeli/ecommerce-microservices?branch=develop)
-[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg?&style=flat-square)](https://github.com/semantic-release/semantic-release)
-[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?&style=flat-square)](http://commitizen.github.io/cz-cli/)
+[![Coverage Status](https://img.shields.io/coverallsCoverage/github/mehdihadeli/ecommerce-microservices?style=for-the-badge&logo=coveralls&label=Code%20Coverage&logoColor=white)](https://coveralls.io/github/mehdihadeli/ecommerce-microservices)
+[![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg?logoColor=white&style=for-the-badge)](http://commitizen.github.io/cz-cli/)
+[![semantic-release: angular](https://img.shields.io/badge/semantic--release-angular-e10079?logo=semantic-release&style=for-the-badge&logoColor=white)](https://github.com/semantic-release/semantic-release)
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/https://github.com/mehdihadeli/ecommerce-microservices)
+[![Gitpod](https://img.shields.io/static/v1?style=for-the-badge&message=Open%20in%20Gitpod&color=222222&logo=Gitpod&logoColor=FFAE33&label=)](https://gitpod.io/https://github.com/mehdihadeli/ecommerce-microservices)
+[![Codespaces](https://img.shields.io/static/v1?style=for-the-badge&message=Open%20in%20GitHub%20Codespaces&color=181717&logo=GitHub&logoColor=FFFFFF&label=)](https://mehdihadeli-humble-space-couscous-5x5pqwwjx5c7664.github.dev)
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://mehdihadeli-humble-space-couscous-5x5pqwwjx5c7664.github.dev)
+<!-- https://raw.githubusercontent.com/progfay/shields-with-icon/master/README.md -->
 
 > `ECommerece Microservices` is a fictional ecommerce sample, built with .Net Core and different software architecture and technologies like **Microservices Architecture**, **Vertical Slice Architecture** , **CQRS Pattern**, **Domain Driven Design (DDD)**, **Event Driven Architecture**. For communication between independent services, we use asynchronous messaging with using rabbitmq on top of [MassTransit](https://github.com/MassTransit/MassTransit) library, and sometimes we use synchronous communication for real-time communications with using REST and gRPC calls.
 
@@ -16,6 +17,15 @@
 > This project is in progress. I add new features over the time. You can check the [Release Notes](https://github.com/mehdihadeli/ecommerce-microservices/releases) and follow the progress on Twitter [@mehdi_hedli](https://twitter.com/shadcn) and Linkedin [mehdihadeli](https://www.linkedin.com/in/mehdihadeli/).
 
 🎯 This Application ported to `modular monolith` approach in [ecommerce-modular-monolith](https://github.com/mehdihadeli/ecommerce-modular-monolith) repository, we can choose best fit architecture for our projects based on production needs.
+
+Other versions of this project are available in these repositories, We can choose best fit architecture for our projects based on production needs:
+
+- [https://github.com/mehdihadeli/ecommerce-modular-monolith](https://github.com/mehdihadeli/ecommerce-modular-monolith)
+- [https://github.com/mehdihadeli/go-ecommerce-microservices](https://github.com/mehdihadeli/go-ecommerce-microservices)
+
+For your simplest .net core projects, you can use my `vertical-slice-api-template` project template:
+
+- [https://github.com/mehdihadeli/vertical-slice-api-template](https://github.com/mehdihadeli/vertical-slice-api-template)
 
 # ⭐ Support
 
@@ -27,12 +37,12 @@ Thanks a bunch for supporting me!
 
 - [Features](#features)
 - [Plan](#plan)
-- [Technologies - Libraries](#technologies---libraries)
 - [Setup](#setup)
   - [Dev Certificate](#dev-certificate)
   - [Conventional Commit](#conventional-commit)
   - [Formatting](#formatting)
   - [Analizers](#analizers)
+- [Technologies - Libraries](#technologies---libraries)
 - [The Domain and Bounded Context - Service Boundary](#the-domain-and-bounded-context---service-boundary)
 - [Application Architecture](#application-architecture)
 - [Application Structure](#application-structure)
@@ -48,41 +58,49 @@ Thanks a bunch for supporting me!
 - [License](#license)
 
 ## Features
-- ✅ Using `Vertical Slice Architecture` as a high level architecture
-- ✅ Using `Event Driven Architecture` on top of RabbitMQ Message Broker and MassTransit
+
+- ✅ Using `Microservices` and `Vertical Slice Architecture` as a high level architecture
+- ✅ Using `Event Driven Architecture` on top of RabbitMQ Message Broker and MassTransit library
 - ✅ Using `Domain Driven Design`in most of services like Customers, Catalogs, ...
-- ✅ Using `Event Sourcing` in `Audit Based` services like Orders, Payment
+- ✅ Using `Event Sourcing` and `EventStoreDB` in `Audit Based` services like Orders, Payment
 - ✅ Using `Data Centeric Architecture` based on `CRUD` in Identity Service
-- ✅ Using `CQRS Pattern` on top of `MediatR` library
+- ✅ Using `CQRS Pattern` on top of `MediatR` library and spliting `read models` and `write models`
+- ✅ Uing `Structured logging` with serilog and exporting logs to `Elastic Seacrch` and `Kibana` through [serilog-sinks-elasticsearch](https://github.com/serilog-contrib/serilog-sinks-elasticsearch) sink
 - ✅ Using `Outbox Pattern` for all microservices for [Guaranteed Delivery](https://www.enterpriseintegrationpatterns.com/GuaranteedMessaging.html) or [At-least-once Delivery](https://www.cloudcomputingpatterns.org/at_least_once_delivery/)
 - ✅ Using `Inbox Pattern` for handling [Idempotency](https://www.cloudcomputingpatterns.org/idempotent_processor/) in reciver side and [Exactly-once Delivery](https://www.cloudcomputingpatterns.org/exactly_once_delivery/)
+- ✅ Using `UnitTests` and `NSubstitute` for mocking dependencies
+- ✅ Using `Integration Tests` and `End To End Tests` on top of [testcontainers-dotnet](https://github.com/testcontainers/testcontainers-dotnet) library for cleanup our test enviroment through docker containers
 - ✅ Using `Minimal APIs` for handling requests
 - ✅ Using `Fluent Validation` and a [Validation Pipeline Behaviour](./src/BuildingBlocks/BuildingBlocks.Validation/RequestValidationBehavior.cs) on top of MediatR
 - ✅ Using `Postgres` for write database as relational DB and `MongoDB` and `Elasric Search` for read database
 - ✅ Using docker and `docker-compose` for deployment
 - ✅ Using [Microsoft Tye](https://github.com/dotnet/tye) for deployment
 - ✅ Using [YARP](https://microsoft.github.io/reverse-proxy/) reverse proxy as API Gateway
-- ✅ Using different type of tests like `Unit Tests`, `Integration Tests`, `End-To-End Tests` and using [testcontainers](https://microsoft.github.io/reverse-proxy/) for testing in isolation
-- 🚧 Using `Helm` and `Kubernetes` for deployment
-- 🚧 Using `OpenTelemetry` for collection `Metrics` and `Distributed Tracing`
+- ✅ Using different type of tests like `Unit Tests`, `Integration Tests`, `End-To-End Tests` and [testcontainers](https://microsoft.github.io/reverse-proxy/) for testing in isolation
+- 🚧 Using `Helm`, `Kubernetes` and `Kustomize` for deployment
+- 🚧 Using `OpenTelemetry` for collecting `Metrics` and `Distributed Traces`
 
 ## Plan
 
 > This project is in progress, New features will be added over time.
 
-| Feature          | Architecture Pattern                  | Status         | CI-CD                                                                                                                                                                                                                                                  |
-| ---------------- | ------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| API Gateway      | Microsoft YARP Reverse Proxy          | Completed ✔️   | [![Gateway-CI-CD](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/gateway.yml/badge.svg?branch=develop&style=flat-square)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/gateway.yml)              |
-| Identity Service | Data Centeric Architecture (CRUD)     | Completed ✔️   | [![Identity-CI-CD](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/identity.yml/badge.svg?branch=develop&style=flat-square)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/identity.yml)           |
-| Customer Service | Domain Driven Design                  | Completed ✔️   | [![Customers-CI-CD](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/customers.yml/badge.svg?branch=develop&style=flat-square)](https://github.com/mehdihadeli/ecommerce-microservices-sample/actions/workflows/customers.yml) |
-| Catalog Service  | Domain Driven Design                  | Completed ✔️   | [![Catalogs-CI-CD](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/catalogs.yml/badge.svg?branch=develop&style=flat-square)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/catalogs.yml)           |
-| Order Service    | Event Sourccing, Domain Driven Design | In Progress👷  | -                                                                                                                                                                                                                                                      |
-| Shipping Service | Domain Driven Design                  | Not Started 🚩 | -                                                                                                                                                                                                                                                      |
-| Payment Service  | Event Sourccing, Domain Driven Design | Not Started 🚩 | -                                                                                                                                                                                                                                                      |
+| Feature          | Architecture Pattern                  | Status         | CI-CD                                                                                                                                                                                                                                                                         |
+| ---------------- | ------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| API Gateway      | Microsoft YARP Reverse Proxy          | Completed ✔️   | [![Gateway-CI-CD](https://img.shields.io/github/actions/workflow/status/mehdihadeli/ecommerce-microservices/gateway.yml?label=Gateway%20CI-CD&logo=github&style=for-the-badge)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/gateway.yml)         |
+| Identity Service | Data Centeric Architecture (CRUD)     | Completed ✔️   | [![Identity-CI-CD](https://img.shields.io/github/actions/workflow/status/mehdihadeli/ecommerce-microservices/identity.yml?label=Identity%20CI-CD&logo=github&style=for-the-badge)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/identity.yml)     |
+| Customer Service | Domain Driven Design                  | Completed ✔️   | [![Customers-CI-CD](https://img.shields.io/github/actions/workflow/status/mehdihadeli/ecommerce-microservices/customers.yml?label=Customers%20CI-CD&logo=github&style=for-the-badge)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/customers.yml) |
+| Catalog Service  | Domain Driven Design                  | Completed ✔️   | [![Catalogs-CI-CD](https://img.shields.io/github/actions/workflow/status/mehdihadeli/ecommerce-microservices/catalogs.yml?label=Catalogs%20CI-CD&logo=github&style=for-the-badge)](https://github.com/mehdihadeli/ecommerce-microservices/actions/workflows/catalogs.yml)     |
+| Order Service    | Event Sourccing, Domain Driven Design | In Progress👷  | -                                                                                                                                                                                                                                                                             |
+| Shipping Service | Domain Driven Design                  | Not Started 🚩 | -                                                                                                                                                                                                                                                                             |
+| Payment Service  | Event Sourccing, Domain Driven Design | Not Started 🚩 | -                                                                                                                                                                                                                                                                             |
+
 ## Technologies - Libraries
 
 - ✔️ **[`.NET 7`](https://dotnet.microsoft.com/download)** - .NET Framework and .NET Core, including ASP.NET and ASP.NET Core
+- ✔️ **[`MassTransit`](https://github.com/MassTransit/MassTransit)** - Distributed Application Framework for .NET
+- ✔️ **[`StackExchange.Redis`](https://github.com/StackExchange/StackExchange.Redis)** - General purpose redis client
 - ✔️ **[`Npgsql Entity Framework Core Provider`](https://www.npgsql.org/efcore/)** - Npgsql has an Entity Framework (EF) Core provider. It behaves like other EF Core providers (e.g. SQL Server), so the general EF Core docs apply here as well
+- ✔️ **[`EventStore-Client-Dotnet`](https://github.com/EventStore/EventStore-Client-Dotnet)** - Dotnet Client SDK for the Event Store gRPC Client API written in C#
 - ✔️ **[`FluentValidation`](https://github.com/FluentValidation/FluentValidation)** - Popular .NET validation library for building strongly-typed validation rules
 - ✔️ **[`Swagger & Swagger UI`](https://github.com/domaindrivendev/Swashbuckle.AspNetCore)** - Swagger tools for documenting API's built on ASP.NET Core
 - ✔️ **[`Serilog`](https://github.com/serilog/serilog)** - Simple .NET logging with fully-structured events
@@ -97,8 +115,8 @@ Thanks a bunch for supporting me!
 - ✔️ **[`NSubstitute`](https://github.com/nsubstitute/NSubstitute)** - A friendly substitute for .NET mocking libraries.
 - ✔️ **[`StyleCopAnalyzers`](https://github.com/DotNetAnalyzers/StyleCopAnalyzers)** - An implementation of StyleCop rules using the .NET Compiler Platform
 - ✔️ **[`AutoMapper`](https://github.com/AutoMapper/AutoMapper)** - Convention-based object-object mapper in .NET.
+- ✔️ **[`Hellang.Middleware.ProblemDetails`](https://github.com/khellang/Middleware/tree/master/src/ProblemDetails)** - A middleware for handling exception in .Net Core
 - ✔️ **[`IdGen`](https://github.com/RobThree/IdGen)** - Twitter Snowflake-alike ID generator for .Net
-- ✔️ **[`MassTransit`](https://github.com/MassTransit/MassTransit)** - Distributed Application Framework for .NET
 
 ## Setup
 
@@ -201,13 +219,13 @@ npm init
 npm install husky --save-dev
 ```
 
-3. To install a tool for local access only (for the current directory and subdirectories), it has to be added to a manifest file. So we [Create a manifest file](https://learn.microsoft.com/en-us/dotnet/core/tools/local-tools-how-to-use#create-a-manifest-file) by running the dotnet new command:
+2. Install Husky:
 
-``` bash
-dotnet new tool-manifest
+```bash
+npm install husky --save-dev
 ```
 
-4. Adds the tool to the manifest file that we created in the preceding step and then install our required packages as dependency with [dotnet tool install](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install), that will add to [dotnet-tools.json](.config/dotnet-tools.json) file in a `.config` directory:
+3. Install manifest file with `dotnet new tool-manifest` because it doesn't exist at first time and then install our required packages as dependency with [dotnet tool install](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install), that will add to [dotnet-tools.json](.config/dotnet-tools.json) file in a `.config` directory:
 
 ```bash
 dotnet new tool-manifest
@@ -216,28 +234,28 @@ dotnet tool install csharpier
 dotnet tool install dotnet-format
 ```
 
-5. Add `prepare` command for installing and activating `husky hooks` and `restoring` our installed [dotnet tools](.config/dotnet-tools.json) in the previous step to the [package.json](package.json) file:
+4. Add `prepare` command for installing and activating `husky hooks` and `restoring` our installed [dotnet tools](.config/dotnet-tools.json) in the previous step to the [package.json](package.json) file:
 
 ```bash
 npm pkg set scripts.prepare="husky install && dotnet tool restore"
 ```
 
-6. Create the Husky folder:
+5. Create the Husky folder:
 
 ```bash
 mkdir .husky
 ```
 
-7. Link Husky and formatting tools:
+6. Link Husky and formatting tools:
 
 ```bash
-npx husky add .husky/pre-commit "dotnet format && git add -A ."
+npx husky add .husky/pre-commit "dotnet format"
 
 # Or using csharpier
-npx husky add .husky/pre-commit "dotnet csharpier . && git add -A ."
+npx husky add .husky/pre-commit "dotnet csharpier ."
 ```
 
-8. Activate and installing all husky hooks with this command:
+7. Activate and installing all husky hooks with this command:
 
 ```bash
 npm run prepare
@@ -608,18 +626,7 @@ We could run our microservices with new microsoft tools with name of [Project Ty
 
 Project Tye is an experimental developer tool that makes developing, testing, and deploying microservices and distributed applications easier.
 
-For installing `Tye` [local tool](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools#install-a-local-tool) to our existing [.Net tools](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-tool-install) we can use following command:
-
-``` bash
-dotnet tool install Microsoft.Tye --version "0.11.0-alpha.22111.1"
-```
-Then this tool will add to [.net tools manifest file](./.config/dotnet-tools.json) and After you check in the manifest file to the repository. To install all of the tools listed in the manifest file, we run the dotnet tool restore command:
-
-``` bash
-dotnet tool restore
-```
-
-For installing `Tye` [globally](https://learn.microsoft.com/en-us/dotnet/core/tools/global-tools#install-a-global-tool) on our machine we should use this command:
+For installing `Tye` globally on our machine we should use this command:
 
 ```bash
 dotnet tool install -g Microsoft.Tye --version "0.11.0-alpha.22111.1"
@@ -704,13 +711,7 @@ fi
 
 ## Contribution
 
-Contributions are always welcome! Please take a look at the [contribution guidelines](https://github.com/mehdihadeli/awesome-software-architecture/blob/main/contributing.md) pages first.
-
-Thanks to all [contributors](https://github.com/mehdihadeli/awesome-software-architecture/graphs/contributors), you're awesome and this wouldn't be possible without you! 
-
-<a href="https://github.com/mehdihadeli/awesome-software-architecture/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=mehdihadeli/awesome-software-architecture" />
-</a>
+The application is in development status. You are feel free to submit pull request or create the issue.
 
 ## Project References
 

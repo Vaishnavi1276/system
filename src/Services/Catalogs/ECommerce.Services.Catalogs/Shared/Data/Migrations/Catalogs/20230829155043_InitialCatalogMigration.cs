@@ -21,7 +21,7 @@ namespace ECommerce.Services.Catalogs.Shared.Data.Migrations.Catalogs
                     new
                     {
                         id = table.Column<long>(type: "bigint", nullable: false),
-                        name = table.Column<string>(type: "varchar(50)", nullable: false),
+                        name = table.Column<string>(type: "text", nullable: false),
                         created = table.Column<DateTime>(
                             type: "timestamp with time zone",
                             nullable: false,

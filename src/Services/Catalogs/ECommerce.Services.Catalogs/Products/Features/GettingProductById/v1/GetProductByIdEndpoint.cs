@@ -38,7 +38,7 @@ internal static class GetProductByIdEndpoint
         > Handle([AsParameters] GetProductByIdRequestParameters requestParameters)
         {
             var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
-            var result = await queryProcessor.SendAsync(new GetProductById(id), cancellationToken);
+            var result = await queryProcessor.SendAsync(GetProductById.Of(id), cancellationToken);
 
             // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
             // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types

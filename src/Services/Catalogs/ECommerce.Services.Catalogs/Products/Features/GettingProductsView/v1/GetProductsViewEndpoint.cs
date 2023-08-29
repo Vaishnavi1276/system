@@ -2,6 +2,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Core.Paging;
 using BuildingBlocks.Web.Minimal.Extensions;
 using BuildingBlocks.Web.Problem.HttpResults;
 using ECommerce.Services.Catalogs.Products.Dtos.v1;
@@ -32,7 +33,15 @@ public static class GetProductsViewEndpoint
         )
         {
             var (context, queryProcessor, mapper, cancellationToken, _, _, _, _) = requestParameters;
-            var query = mapper.Map<GetProductsView>(requestParameters);
+            var query = GetProductsView.Of(
+                new PageRequest
+                {
+                    PageNumber = requestParameters.PageNumber,
+                    PageSize = requestParameters.PageSize,
+                    Filters = requestParameters.Filters,
+                    SortOrder = requestParameters.SortOrder
+                }
+            );
 
             var result = await queryProcessor.SendAsync(query, cancellationToken);
 

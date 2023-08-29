@@ -2,9 +2,9 @@ using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
 using BuildingBlocks.Persistence.EfCore.Postgres;
 using BuildingBlocks.Persistence.Mongo;
+using BuildingBlocks.Web.Workers;
 using ECommerce.Services.Catalogs.Shared.Contracts;
 using ECommerce.Services.Catalogs.Shared.Data;
-using ECommerce.Services.Catalogs.Shared.Workers;
 using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Catalogs.Shared.Extensions.WebApplicationBuilderExtensions;
@@ -36,6 +36,10 @@ public static partial class WebApplicationBuilderExtensions
 
             services.AddHostedService<MigrationWorker>();
             services.AddHostedService<SeedWorker>();
+
+            // add migrations and seeders dependencies, or we could add seeders inner each modules
+            services.AddScoped<IMigrationExecutor, CatalogsMigrationExecutor>();
+            // services.AddScoped<IDataSeeder, Seeder>();
         }
 
         services.AddScoped<ICatalogDbContext>(provider => provider.GetRequiredService<CatalogDbContext>());

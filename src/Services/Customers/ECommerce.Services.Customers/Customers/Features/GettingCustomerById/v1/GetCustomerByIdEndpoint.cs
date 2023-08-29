@@ -30,12 +30,11 @@ internal class GetCustomerByIdEndpointEndpoint
             .RequireAuthorization()
             .WithName(nameof(GetCustomerById))
             .WithDisplayName(nameof(GetCustomerById).Humanize())
-            .WithSummaryAndDescription(nameof(GetCustomerById).Humanize(), nameof(GetCustomerById).Humanize())
-            // .Produces<GetCustomerByIdResponse>("Customer fetched successfully.", StatusCodes.Status200OK)
-            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            // .ProducesProblem(StatusCodes.Status404NotFound)
-            // .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .MapToApiVersion(1.0);
+            .WithSummaryAndDescription(nameof(GetCustomerById).Humanize(), nameof(GetCustomerById).Humanize());
+        // .Produces<GetCustomerByIdResponse>("Customer fetched successfully.", StatusCodes.Status200OK)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem(StatusCodes.Status404NotFound)
+        // .ProducesProblem(StatusCodes.Status401Unauthorized)
     }
 
     public async Task<
@@ -48,7 +47,7 @@ internal class GetCustomerByIdEndpointEndpoint
     > HandleAsync([AsParameters] GetCustomerByIdRequestParameters requestParameters)
     {
         var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
-        var result = await queryProcessor.SendAsync(new GetCustomerById(id), cancellationToken);
+        var result = await queryProcessor.SendAsync(GetCustomerById.Of(id), cancellationToken);
 
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types

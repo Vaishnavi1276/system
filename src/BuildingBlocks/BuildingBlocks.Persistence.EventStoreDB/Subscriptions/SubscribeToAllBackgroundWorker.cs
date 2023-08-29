@@ -1,10 +1,10 @@
+using BuildingBlocks.Abstractions.Domain.Events;
 using BuildingBlocks.Abstractions.Persistence.EventStore.Projections;
 using BuildingBlocks.Core.Threading;
 using BuildingBlocks.Core.Types;
 using BuildingBlocks.Persistence.EventStoreDB.Extensions;
 using EventStore.Client;
 using Grpc.Core;
-using MediatR;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -17,7 +17,7 @@ public class EventStoreDBSubscriptionToAll : BackgroundService
     private readonly EventStoreDbOptions _eventStoreDbOptions;
     private readonly EventStoreClient _eventStoreClient;
     private readonly IReadProjectionPublisher _projectionPublisher;
-    private readonly IMediator _mediator;
+    private readonly IInternalEventBus _internalEventBus;
     private readonly ISubscriptionCheckpointRepository _checkpointRepository;
     private readonly ILogger<EventStoreDBSubscriptionToAll> _logger;
     private readonly object _resubscribeLock = new();
@@ -27,7 +27,7 @@ public class EventStoreDBSubscriptionToAll : BackgroundService
         IOptions<EventStoreDbOptions> eventStoreDbOptions,
         EventStoreClient eventStoreClient,
         IReadProjectionPublisher projectionPublisher,
-        IMediator mediator,
+        IInternalEventBus internalEventBus,
         ISubscriptionCheckpointRepository checkpointRepository,
         ILogger<EventStoreDBSubscriptionToAll> logger
     )
@@ -35,7 +35,7 @@ public class EventStoreDBSubscriptionToAll : BackgroundService
         _eventStoreDbOptions = eventStoreDbOptions.Value;
         _eventStoreClient = eventStoreClient;
         _projectionPublisher = projectionPublisher;
-        _mediator = mediator;
+        _internalEventBus = internalEventBus;
         _checkpointRepository = checkpointRepository;
         _logger = logger;
     }
@@ -111,7 +111,7 @@ public class EventStoreDBSubscriptionToAll : BackgroundService
             }
 
             // publish event to internal event bus
-            await _mediator.Publish(streamEvent, cancellationToken);
+            await _internalEventBus.Publish(streamEvent, cancellationToken);
 
             await _projectionPublisher.PublishAsync(streamEvent, cancellationToken);
 

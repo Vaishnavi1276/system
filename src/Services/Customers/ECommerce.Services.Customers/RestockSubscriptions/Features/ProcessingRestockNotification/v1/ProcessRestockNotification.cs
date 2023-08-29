@@ -1,8 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Core.Exception;
-using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Domain;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.SendingRestockNotification;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.SendingRestockNotification.v1;
 using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
@@ -10,7 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 
-public record ProcessRestockNotification(long ProductId, int CurrentStock) : ITxCommand;
+public record ProcessRestockNotification(long ProductId, int CurrentStock) : ITxCommand
+{
+    public static ProcessRestockNotification Of(long productId, int currentStock)
+    {
+        productId.NotBeNegativeOrZero();
+        currentStock.NotBeNegativeOrZero();
+
+        return new ProcessRestockNotification(productId, currentStock);
+    }
+}
 
 internal class ProcessRestockNotificationValidator : AbstractValidator<ProcessRestockNotification>
 {
@@ -41,7 +47,7 @@ internal class ProcessRestockNotificationHandler : ICommandHandler<ProcessRestoc
 
     public async Task<Unit> Handle(ProcessRestockNotification command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, new RestockSubscriptionDomainException("Command cannot be null"));
+        command.NotBeNull();
 
         var subscribedCustomers = _customersDbContext.RestockSubscriptions.Where(
             x => x.ProductInformation.Id == command.ProductId && !x.Processed

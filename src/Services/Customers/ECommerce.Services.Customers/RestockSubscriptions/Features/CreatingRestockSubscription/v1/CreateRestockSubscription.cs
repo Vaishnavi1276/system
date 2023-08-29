@@ -3,6 +3,7 @@ using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.Domain.ValueObjects;
 using BuildingBlocks.Core.Extensions;
 using BuildingBlocks.Core.IdsGenerator;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Exceptions.Application;
 using ECommerce.Services.Customers.Customers.ValueObjects;
 using ECommerce.Services.Customers.Products;
@@ -18,9 +19,23 @@ using Microsoft.EntityFrameworkCore;
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1;
 
 public record CreateRestockSubscription(long CustomerId, long ProductId, string Email)
-    : ITxCreateCommand<CreateRestockSubscriptionResponse>
+    : ITxCreateCommand<CreateRestockSubscriptionResult>
 {
-    public long Id { get; init; } = SnowFlakIdGenerator.NewId();
+    /// <summary>
+    /// Create a new RestockSubscription with inline validation.
+    /// </summary>
+    /// <param name="customerId"></param>
+    /// <param name="productId"></param>
+    /// <param name="email"></param>
+    /// <returns></returns>
+    public static CreateRestockSubscription Of(long customerId, long productId, string? email)
+    {
+        return new CreateRestockSubscriptionValidator().HandleValidation(
+            new CreateRestockSubscription(customerId, productId, email!)
+        );
+    }
+
+    public long Id { get; } = SnowFlakIdGenerator.NewId();
 }
 
 internal class CreateRestockSubscriptionValidator : AbstractValidator<CreateRestockSubscription>
@@ -36,7 +51,7 @@ internal class CreateRestockSubscriptionValidator : AbstractValidator<CreateRest
 }
 
 internal class CreateRestockSubscriptionHandler
-    : ICommandHandler<CreateRestockSubscription, CreateRestockSubscriptionResponse>
+    : ICommandHandler<CreateRestockSubscription, CreateRestockSubscriptionResult>
 {
     private readonly CustomersDbContext _customersDbContext;
     private readonly ICatalogApiClient _catalogApiClient;
@@ -56,7 +71,7 @@ internal class CreateRestockSubscriptionHandler
         _logger = logger;
     }
 
-    public async Task<CreateRestockSubscriptionResponse> Handle(
+    public async Task<CreateRestockSubscriptionResult> Handle(
         CreateRestockSubscription request,
         CancellationToken cancellationToken
     )
@@ -103,6 +118,8 @@ internal class CreateRestockSubscriptionHandler
 
         var restockSubscriptionDto = _mapper.Map<RestockSubscriptionDto>(restockSubscription);
 
-        return new CreateRestockSubscriptionResponse(restockSubscriptionDto.Id);
+        return new CreateRestockSubscriptionResult(restockSubscriptionDto.Id);
     }
 }
+
+public record CreateRestockSubscriptionResult(long RestockSubscriptionId);

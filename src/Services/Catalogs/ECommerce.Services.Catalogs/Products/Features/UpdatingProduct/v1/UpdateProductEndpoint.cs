@@ -31,9 +31,10 @@ public static class UpdateProductEndpoint
             [AsParameters] UpdateProductRequestParameters requestParameters
         )
         {
-            var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
+            var (request, id, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
             var command = mapper.Map<UpdateProduct>(request);
+            command = command with { Id = id };
 
             await commandProcessor.SendAsync(command, cancellationToken);
 
@@ -48,6 +49,7 @@ public static class UpdateProductEndpoint
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
 internal record UpdateProductRequestParameters(
     [FromBody] UpdateProductRequest Request,
+    [FromRoute] long Id,
     HttpContext HttpContext,
     ICommandProcessor CommandProcessor,
     IMapper Mapper,

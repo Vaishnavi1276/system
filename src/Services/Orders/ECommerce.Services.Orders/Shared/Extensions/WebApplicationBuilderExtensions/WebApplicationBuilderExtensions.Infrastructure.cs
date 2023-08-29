@@ -134,7 +134,7 @@ internal static partial class WebApplicationBuilderExtensions
 
         builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
-        builder.AddCustomCaching();
+        builder.AddCustomEasyCaching();
 
         return builder;
     }

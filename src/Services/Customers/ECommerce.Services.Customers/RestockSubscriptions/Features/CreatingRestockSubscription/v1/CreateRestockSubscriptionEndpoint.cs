@@ -1,11 +1,22 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Customers.Customers.Features.GettingCustomers.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.CreatingRestockSubscription.v1;
 
-public class CreateRestockSubscriptionEndpoint : ICommandMinimalEndpoint<CreateRestockSubscriptionRequest>
+internal class CreateRestockSubscriptionEndpoint
+    : ICommandMinimalEndpoint<
+        CreateRestockSubscriptionRequest,
+        CreateRestockSubscriptionRequestParameters,
+        CreatedAtRoute<CreateRestockSubscriptionResponse>,
+        UnAuthorizedHttpProblemResult,
+        ValidationProblem
+    >
 {
     public string GroupName => RestockSubscriptionsConfigs.Tag;
     public string PrefixRoute => RestockSubscriptionsConfigs.RestockSubscriptionsUrl;
@@ -16,34 +27,45 @@ public class CreateRestockSubscriptionEndpoint : ICommandMinimalEndpoint<CreateR
         return builder
             .MapPost("/", HandleAsync)
             .AllowAnonymous()
-            .Produces<CreateRestockSubscriptionResponse>(StatusCodes.Status201Created)
-            .ProducesValidationProblem()
-            .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .WithName("CreateRestockSubscription")
-            .WithDisplayName("Register New RestockSubscription for Customer.");
+            // .Produces<CreateRestockSubscriptionResponse>(StatusCodes.Status201Created)
+            // .ProducesValidationProblem()
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .WithName(nameof(CreateRestockSubscription))
+            .WithSummaryAndDescription(
+                nameof(CreateRestockSubscription).Humanize(),
+                nameof(CreateRestockSubscription).Humanize()
+            )
+            .WithDisplayName(nameof(GetCustomers).Humanize());
     }
 
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        CreateRestockSubscriptionRequest request,
-        ICommandProcessor commandProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Results<CreatedAtRoute<CreateRestockSubscriptionResponse>, UnAuthorizedHttpProblemResult, ValidationProblem>
+    > HandleAsync([AsParameters] CreateRestockSubscriptionRequestParameters requestParameters)
     {
-        request.NotBeNull();
+        var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
-        var command = new CreateRestockSubscription(request.CustomerId, request.ProductId, request.Email);
+        var command = CreateRestockSubscription.Of(request.CustomerId, request.ProductId, request.Email);
 
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(CreateRestockSubscriptionEndpoint)))
-        using (Serilog.Context.LogContext.PushProperty("RestockSubscriptionId", command.Id))
-        {
-            var result = await commandProcessor.SendAsync(command, cancellationToken);
+        var result = await commandProcessor.SendAsync(command, cancellationToken);
 
-            return Results.Created(
-                $"{RestockSubscriptionsConfigs.RestockSubscriptionsUrl}/{result.RestockSubscriptionId}",
-                result
-            );
-        }
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.CreatedAtRoute(
+            new CreateRestockSubscriptionResponse(result.RestockSubscriptionId),
+            nameof(GetRestockSubscriptionById),
+            new { id = result.RestockSubscriptionId }
+        );
     }
 }
+
+internal record CreateRestockSubscriptionRequestParameters(
+    [FromBody] CreateRestockSubscriptionRequest Request,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<CreateRestockSubscriptionRequest>;
+
+public record CreateRestockSubscriptionResponse(long RestockSubscriptionId);
+
+public record CreateRestockSubscriptionRequest(long CustomerId, long ProductId, string Email);

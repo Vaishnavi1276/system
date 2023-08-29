@@ -32,12 +32,11 @@ internal class GetCustomerByCustomerIdEndpointEndpoint
             .WithSummaryAndDescription(
                 nameof(GetCustomerByCustomerId).Humanize(),
                 nameof(GetCustomerByCustomerId).Humanize()
-            )
-            // .Produces<GetCustomerByCustomerIdResponse>("Customer fetched successfully.", StatusCodes.Status200OK)
-            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            // .ProducesProblem(StatusCodes.Status404NotFound)
-            // .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .MapToApiVersion(1.0);
+            );
+        // .Produces<GetCustomerByCustomerIdResponse>("Customer fetched successfully.", StatusCodes.Status200OK)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem(StatusCodes.Status404NotFound)
+        // .ProducesProblem(StatusCodes.Status401Unauthorized)
     }
 
     public async Task<
@@ -50,7 +49,7 @@ internal class GetCustomerByCustomerIdEndpointEndpoint
     > HandleAsync([AsParameters] GetCustomerByCustomerIdRequestParameters requestParameters)
     {
         var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
-        var result = await queryProcessor.SendAsync(new GetCustomerByCustomerId(id), cancellationToken);
+        var result = await queryProcessor.SendAsync(GetCustomerByCustomerId.Of(id), cancellationToken);
 
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
         // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
@@ -61,7 +60,7 @@ internal class GetCustomerByCustomerIdEndpointEndpoint
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
 internal record GetCustomerByCustomerIdRequestParameters(
-    [FromRoute] long Id,
+    [FromRoute] long CustomerId,
     HttpContext HttpContext,
     IQueryProcessor QueryProcessor,
     IMapper Mapper,

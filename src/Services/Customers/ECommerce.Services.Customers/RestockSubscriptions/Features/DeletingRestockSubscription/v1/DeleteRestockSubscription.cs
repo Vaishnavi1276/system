@@ -1,6 +1,5 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
-using BuildingBlocks.Core.Exception;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Application;
 using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
@@ -8,7 +7,14 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.DeletingRestockSubscription.v1;
 
-public record DeleteRestockSubscription(long Id) : ITxCommand;
+public record DeleteRestockSubscription(long Id) : ITxCommand
+{
+    public static DeleteRestockSubscription Of(long id)
+    {
+        id.NotBeNegativeOrZero();
+        return new DeleteRestockSubscription(id);
+    }
+}
 
 internal class DeleteRestockSubscriptionValidator : AbstractValidator<DeleteRestockSubscription>
 {
@@ -34,13 +40,16 @@ internal class DeleteRestockSubscriptionHandler : ICommandHandler<DeleteRestockS
 
     public async Task<Unit> Handle(DeleteRestockSubscription command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var exists = await _customersDbContext.RestockSubscriptions
             .IgnoreAutoIncludes()
             .SingleOrDefaultAsync(x => x.Id == command.Id, cancellationToken);
 
-        Guard.Against.NotFound(exists, new RestockSubscriptionNotFoundException(command.Id));
+        if (exists is null)
+        {
+            throw new RestockSubscriptionNotFoundException(command.Id);
+        }
 
         // for raising a deleted domain event
         exists!.Delete();

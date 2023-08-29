@@ -24,7 +24,7 @@ internal class CustomersConfigs : IModuleConfiguration
 
     public Task<WebApplication> ConfigureModule(WebApplication app)
     {
-        return Task.FromResult<WebApplication>(app);
+        return Task.FromResult(app);
     }
 
     public IEndpointRouteBuilder MapEndpoints(IEndpointRouteBuilder endpoints)

@@ -37,6 +37,7 @@ internal record UpdateProduct(
     string? Description = null
 ) : ITxCommand
 {
+    // Update product command with inline validation
     public static UpdateProduct Of(
         long id,
         string? name,

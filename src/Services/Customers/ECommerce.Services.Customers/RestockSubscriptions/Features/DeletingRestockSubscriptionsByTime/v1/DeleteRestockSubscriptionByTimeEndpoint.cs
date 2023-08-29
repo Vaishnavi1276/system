@@ -1,12 +1,22 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using Hellang.Middleware.ProblemDetails;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.DeletingRestockSubscriptionsByTime.v1;
 
-public class DeleteRestockSubscriptionByTimeEndpoint : ICommandMinimalEndpoint<DeleteRestockSubscriptionByTimeRequest>
+internal class DeleteRestockSubscriptionByTimeEndpoint
+    : ICommandMinimalEndpoint<
+        DeleteRestockSubscriptionByTimeRequest,
+        DeleteRestockSubscriptionByTimeRequestParameters,
+        UnAuthorizedHttpProblemResult,
+        NotFoundHttpProblemResult,
+        NoContent,
+        ValidationProblem
+    >
 {
     public string GroupName => RestockSubscriptionsConfigs.Tag;
     public string PrefixRoute => RestockSubscriptionsConfigs.RestockSubscriptionsUrl;
@@ -16,31 +26,39 @@ public class DeleteRestockSubscriptionByTimeEndpoint : ICommandMinimalEndpoint<D
     {
         return builder
             .MapDelete("/", HandleAsync)
-            .Produces(StatusCodes.Status204NoContent)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .WithName("DeleteRestockSubscriptionByTime")
-            .WithDisplayName("Delete RestockSubscriptions by time range.");
+            // .Produces(StatusCodes.Status204NoContent)
+            // .ProducesValidationProblem()
+            // .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .RequireAuthorization(CustomersConstants.Role.Admin)
+            .WithName(nameof(DeleteRestockSubscriptionsByTime))
+            .WithName(nameof(DeleteRestockSubscriptionsByTime))
+            .WithDisplayName(nameof(DeleteRestockSubscriptionsByTime).Humanize())
+            .WithSummaryAndDescription(
+                nameof(DeleteRestockSubscriptionsByTime).Humanize(),
+                nameof(DeleteRestockSubscriptionsByTime).Humanize()
+            );
     }
 
-    [Authorize(Roles = CustomersConstants.Role.Admin)]
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        [FromBody] DeleteRestockSubscriptionByTimeRequest request,
-        ICommandProcessor commandProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Results<UnAuthorizedHttpProblemResult, NotFoundHttpProblemResult, NoContent, ValidationProblem>
+    > HandleAsync([AsParameters] DeleteRestockSubscriptionByTimeRequestParameters requestParameters)
     {
-        Guard.Against.Null(request, nameof(request));
+        var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
         var command = new DeleteRestockSubscriptionsByTime(request.From, request.To);
 
-        using (Serilog.Context.LogContext.PushProperty("Endpoint", nameof(DeleteRestockSubscriptionByTimeEndpoint)))
-        {
-            await commandProcessor.SendAsync(command, cancellationToken);
-        }
+        await commandProcessor.SendAsync(command, cancellationToken);
 
-        return Results.NoContent();
+        return TypedResults.NoContent();
     }
 }
+
+internal record DeleteRestockSubscriptionByTimeRequestParameters(
+    [FromBody] DeleteRestockSubscriptionByTimeRequest Request,
+    HttpContext HttpContext,
+    ICommandProcessor CommandProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpCommand<DeleteRestockSubscriptionByTimeRequest>;
+
+internal record DeleteRestockSubscriptionByTimeRequest(DateTime? From = null, DateTime? To = null);

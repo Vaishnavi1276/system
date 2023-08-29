@@ -48,7 +48,7 @@ public class Product : Aggregate<ProductId>
     public Size Size { get; private set; } = default!;
     public Stock Stock { get; set; } = default!;
     public Dimensions Dimensions { get; private set; } = default!;
-    public IReadOnlyList<ProductImage> Images => _images;
+    public IReadOnlyList<ProductImage>? Images => _images;
 
     public static Product Create(
         ProductId id,
@@ -104,7 +104,7 @@ public class Product : Aggregate<ProductId>
                 product.BrandId,
                 DateTime.Now,
                 product.Description,
-                product.Images.Select(x => new ProductImageDto(x.Id, x.ProductId, x.ImageUrl, x.IsMain))
+                product.Images?.Select(x => new ProductImageDto(x.Id, x.ProductId, x.ImageUrl, x.IsMain))
             )
         );
 

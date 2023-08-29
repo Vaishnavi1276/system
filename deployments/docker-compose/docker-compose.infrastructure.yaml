@@ -1,4 +1,5 @@
 version: "3.8"
+name: ecommerce-microservices
 
 services:
   #######################################################
@@ -54,7 +55,7 @@ services:
   # https://developers.eventstore.com/server/v21.10/installation.html#insecure-single-node
   # https://hub.docker.com/r/eventstore/eventstore/tags
   # https://stackoverflow.com/questions/65272764/ports-are-not-available-listen-tcp-0-0-0-0-50070-bind-an-attempt-was-made-to
-
+  # EVENTSTORE_MEM_DB=true, it tells the EventStoreDB container to use an in-memory database, which means that any data stored in EventStoreDB will not be persisted between container restarts. Once the container is stopped or restarted, all data will be lost.
   eventstore:
     image: eventstore/eventstore:latest
     container_name: eventstore
@@ -86,8 +87,10 @@ services:
   #   #  Redis
   #   #######################################################
 
+  ## https://developer.redis.com/howtos/quick-start
+  ## redis-stack is a image with redis modules enabled like JSON module
   # redis:
-  #   image: redis
+  #   image: redis/redis-stack:latest
   #   container_name: redis
   #   restart: unless-stopped
   #   networks:
@@ -95,165 +98,165 @@ services:
   #   ports:
   #     - 6379:6379
 
-  #######################################################
-  #  Portainer
-  #######################################################
-  # https://bobcares.com/blog/install-portainer-docker-compose/
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /etc/localtime:/etc/localtime:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./portainer-data:/data
-    ports:
-      - 9000:9000
-    networks:
-      - ecommerce
+  # #######################################################
+  # #  Portainer
+  # #######################################################
+  # # https://bobcares.com/blog/install-portainer-docker-compose/
+  # portainer:
+  #   image: portainer/portainer-ce:latest
+  #   container_name: portainer
+  #   restart: unless-stopped
+  #   security_opt:
+  #     - no-new-privileges:true
+  #   volumes:
+  #     - /etc/localtime:/etc/localtime:ro
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - ./portainer-data:/data
+  #   ports:
+  #     - 9000:9000
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    #  elasticsearch
-    #######################################################
-  elasticsearch:
-    container_name: elastic_search
-    restart: on-failure
-    image: elasticsearch:8.5.2
-    environment:
-      - discovery.type=single-node
-      - bootstrap.memory_lock=true
-      - xpack.monitoring.enabled=true
-      - xpack.watcher.enabled=false
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-    volumes:
-      - elastic-data:/usr/share/elasticsearch/data
-    ports:
-      - ${ELASTIC_HOST_PORT:-9200}:${ELASTIC_PORT:-9200}
-      - 9300:9300
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   #  elasticsearch
+  #   #######################################################
+  # elasticsearch:
+  #   container_name: elastic_search
+  #   restart: on-failure
+  #   image: elasticsearch:8.5.2
+  #   environment:
+  #     - discovery.type=single-node
+  #     - bootstrap.memory_lock=true
+  #     - xpack.monitoring.enabled=true
+  #     - xpack.watcher.enabled=false
+  #     - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+  #   ulimits:
+  #     memlock:
+  #       soft: -1
+  #       hard: -1
+  #   volumes:
+  #     - elastic-data:/usr/share/elasticsearch/data
+  #   ports:
+  #     - ${ELASTIC_HOST_PORT:-9200}:${ELASTIC_PORT:-9200}
+  #     - 9300:9300
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    #  kibana
-    #######################################################
-  kibana:
-    image: kibana:8.5.2
-    container_name: kibana
-    restart: on-failure
-    environment:
-      - ELASTICSEARCH_HOSTS=http://elastic_search:9200
-    ports:
-      - ${KIBANA_HOST_PORT:-5601}:${KIBANA_PORT:-5601}
-    networks:
-      - ecommerce
-    depends_on:
-      - elasticsearch
+  #   #######################################################
+  #   #  kibana
+  #   #######################################################
+  # kibana:
+  #   image: kibana:8.5.2
+  #   container_name: kibana
+  #   restart: on-failure
+  #   environment:
+  #     - ELASTICSEARCH_HOSTS=http://elastic_search:9200
+  #   ports:
+  #     - ${KIBANA_HOST_PORT:-5601}:${KIBANA_PORT:-5601}
+  #   networks:
+  #     - ecommerce
+  #   depends_on:
+  #     - elasticsearch
 
-  jaeger:
-    container_name: jaeger
-    restart: on-failure
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "16686:16686"
-      - "14268:14268"
-      - "14250:14250"
-    networks:
-      - ecommerce
+  # jaeger:
+  #   container_name: jaeger
+  #   restart: on-failure
+  #   image: jaegertracing/all-in-one:latest
+  #   ports:
+  #     - "16686:16686"
+  #     - "14268:14268"
+  #     - "14250:14250"
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    #  zipkin
-    #######################################################
-  zipkin:
-    image: openzipkin/zipkin:latest
-    restart: on-failure
-    container_name: zipkin
-    ports:
-      - "9411:9411"
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   #  zipkin
+  #   #######################################################
+  # zipkin:
+  #   image: openzipkin/zipkin:latest
+  #   restart: on-failure
+  #   container_name: zipkin
+  #   ports:
+  #     - "9411:9411"
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    #  otel-collector
-    #######################################################
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib-dev:latest
-    command: ["--config=/etc/otel-collector-config.yaml", ""]
-    volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "1888:1888" # pprof extension
-      - "8888:8888" # Prometheus metrics exposed by the collector
-      - "8889:8889" # Prometheus exporter metrics
-      - "13133:13133" # health_check extension
-      - "4317:4317" # OTLP gRPC receiver
-      - "55679:55679" # zpages extension
-    depends_on:
-      - jaeger
-      - zipkin
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   #  otel-collector
+  #   #######################################################
+  # otel-collector:
+  #   image: otel/opentelemetry-collector-contrib-dev:latest
+  #   command: ["--config=/etc/otel-collector-config.yaml", ""]
+  #   volumes:
+  #     - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+  #   ports:
+  #     - "1888:1888" # pprof extension
+  #     - "8888:8888" # Prometheus metrics exposed by the collector
+  #     - "8889:8889" # Prometheus exporter metrics
+  #     - "13133:13133" # health_check extension
+  #     - "4317:4317" # OTLP gRPC receiver
+  #     - "55679:55679" # zpages extension
+  #   depends_on:
+  #     - jaeger
+  #     - zipkin
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    # prometheus
-    #######################################################
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: on-failure
-    user: root
-    ports:
-      - ${PROMETHEUS_HOST_PORT:-9090}:${PROMETHEUS_PORT:-9090}
-    command:
-      - --config.file=/etc/prometheus/prometheus.yml
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   # prometheus
+  #   #######################################################
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   restart: on-failure
+  #   user: root
+  #   ports:
+  #     - ${PROMETHEUS_HOST_PORT:-9090}:${PROMETHEUS_PORT:-9090}
+  #   command:
+  #     - --config.file=/etc/prometheus/prometheus.yml
+  #   volumes:
+  #     - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    # node_exporter
-    #######################################################
-  node_exporter:
-    container_name: node_exporter
-    restart: on-failure
-    image: prom/node-exporter
-    ports:
-      - "9101:9100"
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   # node_exporter
+  #   #######################################################
+  # node_exporter:
+  #   container_name: node_exporter
+  #   restart: on-failure
+  #   image: prom/node-exporter
+  #   ports:
+  #     - "9101:9100"
+  #   networks:
+  #     - ecommerce
 
-    #######################################################
-    # grafana
-    #######################################################
-  grafana:
-    container_name: grafana
-    restart: on-failure
-    image: grafana/grafana
-    ports:
-      - ${GRAFANA_HOST_PORT:-3000}:${GRAFANA_PORT:-3000}
-    networks:
-      - ecommerce
+  #   #######################################################
+  #   # grafana
+  #   #######################################################
+  # grafana:
+  #   container_name: grafana
+  #   restart: on-failure
+  #   image: grafana/grafana
+  #   ports:
+  #     - ${GRAFANA_HOST_PORT:-3000}:${GRAFANA_PORT:-3000}
+  #   networks:
+  #     - ecommerce
 
-  #######################################################
-  # seq
-  #######################################################
-  seq:
-    image: datalust/seq:latest
-    container_name: seq
-    restart: on-failure
-    ports:
-      - 8081:80
-      - 5341:5341
-    environment:
-      ACCEPT_EULA: Y
-    networks:
-      - ecommerce
+  # #######################################################
+  # # seq
+  # #######################################################
+  # seq:
+  #   image: datalust/seq:latest
+  #   container_name: seq
+  #   restart: on-failure
+  #   ports:
+  #     - 8081:80
+  #     - 5341:5341
+  #   environment:
+  #     ACCEPT_EULA: Y
+  #   networks:
+  #     - ecommerce
 
 # https://docs.docker.com/compose/networking/
 # https://docs.docker.com/engine/reference/commandline/network_create/

@@ -1,6 +1,4 @@
-using BuildingBlocks.Abstractions.Domain.Events;
 using BuildingBlocks.Core.Extensions;
-using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Core.Registrations;
 using BuildingBlocks.Persistence.EventStoreDB.Subscriptions;
 using EventStore.Client;
@@ -20,7 +18,7 @@ public static class RegistrationExtensions
         var eventStoreDbConfig = configuration.BindOptions<EventStoreDbOptions>();
 
         services.AddSingleton(
-            new EventStoreClient(EventStoreClientSettings.Create(eventStoreDbConfig.ConnectionString))
+            new EventStoreClient(EventStoreClientSettings.Create(eventStoreDbConfig.GrpcConnectionString))
         );
 
         services.AddEventSourcing<EventStoreDbEventStore>();

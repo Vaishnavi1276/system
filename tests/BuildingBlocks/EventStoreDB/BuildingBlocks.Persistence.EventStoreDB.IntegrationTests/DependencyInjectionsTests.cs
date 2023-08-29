@@ -35,6 +35,6 @@ public class DependencyInjectionsTests
     {
         var options = _provider.GetService<IOptions<EventStoreDbOptions>>();
         options.Should().NotBeNull();
-        options!.Value.ConnectionString.Should().Be("esdb://localhost:2113?tls=false");
+        options!.Value.GrpcConnectionString.Should().Be("esdb://localhost:2113?tls=false");
     }
 }

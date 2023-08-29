@@ -1,19 +1,22 @@
-using Ardalis.GuardClauses;
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Core.CQRS.Commands;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Application;
-using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
-using ECommerce.Services.Customers.RestockSubscriptions.Models.Write;
-using ECommerce.Services.Customers.Shared.Data;
-using MongoDB.Driver;
-using RestockSubscription = ECommerce.Services.Customers.RestockSubscriptions.Models.Write.RestockSubscription;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 
-public record UpdateMongoRestockSubscriptionReadModel(RestockSubscription RestockSubscription, bool IsDeleted)
-    : InternalCommand;
+public record UpdateMongoRestockSubscriptionReadModel(
+    long RestockSubscriptionId,
+    long CustomerId,
+    string Email,
+    long ProductId,
+    string ProductName,
+    bool Processed,
+    DateTime? ProcessedTime,
+    bool IsDeleted = false
+) : InternalCommand;
 
 internal class UpdateMongoRestockSubscriptionReadModelHandler : ICommandHandler<UpdateMongoRestockSubscriptionReadModel>
 {
@@ -28,21 +31,30 @@ internal class UpdateMongoRestockSubscriptionReadModelHandler : ICommandHandler<
 
     public async Task<Unit> Handle(UpdateMongoRestockSubscriptionReadModel command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var existingSubscription = await _unitOfWork.RestockSubscriptionsRepository.FindOneAsync(
-            x => x.RestockSubscriptionId == command.RestockSubscription.Id,
+            x => x.RestockSubscriptionId == command.RestockSubscriptionId,
             cancellationToken
         );
 
         if (existingSubscription is null)
         {
-            throw new RestockSubscriptionNotFoundException(command.RestockSubscription.Id);
+            throw new RestockSubscriptionNotFoundException(command.RestockSubscriptionId);
         }
 
-        var updateSubscription = _mapper.Map(command.RestockSubscription, existingSubscription);
+        existingSubscription = existingSubscription with
+        {
+            Processed = command.Processed,
+            CustomerId = command.CustomerId,
+            ProductName = command.ProductName,
+            ProductId = command.ProductId,
+            Email = command.Email,
+            ProcessedTime = command.ProcessedTime,
+            IsDeleted = command.IsDeleted
+        };
 
-        await _unitOfWork.RestockSubscriptionsRepository.UpdateAsync(updateSubscription, cancellationToken);
+        await _unitOfWork.RestockSubscriptionsRepository.UpdateAsync(existingSubscription, cancellationToken);
         await _unitOfWork.CommitAsync(cancellationToken);
 
         return Unit.Value;

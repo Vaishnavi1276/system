@@ -17,7 +17,6 @@ using BuildingBlocks.Validation;
 using BuildingBlocks.Validation.Extensions;
 using BuildingBlocks.Web.Extensions;
 using ECommerce.Services.Catalogs.Products;
-using ECommerce.Services.Catalogs.Shared.Workers;
 
 namespace ECommerce.Services.Catalogs.Shared.Extensions.WebApplicationBuilderExtensions;
 
@@ -123,7 +122,7 @@ public static partial class WebApplicationBuilderExtensions
             x.AddProfile<ProductMappers>();
         });
 
-        builder.AddCustomCaching();
+        builder.AddCustomEasyCaching();
 
         return builder;
     }

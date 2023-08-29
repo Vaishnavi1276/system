@@ -3,6 +3,7 @@ using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
 using BuildingBlocks.Web.Minimal.Extensions;
 using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Catalogs.Products.Features.GettingProductById.v1;
 using ECommerce.Services.Catalogs.Products.Models;
 using Humanizer;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -51,7 +52,7 @@ internal static class CreateProductEndpoint
             // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
             return TypedResults.CreatedAtRoute(
                 new CreateProductResponse(result.Id),
-                "GetProductById",
+                nameof(GetProductById),
                 new { id = result.Id }
             );
         }

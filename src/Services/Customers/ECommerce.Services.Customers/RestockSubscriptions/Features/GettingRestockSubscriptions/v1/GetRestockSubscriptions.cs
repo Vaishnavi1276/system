@@ -1,19 +1,40 @@
 using AutoMapper;
+using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Core.CQRS.Queries;
-using BuildingBlocks.Persistence.Mongo;
+using BuildingBlocks.Core.Paging;
+using BuildingBlocks.Validation.Extensions;
 using ECommerce.Services.Customers.Customers.Data.UOW.Mongo;
 using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
-using ECommerce.Services.Customers.RestockSubscriptions.Models.Read;
-using ECommerce.Services.Customers.Shared.Data;
 using FluentValidation;
-using MongoDB.Driver;
-using MongoDB.Driver.Linq;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.GettingRestockSubscriptions.v1;
 
-public record GetRestockSubscriptions : PageQuery<GetRestockSubscriptionsResponse>
+internal record GetRestockSubscriptions : PageQuery<GetRestockSubscriptionsResult>
 {
+    public static GetRestockSubscriptions Of(
+        PageRequest pageRequest,
+        IEnumerable<string> emails,
+        DateTime? from,
+        DateTime? to
+    )
+    {
+        var (pageNumber, pageSize, filters, sortOrder) = pageRequest;
+
+        return new GetRestockSubscriptionsValidator().HandleValidation(
+            new GetRestockSubscriptions
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Filters = filters,
+                SortOrder = sortOrder,
+                Emails = emails.ToList(),
+                From = from,
+                To = to
+            }
+        );
+    }
+
     public IList<string> Emails { get; init; } = null!;
     public DateTime? From { get; init; }
     public DateTime? To { get; init; }
@@ -33,7 +54,7 @@ internal class GetRestockSubscriptionsValidator : AbstractValidator<GetRestockSu
     }
 }
 
-public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptions, GetRestockSubscriptionsResponse>
+internal class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptions, GetRestockSubscriptionsResult>
 {
     private readonly CustomersReadUnitOfWork _customersReadUnitOfWork;
     private readonly IMapper _mapper;
@@ -44,7 +65,7 @@ public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptio
         _mapper = mapper;
     }
 
-    public async Task<GetRestockSubscriptionsResponse> Handle(
+    public async Task<GetRestockSubscriptionsResult> Handle(
         GetRestockSubscriptions query,
         CancellationToken cancellationToken
     )
@@ -55,7 +76,8 @@ public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptio
         >(
             query,
             _mapper.ConfigurationProvider,
-            x =>
+            sortExpression: x => x.Created,
+            predicate: x =>
                 x.IsDeleted == false
                 && (query.Emails.Any() == false || query.Emails.Contains(x.Email))
                 && (
@@ -64,10 +86,11 @@ public class GeRestockSubscriptionsHandler : IQueryHandler<GetRestockSubscriptio
                     || (query.To == null && x.Created >= query.From)
                     || (x.Created >= query.From && x.Created <= query.To)
                 ),
-            sortExpression: x => x.Created,
             cancellationToken: cancellationToken
         );
 
-        return new GetRestockSubscriptionsResponse(restockSubscriptions);
+        return new GetRestockSubscriptionsResult(restockSubscriptions);
     }
 }
+
+internal record GetRestockSubscriptionsResult(IPageList<RestockSubscriptionDto> RestockSubscriptions);

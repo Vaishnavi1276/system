@@ -36,7 +36,7 @@ internal static class ReplenishProductStockEndpoint
             var (request, productId, context, commandProcessor, _, cancellationToken) = requestParameters;
 
             await commandProcessor.SendAsync(
-                new ReplenishProductStock(productId, request.DebitQuantity),
+                ReplenishProductStock.Of(productId, request.DebitQuantity),
                 cancellationToken
             );
 

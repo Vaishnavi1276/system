@@ -47,6 +47,7 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
 
     public Func<Task>? OnSharedFixtureInitialized;
     public Func<Task>? OnSharedFixtureDisposed;
+    public bool AlreadyMigrated { get; set; }
 
     public ILogger Logger { get; }
     public PostgresContainerFixture PostgresContainerFixture { get; }
@@ -64,6 +65,9 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
     public IHttpContextAccessor HttpContextAccessor =>
         _httpContextAccessor ??= ServiceProvider.GetRequiredService<IHttpContextAccessor>();
 
+    /// <summary>
+    /// We should not dispose this GuestClient, because we reuse it in our tests
+    /// </summary>
     public HttpClient GuestClient
     {
         get
@@ -78,7 +82,14 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         }
     }
 
+    /// <summary>
+    /// We should not dispose this AdminHttpClient, because we reuse it in our tests
+    /// </summary>
     public HttpClient AdminHttpClient => _adminClient ??= CreateAdminHttpClient();
+
+    /// <summary>
+    /// We should not dispose this NormalUserHttpClient, because we reuse it in our tests
+    /// </summary>
     public HttpClient NormalUserHttpClient => _normalClient ??= CreateNormalUserHttpClient();
     public WireMockServer WireMockServer { get; }
     public string? WireMockServerUrl { get; }
@@ -110,7 +121,6 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         //Mongo2GoFixture = new Mongo2GoFixture(messageSink);
         RabbitMqContainerFixture = new RabbitMQContainerFixture(messageSink);
 
-        Factory = new CustomWebApplicationFactory<TEntryPoint>();
         AutoFaker.Configure(b =>
         {
             // configure global AutoBogus settings here
@@ -134,7 +144,8 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         WireMockServer = WireMockServer.Start();
         WireMockServerUrl = WireMockServer.Url;
 
-        WithConfigureAppConfigurations(
+        Factory = new CustomWebApplicationFactory<TEntryPoint>();
+        ConfigureTestConfigureApp(
             (context, builder) =>
             {
                 // add in-memory configuration instead of using appestings.json and override existing settings and it is accessible via IOptions and Configuration
@@ -259,7 +270,13 @@ public class SharedFixture<TEntryPoint> : IAsyncLifetime
         return Factory;
     }
 
-    public void ConfigureTestServices(Action<IServiceCollection>? services = null)
+    public void ConfigureTestConfigureApp(Action<HostBuilderContext, IConfigurationBuilder>? configBuilder)
+    {
+        if (configBuilder is not null)
+            Factory.TestConfigureApp += configBuilder;
+    }
+
+    public void ConfigureTestServices(Action<IServiceCollection>? services)
     {
         if (services is not null)
             Factory.TestConfigureServices += services;

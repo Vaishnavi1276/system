@@ -32,10 +32,7 @@ public static class DebitProductStockEndpoint
         {
             var (request, productId, context, commandProcessor, _, cancellationToken) = requestParameters;
 
-            await commandProcessor.SendAsync(
-                new DebitProductStock(productId, request.DebitQuantity),
-                cancellationToken
-            );
+            await commandProcessor.SendAsync(DebitProductStock.Of(productId, request.DebitQuantity), cancellationToken);
 
             return TypedResults.NoContent();
         }

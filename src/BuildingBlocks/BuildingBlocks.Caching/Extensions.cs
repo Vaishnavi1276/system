@@ -2,12 +2,14 @@ using BuildingBlocks.Abstractions.Caching;
 using BuildingBlocks.Core.Extensions;
 using EasyCaching.Redis;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Options;
+using StackExchange.Redis;
 
 namespace BuildingBlocks.Caching;
 
 public static class Extensions
 {
-    public static WebApplicationBuilder AddCustomCaching(this WebApplicationBuilder builder)
+    public static WebApplicationBuilder AddCustomEasyCaching(this WebApplicationBuilder builder)
     {
         // https://www.twilio.com/blog/provide-default-configuration-to-dotnet-applications
         var cacheOptions = builder.Configuration.BindOptions<CacheOptions>();
@@ -52,6 +54,26 @@ public static class Extensions
             {
                 option.WithMessagePack(nameof(CacheSerializationType.MessagePack));
             }
+        });
+
+        return builder;
+    }
+
+    public static WebApplicationBuilder AddCustomRedis(this WebApplicationBuilder builder)
+    {
+        builder.Services.AddOptions<RedisOptions>().BindConfiguration(nameof(RedisOptions));
+        builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+        {
+            var redisOptions = sp.GetService<IOptions<RedisOptions>>()?.Value;
+            redisOptions.NotBeNull();
+
+            return ConnectionMultiplexer.Connect(
+                new ConfigurationOptions
+                {
+                    EndPoints = { $"{redisOptions.Host}:{redisOptions.Port}" },
+                    AllowAdmin = true
+                }
+            );
         });
 
         return builder;

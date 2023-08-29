@@ -44,7 +44,17 @@ public class RestockSubscription : Aggregate<RestockSubscriptionId>, IHaveSoftDe
 
         restockSubscription.ChangeEmail(email);
 
-        restockSubscription.AddDomainEvents(new RestockSubscriptionCreated(restockSubscription));
+        restockSubscription.AddDomainEvents(
+            RestockSubscriptionCreated.Of(
+                id,
+                productInformation.Id,
+                customerId,
+                productInformation.Name,
+                email,
+                restockSubscription.Created,
+                false
+            )
+        );
 
         return restockSubscription;
     }
@@ -57,7 +67,7 @@ public class RestockSubscription : Aggregate<RestockSubscriptionId>, IHaveSoftDe
 
     public void Delete()
     {
-        AddDomainEvents(new RestockSubscriptionDeleted(this));
+        AddDomainEvents(new RestockSubscriptionDeleted(Id));
     }
 
     public void MarkAsProcessed(DateTime processedTime)
@@ -65,6 +75,6 @@ public class RestockSubscription : Aggregate<RestockSubscriptionId>, IHaveSoftDe
         Processed = true;
         ProcessedTime = processedTime;
 
-        AddDomainEvents(new RestockNotificationProcessed(this));
+        AddDomainEvents(new RestockNotificationProcessed(Id, processedTime));
     }
 }

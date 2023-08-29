@@ -9,19 +9,6 @@ namespace ECommerce.Services.Catalogs.Categories.Data;
 
 public class CategoryDataSeeder : IDataSeeder
 {
-    public sealed class CategorySeedFaker : AutoFaker<Category>
-    {
-        public CategorySeedFaker()
-        {
-            var categoryId = 1;
-
-            RuleFor(p => p.Id, _ => CategoryId.Of(categoryId++))
-                .RuleFor(p => p.Name, f => f.Commerce.Categories(1).First())
-                .RuleFor(p => p.Description, f => f.Commerce.ProductDescription())
-                .RuleFor(p => p.Code, f => f.Random.Number(1000, 5000).ToString(CultureInfo.InvariantCulture));
-        }
-    }
-
     private readonly ICatalogDbContext _dbContext;
 
     public CategoryDataSeeder(ICatalogDbContext dbContext)
@@ -47,4 +34,22 @@ public class CategoryDataSeeder : IDataSeeder
     }
 
     public int Order => 1;
+}
+
+public sealed class CategorySeedFaker : Faker<Category>
+{
+    public CategorySeedFaker()
+    {
+        var categoryId = 1;
+
+        CustomInstantiator(
+            f =>
+                Category.Of(
+                    CategoryId.Of(categoryId++),
+                    f.Commerce.Categories(1).First(),
+                    f.Commerce.ProductDescription(),
+                    f.Random.Number(1000, 5000).ToString(CultureInfo.InvariantCulture)
+                )
+        );
+    }
 }

@@ -2,6 +2,7 @@ using AutoMapper;
 using BuildingBlocks.Abstractions.Core.Paging;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
+using BuildingBlocks.Core.Paging;
 using BuildingBlocks.Web.Minimal.Extensions;
 using BuildingBlocks.Web.Problem.HttpResults;
 using ECommerce.Services.Customers.Customers.Dtos.v1;
@@ -29,23 +30,30 @@ internal class GetCustomersEndpoint
         return builder
             .MapGet("/", HandleAsync)
             .RequireAuthorization()
-            .WithTags(CustomersConfigs.Tag)
             .WithName(nameof(GetCustomers))
             .WithSummaryAndDescription(nameof(GetCustomers).Humanize(), nameof(GetCustomers).Humanize())
-            .WithDisplayName(nameof(GetCustomers).Humanize())
-            // .Produces<GetCustomersResponse>("Customers fetched successfully.", StatusCodes.Status200OK)
-            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            // .ProducesProblem(StatusCodes.Status401Unauthorized)
-            .MapToApiVersion(1.0);
+            .WithDisplayName(nameof(GetCustomers).Humanize());
+        // .Produces<GetCustomersResponse>("Customers fetched successfully.", StatusCodes.Status200OK)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem(StatusCodes.Status401Unauthorized)
     }
 
     public async Task<Results<Ok<GetCustomersResponse>, ValidationProblem, UnAuthorizedHttpProblemResult>> HandleAsync(
         [AsParameters] GetCustomersRequestParameters requestParameters
     )
     {
-        var (context, queryProcessor, mapper, cancellationToken, _, _, _, _) = requestParameters;
+        var (context, queryProcessor, mapper, cancellationToken, pageSize, pageNumber, filters, sortOrder) =
+            requestParameters;
 
-        var query = mapper.Map<GetCustomers>(requestParameters);
+        var query = GetCustomers.Of(
+            new PageRequest
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                Filters = filters,
+                SortOrder = sortOrder
+            }
+        );
 
         var result = await queryProcessor.SendAsync(query, cancellationToken);
 

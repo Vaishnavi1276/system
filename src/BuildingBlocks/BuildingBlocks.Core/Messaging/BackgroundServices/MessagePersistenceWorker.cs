@@ -9,9 +9,9 @@ using Microsoft.Extensions.Options;
 namespace BuildingBlocks.Core.Messaging.BackgroundServices;
 
 // https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/hosted-services
-public class MessagePersistenceBackgroundService : BackgroundService
+public class MessagePersistenceWorker : BackgroundService
 {
-    private readonly ILogger<MessagePersistenceBackgroundService> _logger;
+    private readonly ILogger<MessagePersistenceWorker> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly IHostApplicationLifetime _lifetime;
     private readonly MessagePersistenceOptions _options;
@@ -19,8 +19,8 @@ public class MessagePersistenceBackgroundService : BackgroundService
 
     private Task? _executingTask;
 
-    public MessagePersistenceBackgroundService(
-        ILogger<MessagePersistenceBackgroundService> logger,
+    public MessagePersistenceWorker(
+        ILogger<MessagePersistenceWorker> logger,
         IOptions<MessagePersistenceOptions> options,
         IServiceProvider serviceProvider,
         IHostApplicationLifetime lifetime,

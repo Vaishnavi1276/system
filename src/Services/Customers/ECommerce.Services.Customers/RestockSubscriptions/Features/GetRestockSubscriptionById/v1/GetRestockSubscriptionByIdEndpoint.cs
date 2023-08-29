@@ -1,12 +1,22 @@
 using AutoMapper;
 using BuildingBlocks.Abstractions.CQRS.Queries;
 using BuildingBlocks.Abstractions.Web.MinimalApi;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.GettingRestockSubscriptionBySubscriptionId.v1;
-using Hellang.Middleware.ProblemDetails;
+using BuildingBlocks.Web.Minimal.Extensions;
+using BuildingBlocks.Web.Problem.HttpResults;
+using ECommerce.Services.Customers.RestockSubscriptions.Dtos.v1;
+using Humanizer;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ECommerce.Services.Customers.RestockSubscriptions.Features.GetRestockSubscriptionById.v1;
 
-public class GetRestockSubscriptionByIdEndpoint : IQueryMinimalEndpoint<Guid>
+internal class GetRestockSubscriptionByIdEndpoint
+    : IQueryMinimalEndpoint<
+        GetRestockSubscriptionByIdRequestParameters,
+        Ok<GetRestockSubscriptionByIdResponse>,
+        ValidationProblem,
+        NotFoundHttpProblemResult,
+        UnAuthorizedHttpProblemResult
+    >
 {
     public string GroupName => RestockSubscriptionsConfigs.Tag;
     public string PrefixRoute => RestockSubscriptionsConfigs.RestockSubscriptionsUrl;
@@ -17,38 +27,44 @@ public class GetRestockSubscriptionByIdEndpoint : IQueryMinimalEndpoint<Guid>
         return builder
             .MapGet("/{id:guid}", HandleAsync)
             .RequireAuthorization(CustomersConstants.Role.Admin)
-            .Produces<GetRestockSubscriptionByIdResponse>(StatusCodes.Status200OK)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
-            .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
-            .WithName("GetRestockSubscriptionById")
-            .WithOpenApi(
-                operation =>
-                    new(operation)
-                    {
-                        Description = "Getting RestockSubscription By SubscriptionId.",
-                        Summary = "Getting RestockSubscription By SubscriptionId."
-                    }
-            )
-            .WithDisplayName("Get RestockSubscription By InternalCommandId.");
+            // .Produces<GetRestockSubscriptionByIdResponse>(StatusCodes.Status200OK)
+            // .Produces<StatusCodeProblemDetails>(StatusCodes.Status401Unauthorized)
+            // .Produces<StatusCodeProblemDetails>(StatusCodes.Status400BadRequest)
+            // .Produces<StatusCodeProblemDetails>(StatusCodes.Status404NotFound)
+            .WithName(nameof(GetRestockSubscriptionById))
+            .WithDisplayName(nameof(GetRestockSubscriptionById).Humanize())
+            .WithSummaryAndDescription(
+                nameof(GetRestockSubscriptionById).Humanize(),
+                nameof(GetRestockSubscriptionById).Humanize()
+            );
     }
 
-    public async Task<IResult> HandleAsync(
-        HttpContext context,
-        Guid id,
-        IQueryProcessor queryProcessor,
-        IMapper mapper,
-        CancellationToken cancellationToken
-    )
+    public async Task<
+        Results<
+            Ok<GetRestockSubscriptionByIdResponse>,
+            ValidationProblem,
+            NotFoundHttpProblemResult,
+            UnAuthorizedHttpProblemResult
+        >
+    > HandleAsync([AsParameters] GetRestockSubscriptionByIdRequestParameters requestParameters)
     {
-        using (
-            Serilog.Context.LogContext.PushProperty("Endpoint", nameof(GetRestockSubscriptionBySubscriptionIdEndpoint))
-        )
-        using (Serilog.Context.LogContext.PushProperty("InternalCommandId", id))
-        {
-            var result = await queryProcessor.SendAsync(new GetRestockSubscriptionById(id), cancellationToken);
+        var (id, _, queryProcessor, mapper, cancellationToken) = requestParameters;
+        var result = await queryProcessor.SendAsync(GetRestockSubscriptionById.Of(id), cancellationToken);
 
-            return Results.Ok(result);
-        }
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/responses
+        // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/openapi?view=aspnetcore-7.0#multiple-response-types
+        return TypedResults.Ok(new GetRestockSubscriptionByIdResponse(result.RestockSubscription));
     }
 }
+
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#parameter-binding-for-argument-lists-with-asparameters
+// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
+internal record GetRestockSubscriptionByIdRequestParameters(
+    [FromRoute] Guid Id,
+    HttpContext HttpContext,
+    IQueryProcessor QueryProcessor,
+    IMapper Mapper,
+    CancellationToken CancellationToken
+) : IHttpQuery;
+
+public record GetRestockSubscriptionByIdResponse(RestockSubscriptionDto RestockSubscription);

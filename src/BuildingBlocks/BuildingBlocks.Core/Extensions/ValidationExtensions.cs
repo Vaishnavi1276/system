@@ -315,4 +315,16 @@ public static class ValidationExtensions
 
         return enumValue;
     }
+
+    public static void NotBeEmpty(
+        this DateTime dateTime,
+        [CallerArgumentExpression("dateTime")] string? argumentName = null
+    )
+    {
+        var isEmpty = dateTime == DateTime.MinValue;
+        if (isEmpty)
+        {
+            throw new ArgumentException($"The value of '{argumentName}' cannot be the default value of '{dateTime}'.");
+        }
+    }
 }

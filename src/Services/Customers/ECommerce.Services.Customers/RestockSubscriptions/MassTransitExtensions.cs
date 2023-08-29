@@ -1,4 +1,4 @@
-﻿using ECommerce.Services.Shared.Customers.RestockSubscriptions.Events.v1.Integration;
+using ECommerce.Services.Shared.Customers.RestockSubscriptions.Events.v1.Integration;
 using Humanizer;
 using MassTransit;
 using RabbitMQ.Client;

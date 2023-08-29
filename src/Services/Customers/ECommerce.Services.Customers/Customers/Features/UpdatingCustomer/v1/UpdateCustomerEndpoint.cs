@@ -15,24 +15,23 @@ internal class UpdateCustomerEndpoint : ICommandMinimalEndpoint<UpdateCustomerRe
     public RouteHandlerBuilder MapEndpoint(IEndpointRouteBuilder builder)
     {
         return builder
-            .MapPut("/", HandleAsync)
+            .MapPut("/{id}", HandleAsync)
             .RequireAuthorization()
-            .WithTags(CustomersConfigs.Tag)
             .RequireAuthorization()
             .WithName(nameof(UpdateCustomer))
             .WithDisplayName(nameof(UpdateCustomer).Humanize())
-            .WithSummaryAndDescription(nameof(UpdateCustomer).Humanize(), nameof(UpdateCustomer).Humanize())
-            // .Produces("Customer updated successfully.", StatusCodes.Status204NoContent)
-            // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
-            // .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
-            .MapToApiVersion(1.0);
+            .WithSummaryAndDescription(nameof(UpdateCustomer).Humanize(), nameof(UpdateCustomer).Humanize());
+        // .Produces("Customer updated successfully.", StatusCodes.Status204NoContent)
+        // .ProducesValidationProblem(StatusCodes.Status400BadRequest)
+        // .ProducesProblem("UnAuthorized request.", StatusCodes.Status401Unauthorized)
     }
 
     public async Task<IResult> HandleAsync(UpdateCustomerRequestParameters requestParameters)
     {
-        var (request, context, commandProcessor, mapper, cancellationToken) = requestParameters;
+        var (request, id, context, commandProcessor, mapper, cancellationToken) = requestParameters;
 
         var command = mapper.Map<UpdateCustomer>(request);
+        command = command with { Id = id };
 
         await commandProcessor.SendAsync(command, cancellationToken);
 
@@ -46,6 +45,7 @@ internal class UpdateCustomerEndpoint : ICommandMinimalEndpoint<UpdateCustomerRe
 // https://learn.microsoft.com/en-us/aspnet/core/fundamentals/minimal-apis/parameter-binding#binding-precedence
 internal record UpdateCustomerRequestParameters(
     [FromBody] UpdateCustomerRequest Request,
+    [FromRoute] long Id,
     HttpContext HttpContext,
     ICommandProcessor CommandProcessor,
     IMapper Mapper,
@@ -54,7 +54,6 @@ internal record UpdateCustomerRequestParameters(
 
 // These parameters can be pass null from the user
 internal sealed record UpdateCustomerRequest(
-    long Id,
     string? FirstName,
     string? LastName,
     string? Email,

@@ -20,6 +20,7 @@ using BuildingBlocks.Core.Serialization;
 using BuildingBlocks.Core.Types;
 using BuildingBlocks.Core.Utils;
 using Microsoft.Extensions.Configuration;
+using Polly;
 using Scrutor;
 using Sieve.Services;
 
@@ -48,6 +49,9 @@ public static class CoreRegistrationExtensions
 
         services.AddScoped<ISieveProcessor, ApplicationSieveProcessor>();
         services.ScanAndRegisterDbExecutors(assemblies);
+
+        var policy = Policy.Handle<System.Exception>().RetryAsync(2);
+        services.AddSingleton<AsyncPolicy>(policy);
 
         services.AddHttpContextAccessor();
 
@@ -92,7 +96,7 @@ public static class CoreRegistrationExtensions
     {
         services.AddScoped<IMessagePersistenceService, MessagePersistenceService>();
         services.AddScoped<IMessagePersistenceRepository, NullPersistenceRepository>();
-        services.AddHostedService<MessagePersistenceBackgroundService>();
+        services.AddHostedService<MessagePersistenceWorker>();
         services.AddValidatedOptions<MessagePersistenceOptions>();
     }
 

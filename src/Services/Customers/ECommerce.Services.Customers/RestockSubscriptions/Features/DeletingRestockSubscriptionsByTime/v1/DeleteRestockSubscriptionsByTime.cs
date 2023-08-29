@@ -1,8 +1,7 @@
-using Ardalis.GuardClauses;
 using BuildingBlocks.Abstractions.CQRS.Commands;
 using BuildingBlocks.Abstractions.Domain.Events.Internal;
+using BuildingBlocks.Core.Extensions;
 using ECommerce.Services.Customers.RestockSubscriptions.Exceptions.Domain;
-using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification;
 using ECommerce.Services.Customers.RestockSubscriptions.Features.ProcessingRestockNotification.v1;
 using ECommerce.Services.Customers.Shared.Data;
 using Microsoft.EntityFrameworkCore;
@@ -33,7 +32,7 @@ internal class DeleteRestockSubscriptionsByTimeHandler : ICommandHandler<DeleteR
 
     public async Task<Unit> Handle(DeleteRestockSubscriptionsByTime command, CancellationToken cancellationToken)
     {
-        Guard.Against.Null(command, nameof(command));
+        command.NotBeNull();
 
         var exists = await _customersDbContext.RestockSubscriptions
             .Where(

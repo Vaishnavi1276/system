@@ -109,7 +109,7 @@ public static partial class WebApplicationBuilderExtensions
             autoConfigEndpoints: false
         );
 
-        builder.AddCustomCaching();
+        builder.AddCustomEasyCaching();
 
         builder.Services.AddCustomValidators(Assembly.GetExecutingAssembly());
 

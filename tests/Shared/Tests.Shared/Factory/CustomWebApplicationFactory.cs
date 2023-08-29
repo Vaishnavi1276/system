@@ -29,15 +29,23 @@ public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TE
     private Action<IWebHostBuilder>? _customWebHostBuilder;
     private Action<IHostBuilder>? _customHostBuilder;
     private Action<HostBuilderContext, IConfigurationBuilder>? _configureAppConfigurations;
+    private Action<IServiceCollection>? _testServices;
 
     public Action<IServiceCollection>? TestConfigureServices { get; set; }
-    public Action<IApplicationBuilder>? TestConfigureApp { get; set; }
+    public Action<HostBuilderContext, IConfigurationBuilder>? TestConfigureApp { get; set; }
 
     public ILogger Logger => Services.GetRequiredService<ILogger<CustomWebApplicationFactory<TEntryPoint>>>();
 
     public void ClearOutputHelper() => _outputHelper = null;
 
     public void SetOutputHelper(ITestOutputHelper value) => _outputHelper = value;
+
+    public CustomWebApplicationFactory<TEntryPoint> WithTestServices(Action<IServiceCollection> services)
+    {
+        _testServices += services;
+
+        return this;
+    }
 
     public CustomWebApplicationFactory<TEntryPoint> WithConfigureAppConfigurations(
         Action<HostBuilderContext, IConfigurationBuilder> builder
@@ -143,6 +151,7 @@ public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TE
                         scheme: FakeJwtBearerDefaults.AuthenticationScheme
                     );
 
+                _testServices?.Invoke(services);
                 TestConfigureServices?.Invoke(services);
             });
 
@@ -187,6 +196,7 @@ public class CustomWebApplicationFactory<TEntryPoint> : WebApplicationFactory<TE
                 // configurationBuilder.AddInMemoryCollection(new Dictionary<string, string?> {});
 
                 _configureAppConfigurations?.Invoke(hostingContext, configurationBuilder);
+                TestConfigureApp?.Invoke(hostingContext, configurationBuilder);
             }
         );
 

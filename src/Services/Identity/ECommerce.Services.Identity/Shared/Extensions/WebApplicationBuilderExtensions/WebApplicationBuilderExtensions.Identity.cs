@@ -1,6 +1,9 @@
 using BuildingBlocks.Abstractions.Domain.Events.Internal;
 using BuildingBlocks.Abstractions.Persistence;
+using BuildingBlocks.Core.Extensions;
+using BuildingBlocks.Core.Extensions.ServiceCollection;
 using BuildingBlocks.Persistence.EfCore.Postgres;
+using BuildingBlocks.Web.Workers;
 using ECommerce.Services.Identity.Shared.Data;
 using ECommerce.Services.Identity.Shared.Models;
 using Microsoft.AspNetCore.Identity;
@@ -15,7 +18,10 @@ public static partial class WebApplicationBuilderExtensions
         Action<IdentityOptions>? configure = null
     )
     {
-        if (builder.Configuration.GetValue<bool>($"{nameof(PostgresOptions)}:{nameof(PostgresOptions.UseInMemory)}"))
+        builder.Services.AddValidatedOptions<IdentityOptions>();
+        var postgresOptions = builder.Configuration.BindOptions<PostgresOptions>();
+
+        if (postgresOptions.UseInMemory)
         {
             builder.Services.AddDbContext<IdentityContext>(
                 options => options.UseInMemoryDatabase("Shop.Services.ECommerce.Services.Identity")
@@ -28,6 +34,13 @@ public static partial class WebApplicationBuilderExtensions
         {
             // Postgres
             builder.Services.AddPostgresDbContext<IdentityContext>();
+
+            builder.Services.AddHostedService<MigrationWorker>();
+            builder.Services.AddHostedService<SeedWorker>();
+
+            // add migrations and seeders dependencies, or we could add seeders inner each modules
+            builder.Services.AddScoped<IMigrationExecutor, IdentityMigrationExecutor>();
+            // services.AddScoped<IDataSeeder, Seeder>();
         }
 
         // Problem with .net core identity - will override our default authentication scheme `JwtBearerDefaults.AuthenticationScheme` to unwanted `ECommerce.Services.Identity.Application` in `AddIdentity()` method .net identity
@@ -58,9 +71,6 @@ public static partial class WebApplicationBuilderExtensions
             })
             .AddEntityFrameworkStores<IdentityContext>()
             .AddDefaultTokenProviders();
-
-        if (builder.Configuration.GetSection(nameof(IdentityOptions)) is not null)
-            builder.Services.Configure<IdentityOptions>(builder.Configuration.GetSection(nameof(IdentityOptions)));
 
         return builder;
     }

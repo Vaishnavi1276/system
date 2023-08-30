@@ -3,8 +3,8 @@ name: Update App Version
 on:
   # https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule
   # https://github.com/peter-evans/create-pull-request/issues/1608
-  schedule:
-    - cron: '0 0 * * *' # run at midnight every day
+  # schedule:
+  #  - cron: '0 0 */30 * *' # run at midnight every 30 days
 
   workflow_dispatch:
     inputs:
